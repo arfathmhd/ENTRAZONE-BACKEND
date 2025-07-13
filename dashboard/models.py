@@ -67,22 +67,33 @@ class CustomUser(AbstractBaseUser):
         
     )
 
-    DISTRICT_CHOICES = [
-        ('0', 'Thiruvananthapuram'),
-        ('1', 'Kollam'),
-        ('2', 'Pathanamthitta'),
-        ('3', 'Alapuzha'),
-        ('4', 'Kottayam'),
-        ('5', 'Idukki'),
-        ('6', 'Eranakulam'),
-        ('7', 'Thrissur'),
-        ('8', 'Palakkad'),
-        ('9', 'Malappuaram'),
-        ('10', 'Kozhikode'),
-        ('11', 'Wayanad'),
-        ('12', 'Kannur'),
-        ('13', 'Kasargode'),
+    STATE_CHOICES = [
+    ('0', 'Andhra Pradesh'),
+    ('1', 'Arunachal Pradesh'),
+    ('2', 'Assam'),
+    ('3', 'Bihar'),
+    ('4', 'Chhattisgarh'),
+    ('5', 'Goa'),
+    ('6', 'Gujarat'),
+    ('7', 'Haryana'),
+    ('8', 'Himachal Pradesh'),
+    ('9', 'Jharkhand'),
+    ('10', 'Karnataka'),
+    ('11', 'Kerala'),
+    ('12', 'Madhya Pradesh'),
+    ('13', 'Maharashtra'),
+    ('14', 'Manipur'),
+    ('15', 'Meghalaya'),
+    ('16', 'Mizoram'),
+    ('17', 'Nagaland'),
+    ('18', 'Odisha'),
+    ('19', 'Punjab'),
+    ('20', 'Rajasthan'),
+    ('21', 'Sikkim'),
+    ('22', 'Tamil Nadu'),
+    ('23', 'Telangana'),
     ]
+
     username = models.CharField(
         unique=True,
         max_length=150,
@@ -95,7 +106,7 @@ class CustomUser(AbstractBaseUser):
     image=models.ImageField(upload_to=get_file_path, null=True, blank=True)
     name = models.CharField(max_length=100, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    district = models.CharField(max_length=2, choices=DISTRICT_CHOICES)
+    district = models.CharField(max_length=2, choices=STATE_CHOICES)
     user_type = models.IntegerField(default=0, choices=TYPE_CHOICES)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)

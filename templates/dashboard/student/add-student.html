@@ -1,0 +1,446 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Student</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-customer' %}">Student</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-customer' %}">Add Student</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card">
+                        <!-- Header Section -->
+                        <div class="card-header bg-light">
+                            <div class="d-flex align-items-center">
+                                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                                <h4 class="text-dark">Personal Information</h4>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        {% load crispy_forms_tags %}
+
+                        <div class="card-body pb-1">
+                            <!-- Custom Image Upload Field with Preview -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
+                                        <div id="image-preview-container"
+                                            class="d-flex align-items-center justify-content-center avatar avatar-xxl border border-dashed me-2 flex-shrink-0 text-dark frames">
+                                            {% if form.image.value %}
+                                            <img id="image-preview" src="{{ form.image.value.url }}" alt="Profile Image"
+                                                style="width: 100px; height: 100px; object-fit: cover;">
+                                            {% else %}
+                                            <i class="bi bi-image fs-16"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="profile-upload">
+                                            <div class="profile-uploader d-flex align-items-center">
+                                                <div class="drag-upload-btn mb-3">
+                                                    Upload
+                                                    <!-- Use Django crispy-forms to render the image input field -->
+                                                    {{ form.image }}
+                                                </div>
+                                            </div>
+                                            <p class="fs-12">Upload image size 4MB, Format JPG, PNG, SVG</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Fields Rendering -->
+                            <div class="row row-cols-xxl-5 row-cols-md-6">
+                                <div class="col-xxl col-xl-3 col-md-6 mb-3">
+                                    {{ form.name|as_crispy_field }}
+                                </div>
+                                <div class="col-xxl col-xl-3 col-md-6 mb-3">
+                                    {{ form.email|as_crispy_field }}
+                                </div>
+                                <div class="col-xxl col-xl-3 col-md-6 mb-3">
+                                    {{ form.phone_number|as_crispy_field }}
+                                </div>
+                                <div class="col-xxl col-xl-3 col-md-6 mb-3">
+                                    {{ form.district|as_crispy_field }}
+                                </div>
+                                <div class="col-xxl col-xl-3 col-md-6 mb-3">
+                                    {{ form.batches|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Plan Card -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <div class="d-flex align-items-center">
+                                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                                    <i class="bi bi-credit-card"></i>
+                                </span>
+                                <h4 class="text-dark">Payment Plan</h4>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Payment Plan Type</label>
+                                        <div class="d-flex">
+                                            {% for radio in payment_plan_form.payment_plan_type %}
+                                            <div class="form-check me-4">
+                                                {{ radio.tag }}
+                                                <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                                    {{ radio.choice_label }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Existing Plan Section -->
+                            <div id="existing-plan-section" class="row mb-3">
+                                <div class="col-md-6">
+                                    {{ payment_plan_form.existing_plan|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <!-- New Plan Section -->
+                            <div id="new-plan-section" class="row" style="display: none;">
+                                <div class="col-md-4 mb-3">
+                                    {{ payment_plan_form.plan_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ payment_plan_form.total_amount|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ payment_plan_form.discount|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ payment_plan_form.number_of_installments|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ payment_plan_form.installment_frequency|as_crispy_field }}
+                                </div>
+                                
+                                <!-- Custom date fields (initially hidden) -->
+                                <div id="custom-date-fields" class="row" style="display: none;">
+                                    <div class="col-md-4 mb-3">
+                                        {{ payment_plan_form.custom_start_date|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ payment_plan_form.custom_end_date|as_crispy_field }}
+                                    </div>
+                                </div>
+
+                                <!-- Preview Section -->
+                                <div class="col-md-12 mt-3">
+                                    <div class="card border">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Installment Preview</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="installment-preview-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Installment #</th>
+                                                            <th>Due Date</th>
+                                                            <th>Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="3" class="text-center">Configure the payment
+                                                                plan to see installments</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light me-3"
+                            onclick="window.history.back();">Cancel</button>
+
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</div>
+
+
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Image preview functionality
+        const imageInput = document.querySelector('input[type="file"]');
+        const previewContainer = document.getElementById('image-preview-container');
+
+        imageInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    // Remove any existing preview
+                    const existingPreview = previewContainer.querySelector('img');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+
+                    // Remove the icon if it exists
+                    const existingIcon = previewContainer.querySelector('.bi-image');
+                    if (existingIcon) {
+                        existingIcon.remove();
+                    }
+
+                    // Create and add the new preview image
+                    const img = document.createElement('img');
+                    img.id = 'image-preview';
+                    img.src = e.target.result;
+                    img.alt = 'Profile Image';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+
+                    previewContainer.appendChild(img);
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Payment plan form functionality
+        const paymentPlanTypeRadios = document.querySelectorAll('input[name="payment_plan_type"]');
+        const existingPlanSection = document.getElementById('existing-plan-section');
+        const newPlanSection = document.getElementById('new-plan-section');
+
+        // Fields for installment preview calculation
+        const totalAmountField = document.querySelector('input[name="total_amount"]');
+        const numberOfInstallmentsField = document.querySelector('input[name="number_of_installments"]');
+        const discountField = document.querySelector('input[name="discount"]');
+        const frequencySelect = document.querySelector('select[name="installment_frequency"]');
+        const previewTable = document.getElementById('installment-preview-table');
+
+        // Toggle between existing and new plan sections
+        paymentPlanTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'existing') {
+                    existingPlanSection.style.display = 'flex';
+                    newPlanSection.style.display = 'none';
+                } else {
+                    existingPlanSection.style.display = 'none';
+                    newPlanSection.style.display = 'flex';
+                }
+            });
+        });
+
+        // Custom date fields and batch selection handling
+        const customDateFields = document.getElementById('custom-date-fields');
+        const customStartDateField = document.querySelector('input[name="custom_start_date"]');
+        const customEndDateField = document.querySelector('input[name="custom_end_date"]');
+        const batchSelect = document.querySelector('select[name="batches"]');
+        
+        // Show/hide custom date fields based on frequency selection
+        frequencySelect.addEventListener('change', function() {
+            if (this.value === 'custom_date') {
+                customDateFields.style.display = 'flex';
+            } else {
+                customDateFields.style.display = 'none';
+            }
+            updateInstallmentPreview();
+        });
+        
+        // Generate installment preview when inputs change
+        function updateInstallmentPreview() {
+            const totalAmount = parseFloat(totalAmountField.value) || 0;
+            const numberOfInstallments = parseInt(numberOfInstallmentsField.value) || 0;
+            const discount = parseFloat(discountField.value) || 0;
+            const frequency = frequencySelect.value || 'monthly';
+
+            if (totalAmount > 0 && numberOfInstallments > 0) {
+                const totalAfterDiscount = totalAmount - discount;
+                const amountPerInstallment = totalAfterDiscount / numberOfInstallments;
+
+                // Generate preview table rows
+                let tableHtml = '';
+                let startDate, endDate;
+                
+                // Handle different frequency types
+                if (frequency === 'custom_date') {
+                    // Use custom date range if both dates are provided
+                    if (customStartDateField.value && customEndDateField.value) {
+                        startDate = new Date(customStartDateField.value);
+                        endDate = new Date(customEndDateField.value);
+                        
+                        // Calculate date intervals
+                        const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+                        const intervalDays = Math.max(1, Math.floor(totalDays / numberOfInstallments));
+                        
+                        for (let i = 0; i < numberOfInstallments; i++) {
+                            let dueDate;
+                            
+                            // For the last installment, use the end date
+                            if (i === numberOfInstallments - 1) {
+                                dueDate = new Date(endDate);
+                            } else {
+                                dueDate = new Date(startDate);
+                                dueDate.setDate(startDate.getDate() + (intervalDays * i));
+                            }
+                            
+                            const formattedDate = dueDate.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                            
+                            tableHtml += `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${formattedDate}</td>
+                            <td>₹${amountPerInstallment.toFixed(2)}</td>
+                        </tr>`;
+                        }
+                    } else {
+                        tableHtml = `<tr><td colspan="3" class="text-center">Please select both start and end dates</td></tr>`;
+                    }
+                } else if (frequency === 'batch_duration') {
+                    // Get selected batch details
+                    const selectedBatchOption = batchSelect.options[batchSelect.selectedIndex];
+                    if (selectedBatchOption && selectedBatchOption.value) {
+                        // Get batch data from data attributes
+                        const batchStartDate = selectedBatchOption.dataset.startDate;
+                        const batchEndDate = selectedBatchOption.dataset.endDate;
+                        
+                        if (batchStartDate && batchEndDate) {
+                            startDate = new Date(batchStartDate);
+                            endDate = new Date(batchEndDate);
+                            
+                            // Calculate date intervals
+                            const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+                            const intervalDays = Math.max(1, Math.floor(totalDays / numberOfInstallments));
+                            
+                            for (let i = 0; i < numberOfInstallments; i++) {
+                                let dueDate;
+                                
+                                // For the last installment, use the end date
+                                if (i === numberOfInstallments - 1) {
+                                    dueDate = new Date(endDate);
+                                } else {
+                                    dueDate = new Date(startDate);
+                                    dueDate.setDate(startDate.getDate() + (intervalDays * i));
+                                }
+                                
+                                const formattedDate = dueDate.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                                
+                                tableHtml += `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${formattedDate}</td>
+                                <td>₹${amountPerInstallment.toFixed(2)}</td>
+                            </tr>`;
+                            }
+                        } else {
+                            tableHtml = `<tr><td colspan="3" class="text-center">Please select a batch with valid start and end dates</td></tr>`;
+                        }
+                    } else {
+                        tableHtml = `<tr><td colspan="3" class="text-center">Please select a batch</td></tr>`;
+                    }
+                } else {
+                    // Standard frequency options (weekly, monthly, yearly)
+                    const today = new Date();
+                    
+                    for (let i = 0; i < numberOfInstallments; i++) {
+                        let dueDate = new Date(today);
+
+                        if (frequency === 'weekly') {
+                            dueDate.setDate(today.getDate() + (7 * i));
+                        } else if (frequency === 'yearly') {
+                            dueDate.setFullYear(today.getFullYear() + i);
+                        } else { // monthly
+                            dueDate.setMonth(today.getMonth() + i);
+                        }
+
+                        const formattedDate = dueDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+
+                        tableHtml += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${formattedDate}</td>
+                        <td>₹${amountPerInstallment.toFixed(2)}</td>
+                    </tr>`;
+                    }
+                }
+
+                // Update the table
+                previewTable.querySelector('tbody').innerHTML = tableHtml;
+            } else {
+                // Reset the table if inputs are invalid
+                previewTable.querySelector('tbody').innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center">Configure the payment plan to see installments</td>
+            </tr>`;
+            }
+        }
+
+        // Add event listeners to update preview
+        [totalAmountField, numberOfInstallmentsField, discountField, frequencySelect, customStartDateField, customEndDateField, batchSelect].forEach(field => {
+            if (field) { // Check if field exists
+                field.addEventListener('input', updateInstallmentPreview);
+                field.addEventListener('change', updateInstallmentPreview);
+            }
+        });
+
+        // Initial setup based on default selection
+        const initialSelectedType = document.querySelector('input[name="payment_plan_type"]:checked');
+        if (initialSelectedType) {
+            if (initialSelectedType.value === 'existing') {
+                existingPlanSection.style.display = 'flex';
+                newPlanSection.style.display = 'none';
+            } else {
+                existingPlanSection.style.display = 'none';
+                newPlanSection.style.display = 'flex';
+            }
+        }
+    });
+</script>
+{% endblock %}

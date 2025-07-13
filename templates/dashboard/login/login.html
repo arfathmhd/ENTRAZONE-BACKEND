@@ -1,0 +1,254 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Added by HTTrack -->
+<meta http-equiv="content-type" content="text/html;charset=UTF-8" /><!-- /Added by HTTrack -->
+
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/themify-icons/0.1.2/css/themify-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/themify-icons@0.1.2/css/themify-icons.css">
+
+    <!-- Local Static Files -->
+    <link rel="stylesheet" href="{% static 'dashboard/ci/template/public/assets/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/ci/template\public\assets\feather.css' %}">
+    <!-- static\dashboard\ci\template\public\assets\plugins\tabler-icons\tabler-icons.css -->
+    <link rel="stylesheet"
+    href="{% static 'dashboard/ci/template/public/assets/plugins/tabler-icons/tabler-icons.css' %}">
+    <link rel="stylesheet"
+    href="{% static 'dashboard/ci/template/public/assets/bootstrap-datetimepicker.min.css' %}">
+    <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/select2.min.css' %}">
+        
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+    <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/fontawesome.min.css' %}">
+
+    <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/all.min.css' %}">
+    <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/css/bootstrap-datetimepicker.min.css' %}">
+    <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/plugins/owlcarousel/owl.carousel.min.css' %}">
+        <link rel="stylesheet"
+        href="{% static 'dashboard/ci/template/public/assets/plugins/owlcarousel/owl.theme.default.min.css' %}">
+
+   
+        <!-- static\dashboard\ci\plugins\owlcarousel\owl.carousel.min.css -->
+        <link rel="stylesheet"
+        href="">
+
+    <link rel="stylesheet" href= "{% static 'dashboard/ci/template/public/assets/style.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>/ -->
+  
+</head>
+
+<body class="account-page">
+    {% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <script>
+                Toastify({
+                    text: "{{ message }}",
+                    duration: 2500,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                    className: "rounded",
+                    style: {
+                        background: "#4CAF50",
+                        padding: "8px 15px",
+                        fontSize: "14px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                        zIndex: 9999
+                    }
+                }).showToast();
+            </script>
+        {% endif %}
+
+        {% if message.tags == 'error' %}
+            <script>
+                Toastify({
+                    text: "{{ message }}",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                    className: "rounded",
+                    style: {
+                        background: "#dc3545", 
+                        padding: "8px 15px",
+                        fontSize: "14px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                        zIndex: 9999
+                    }
+                }).showToast();
+            </script>
+        {% endif %}
+
+        {% if message.tags == 'warning' %}
+            <script>
+                Toastify({
+                    text: "{{ message }}",
+                    duration: 2500,
+                    gravity: "top",
+                    position: "right",
+                    stopOnFocus: true,
+                    className: "rounded",
+                    style: {
+                        background: "#FFA000",
+                        padding: "8px 15px",
+                        fontSize: "14px",
+                        boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                        zIndex: 9999
+                    }
+                }).showToast();
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+    <div class="main-wrapper">
+        <div class="container-fuild">
+            <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div
+                            class="login-background position-relative d-lg-flex align-items-center justify-content-center d-lg-block d-none flex-wrap vh-100">
+                            <div class="w-100 text-center">
+                                <img src="{% static 'dashboard/ci/template/public/assets/images/sahakari5050.png' %}" 
+                                     alt="Sahakari Logo" 
+                                     style="width: 350px; height: auto;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-12 col-sm-12">
+                        <div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap ">
+                            <div class="col-md-8 mx-auto p-4">
+                                <form action="{% url 'dashboard-login' %}" method="POST">
+                                    <div>
+                                        <div class=" mx-auto mb-5 text-center">
+                                            <img src="{% static 'dashboard\ci\template\public\assets\images\sahakari5050.png' %}"
+                                                class="img-fluid" alt="Logo" style="width: 100px; height: 100px;">
+                                        </div>
+                                        <div class="card">
+                                            <div class="card-body p-4">
+                                                <div class="mb-4">
+                                                    <h2 class="mb-2">Welcome</h2>
+                                                    <p class="mb-0">Please enter your details to sign in</p>
+                                                </div>
+                                        
+                                                <!-- Start of the Form -->
+                                               
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Username</label>
+                                                        <div class="input-icon mb-3 position-relative">
+                                                            <span class="input-icon-addon">
+                                                                <i class="bi bi-person"></i>
+
+
+                                                            </span>
+                                                            <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+                                                        </div>
+                                        
+                                                        <label class="form-label">Password</label>
+                                                        <div class="pass-group">
+                                                            <span class="input-icon-addon">
+                                                                <i class="bi bi-lock"></i>
+
+
+                                                            </span>
+                                                            <input type="text" name="password" class="pass-input form-control" placeholder="Enter your password" required>
+                                                        </div>
+                                                        
+                                                    </div>
+                                        
+                                                    <!-- Remember Me Checkbox -->
+                                                    <!-- <div class="form-wrap form-wrap-checkbox mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="form-check form-check-md mb-0">
+                                                                <input class="form-check-input mt-0" type="checkbox" name="remember_me">
+                                                            </div>
+                                                            <p class="ms-1 mb-0">Remember Me</p>
+                                                        </div>
+                                                    </div> -->
+                                        
+                                                    <!-- Submit Button -->
+                                                    <div class="mb-3">
+                                                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                                                    </div>
+                                                <!-- End of the Form -->
+                                        
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-5 text-center">
+                                            <!-- <p class="mb-0 ">Copyright &copy; 2024 - Preskool</p> -->
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+        <script src="{% static 'dashboard/ci/template/public/assets/js/jquery-3.7.1.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/js/bootstrap.bundle.min.js' %}"></script>
+        <!-- Moment.js (only one instance) -->
+        <script src="{% static 'dashboard/ci/template/public/assets/js/moment.js' %}"></script>
+        
+        <!-- Plugins -->
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/daterangepicker/daterangepicker.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/js/bootstrap-datetimepicker.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/js/feather.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/js/jquery.slimscroll.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/apexcharts.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/owl.carousel.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/select2.min.js' %}"></script>
+        
+        <script src="{% static 'dashboard/ci/template/public/assets/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/js/dataTables.bootstrap5.min.js' %}"></script>
+        
+        <!-- Additional Plugins -->
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/jquery.counterup.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/jquery.waypoints.min.js' %}"></script>
+        <script src="{% static 'dashboard/ci/template/public/assets/plugins/jquery.missofis-countdown.js' %}"></script>
+        
+        <!-- Main Script -->
+        <script src="{% static 'dashboard/ci/script.js '  %}"></script>
+        
+        <!-- Cloudflare Rocket Loader -->
+        <script src="{% static 'dashboard/ci/template/public/assets/js/rocket-loader.min.js' %}" data-cf-settings="5ebbf4cccda87f0111f3041a-|49" defer></script>
+        
+
+    </body>
+
+
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/login by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 28 Sep 2024 04:48:02 GMT -->
+
+</html>

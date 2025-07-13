@@ -1,0 +1,551 @@
+<!-- Copy Exam Modal -->
+<div class="modal fade" id="copy-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                </span>
+                <h4 id="copy-exam-title">Copy Exam</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="copy-exam-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-exam-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-exam-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="copy-exam-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="copy-exam-folder" disabled>
+                            <option value="">Select Folder (Optional)</option>
+                        </select>
+                        <div id="copy-exam-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="copy-exam-subfolder" disabled>
+                                <option value="">Select Subfolder (Optional)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="copy-exam-button" class="btn btn-success" disabled>Copy here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Exam Modal -->
+<div class="modal fade" id="move-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                </span>
+                <h4 id="move-exam-title">Move Exam</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="move-exam-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-exam-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-exam-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="move-exam-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="move-exam-folder" disabled>
+                            <option value="">Select Folder (Optional)</option>
+                        </select>
+                        <div id="move-exam-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="move-exam-subfolder" disabled>
+                                <option value="">Select Subfolder (Optional)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="move-exam-button" class="btn btn-success" disabled>Move here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- JavaScript for Copy/Move Functionality -->
+<script>
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function loadDropdownData(courseSelect, subjectSelect, chapterSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            success: function(data) {
+                // Clear and populate course dropdown
+                $(courseSelect).html('<option value="">Select Course</option>');
+                $.each(data.courses, function(i, course) {
+                    $(courseSelect).append(`<option value="${course.id}">${course.course_name}</option>`);
+                });
+                
+                courseSelect.disabled = false;
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading data:', error);
+            }
+        });
+    }
+
+    function loadSubjects(courseId, subjectSelect, chapterSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId
+            },
+            success: function(data) {
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $.each(data.subjects, function(i, subject) {
+                    $(subjectSelect).append(`<option value="${subject.id}">${subject.subject_name}</option>`);
+                });
+                
+                subjectSelect.disabled = false;
+                chapterSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading subjects:', error);
+            }
+        });
+    }
+
+    function loadChapters(courseId, subjectId, chapterSelect, folderSelect, subfolderSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId,
+                'subject_id': subjectId
+            },
+            success: function(data) {
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $.each(data.chapters, function(i, chapter) {
+                    $(chapterSelect).append(`<option value="${chapter.id}">${chapter.chapter_name}</option>`);
+                });
+                
+                chapterSelect.disabled = false;
+                if (folderSelect) {
+                    folderSelect.disabled = true;
+                    $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                }
+                if (subfolderSelect) {
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading chapters:', error);
+            }
+        });
+    }
+
+    function loadFolders(chapterId, folderSelect, subfolderSelect, folderContainer) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'chapter_id': chapterId
+            },
+            success: function(data) {
+                // Hide folder selects by default
+                if (folderContainer) {
+                    $(folderContainer).hide();
+                }
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+
+                if (data.has_folders && data.folders && data.folders.length > 0) {
+                    // Show folder container if folders exist
+                    if (folderContainer) {
+                        $(folderContainer).show();
+                    }
+
+                    $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                    $.each(data.folders, function(i, folder) {
+                        $(folderSelect).append(`<option value="${folder.id}" data-has-subfolders="${folder.has_subfolders}">${folder.title}</option>`);
+                    });
+                    folderSelect.disabled = false;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading folders:', error);
+            }
+        });
+    }
+
+    function loadSubfolders(folderId, folderSelect, subfolderSelect) {
+        const selectedOption = $(folderSelect).find('option:selected');
+        const hasSubfolders = selectedOption.data('has-subfolders');
+
+        if (hasSubfolders) {
+            $.ajax({
+                url: "{% url 'get-courses-subject-chapters' %}",
+                type: 'GET',
+                data: {
+                    'folder_id': folderId
+                },
+                success: function(data) {
+                    if (data.folders) {
+                        const folder = data.folders.find(f => f.id === parseInt(folderId));
+                        if (folder && folder.subfolders.length > 0) {
+                            $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                            $.each(folder.subfolders, function(i, subfolder) {
+                                $(subfolderSelect).append(`<option value="${subfolder.id}">${subfolder.title}</option>`);
+                            });
+                            subfolderSelect.disabled = false;
+                            return;
+                        }
+                    }
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading subfolders:', error);
+                }
+            });
+        } else {
+            subfolderSelect.disabled = true;
+            $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+        }
+    }
+
+    function checkSelections(courseSelect, subjectSelect, chapterSelect, actionButton) {
+        // Enable the button as soon as a course is selected
+        actionButton.disabled = !courseSelect.value;
+    }
+
+    function showCopyExamModal(examId, examName) {
+        // Store the exam ID and name for later use
+        document.getElementById('copy-exam-modal').setAttribute('data-exam-id', examId);
+        document.getElementById('copy-exam-title').textContent = 'Copy Exam: ' + examName;
+        
+        const courseSelect = document.getElementById('copy-exam-course');
+        const subjectSelect = document.getElementById('copy-exam-subject');
+        const chapterSelect = document.getElementById('copy-exam-chapter');
+        const folderSelect = document.getElementById('copy-exam-folder');
+        const subfolderSelect = document.getElementById('copy-exam-subfolder');
+        const copyButton = document.getElementById('copy-exam-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        copyButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#copy-exam-folder-container').hide();
+        $('#copy-exam-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#copy-exam-folder-container').hide();
+                $('#copy-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#copy-exam-folder-container').hide();
+                $('#copy-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('copy-exam-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#copy-exam-folder-container').hide();
+                $('#copy-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#copy-exam-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#copy-exam-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                }
+            } else {
+                $('#copy-exam-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('copy-exam-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle copy button click
+        document.getElementById('copy-exam-button').onclick = function() {
+            const examId = modalElement.getAttribute('data-exam-id');
+            const courseId = document.getElementById('copy-exam-course').value;
+            const subjectId = document.getElementById('copy-exam-subject').value;
+            const chapterId = document.getElementById('copy-exam-chapter').value;
+            const folderId = document.getElementById('copy-exam-folder').value;
+            const subfolderId = document.getElementById('copy-exam-subfolder').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_course_id', courseId);
+            if (subjectId) {
+                formData.append('target_subject_id', subjectId);
+            }
+            if (chapterId) {
+                formData.append('target_chapter_id', chapterId);
+            }
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the copy request
+            $.ajax({
+                url: `/exam/${examId}/copy/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error copying exam');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error copying exam');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showMoveExamModal(examId, examName) {
+        // Store the exam ID and name for later use
+        document.getElementById('move-exam-modal').setAttribute('data-exam-id', examId);
+        document.getElementById('move-exam-title').textContent = 'Move Exam: ' + examName;
+        
+        const courseSelect = document.getElementById('move-exam-course');
+        const subjectSelect = document.getElementById('move-exam-subject');
+        const chapterSelect = document.getElementById('move-exam-chapter');
+        const folderSelect = document.getElementById('move-exam-folder');
+        const subfolderSelect = document.getElementById('move-exam-subfolder');
+        const moveButton = document.getElementById('move-exam-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        moveButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#move-exam-folder-container').hide();
+        $('#move-exam-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#move-exam-folder-container').hide();
+                $('#move-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#move-exam-folder-container').hide();
+                $('#move-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('move-exam-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#move-exam-folder-container').hide();
+                $('#move-exam-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#move-exam-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#move-exam-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                }
+            } else {
+                $('#move-exam-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('move-exam-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle move button click
+        document.getElementById('move-exam-button').onclick = function() {
+            const examId = modalElement.getAttribute('data-exam-id');
+            const courseId = document.getElementById('move-exam-course').value;
+            const subjectId = document.getElementById('move-exam-subject').value;
+            const chapterId = document.getElementById('move-exam-chapter').value;
+            const folderId = document.getElementById('move-exam-folder').value;
+            const subfolderId = document.getElementById('move-exam-subfolder').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_course_id', courseId);
+            if (subjectId) {
+                formData.append('target_subject_id', subjectId);
+            }
+            if (chapterId) {
+                formData.append('target_chapter_id', chapterId);
+            }
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the move request
+            $.ajax({
+                url: `/exam/${examId}/move/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error moving exam');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error moving exam');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+</script>

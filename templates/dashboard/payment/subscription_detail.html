@@ -1,0 +1,731 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load dashboard_filters %}
+
+{% block title %}Subscription Details{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                    <div class="my-auto mb-2">
+                        <h3 class="mb-1">Subscription Details</h3>
+                        <nav aria-label="breadcrumbs">
+                            <ol class="custom-breadcrumb">
+                                <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                                <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-payment' %}">Fee Collection</a></li>
+                                <li class="custom-breadcrumb-item active">Subscription Details</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student & Subscription Info -->
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-4">
+                            {% if student.image %}
+                            <div class="avatar-xl me-3">
+                                <img src="{{ student.image.url }}" alt="{{ student.name }}" class="img-fluid rounded-circle">
+                            </div>
+                            {% else %}
+                            <div class="avatar-xl me-3 d-flex align-items-center justify-content-center bg-soft-primary rounded-circle">
+                                <span class="text-primary font-size-24">{{ student.name|slice:":1" }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h5 class="font-size-16 mb-1">{{ student.name }}</h5>
+                                <p class="text-muted mb-1">
+                                    <i class="bi bi-phone me-1"></i> {{ student.phone_number }}
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-envelope me-1"></i> {{ student.email }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Subscription ID</th>
+                                        <td>{{ subscription.id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Created On</th>
+                                        <td>{{ subscription.created|date:"d M Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Last Payment</th>
+                                        <td>{{ subscription.last_payment_date|date:"d M Y"|default:"No payments yet" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Payment Status</th>
+                                        <td>
+                                            {% if subscription.get_payment_status == 'PAID' %}
+                                            <span class="badge bg-success">Paid</span>
+                                            {% elif subscription.get_payment_status == 'OVERDUE' %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                            {% else %}
+                                            <span class="badge bg-info">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total Amount</th>
+                                        <td>₹{{ subscription.total_due|add:subscription.total_paid|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Amount Paid</th>
+                                        <td class="text-success">₹{{ subscription.total_paid|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Amount Due</th>
+                                        <td class="text-danger">₹{{ subscription.total_due|floatformat:2 }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Batch Information -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Enrolled Batches</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if batches %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Batch Name</th>
+                                        <th>Course</th>
+                                        <th>Expiry</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in batches %}
+                                    <tr>
+                                        <td>{{ batch.batch_name }}</td>
+                                        <td>{{ batch.course.course_name }}</td>
+                                        <td>{{ batch.batch_expiry|date:"d M Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-0">No batches enrolled</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Plan Information -->
+                {% if subscription.payment_plan %}
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Payment Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Plan Name</th>
+                                        <td>{{ subscription.payment_plan.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Total Amount</th>
+                                        <td>₹{{ subscription.payment_plan.total_amount|floatformat:2 }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Installments</th>
+                                        <td>{{ subscription.payment_plan.number_of_installments }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Frequency</th>
+                                        <td>{{ subscription.payment_plan.get_frequency_display }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Discount</th>
+                                        <td>₹{{ subscription.payment_plan.discount|floatformat:2 }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Payment Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-3">No payment plan has been assigned to this subscription.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentPlanModal">
+                                <i class="bi bi-plus-circle me-1"></i> Add Payment Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Installments List -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Installments</h5>
+                        <div class="d-flex align-items-center">
+                            {% if not subscription.payment_plan %}
+                            <button type="button" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addPaymentPlanModal">
+                                <i class="bi bi-plus-circle me-1"></i> Add Payment Plan
+                            </button>
+                            {% endif %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear me-1"></i> Actions
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <li><a class="dropdown-item" href="#" id="print-installments"><i class="bi bi-printer me-1"></i> Print</a></li>
+                                    <li><a class="dropdown-item" href="#" id="export-csv"><i class="bi bi-file-earmark-excel me-1"></i> Export CSV</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'dashboard-customer' %}"><i class="bi bi-people me-1"></i> All Students</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-centered table-hover mb-0" id="installments-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Due Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Payment Date</th>
+                                        <th>Reference</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for installment in installments %}
+                                    <tr class="{% if installment.is_paid %}table-success{% elif installment.status == 'OVERDUE' %}table-danger{% endif %}">
+                                        <td>{{ installment.id }}</td>
+                                        <td>{{ installment.due_date|date:"d M Y" }}</td>
+                                        <td>₹{{ installment.amount_due|floatformat:2 }}</td>
+                                        <td>
+                                            {% if installment.status == 'PENDING' %}
+                                            <span class="badge bg-info">Pending</span>
+                                            {% elif installment.status == 'PAID' %}
+                                            <span class="badge bg-success">Paid</span>
+                                            {% elif installment.status == 'OVERDUE' %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                            {% elif installment.status == 'PROCESSING' %}
+                                            <span class="badge bg-warning">Processing</span>
+                                            {% elif installment.status == 'FAILED' %}
+                                            <span class="badge bg-secondary">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ installment.paid_on|date:"d M Y"|default:"-" }}</td>
+                                        <td>{{ installment.payment_reference|default:"-" }}</td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Actions
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'dashboard-installment-detail' pk=installment.id %}">
+                                                            <i class="bi bi-eye me-1"></i> View Details
+                                                        </a>
+                                                    </li>
+                                                    {% if not installment.is_paid %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'dashboard-generate-payment-link' installment_id=installment.id %}">
+                                                            <i class="bi bi-link me-1"></i> Generate Link
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{% url 'dashboard-mark-installment-paid' installment_id=installment.id %}">
+                                                            <i class="bi bi-check-circle me-1"></i> Mark as Paid
+                                                        </a>
+                                                    </li>
+                                                    {% endif %}
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" data-installment-id="{{ installment.id }}" data-bs-toggle="modal" data-bs-target="#transactionsModal">
+                                                            <i class="bi bi-credit-card me-1"></i> Transactions
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-3">No installments found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Progress -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Payment Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        {% with total_amount=subscription.total_due|add:subscription.total_paid %}
+                        {% if total_amount > 0 %}
+                        {% with percentage_value=subscription.total_paid|calculate_percentage:total_amount %}
+                        <div class="mb-4">
+                            <h6 class="font-size-14 mb-3">Overall Progress</h6>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ percentage_value }}%;" aria-valuenow="{{ percentage_value }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ percentage_value }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endif %}
+                        {% endwith %}
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mini-stats-wid border">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Total Amount</p>
+                                                <h4 class="mb-0">₹{{ subscription.total_due|add:subscription.total_paid|floatformat:2 }}</h4>
+                                            </div>
+                                            <div class="mini-stat-icon avatar-sm align-self-center">
+                                                <span class="avatar-title rounded-circle ">
+                                                    <i class="bi bi-cash-stack font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mini-stats-wid border">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Amount Paid</p>
+                                                <h4 class="mb-0 text-success">₹{{ subscription.total_paid|floatformat:2 }}</h4>
+                                            </div>
+                                            <div class="mini-stat-icon avatar-sm align-self-center">
+                                                <span class="avatar-title rounded-circle">
+                                                    <i class="bi bi-check-circle font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mini-stats-wid border">
+                                    <div class="card-body">
+                                        <div class="d-flex">
+                                            <div class="flex-grow-1">
+                                                <p class="text-muted fw-medium">Amount Due</p>
+                                                <h4 class="mb-0 text-danger">₹{{ subscription.total_due|floatformat:2 }}</h4>
+                                            </div>
+                                            <div class="mini-stat-icon avatar-sm align-self-center">
+                                                <span class="avatar-title rounded-circle">
+                                                    <i class="bi bi-exclamation-circle font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions Modal -->
+<div class="modal fade" id="transactionsModal" tabindex="-1" aria-labelledby="transactionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionsModalLabel">Installment Transactions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4" id="transaction-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading transactions...</p>
+                </div>
+                <div id="transaction-content" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transaction-table-body">
+                                <!-- Transactions will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center py-3" id="no-transactions" style="display: none;">
+                        <p class="text-muted mb-0">No transactions found for this installment</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Print functionality
+        const printButton = document.getElementById('print-installments');
+        if (printButton) {
+            // Remove any existing event listeners by cloning and replacing the element
+            const newPrintButton = printButton.cloneNode(true);
+            printButton.parentNode.replaceChild(newPrintButton, printButton);
+            
+            // Add the event listener to the new element
+            newPrintButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.print();
+            });
+        }
+        
+        // Export to CSV
+        const exportButton = document.getElementById('export-csv');
+        if (exportButton) {
+            // Remove any existing event listeners by cloning and replacing the element
+            const newExportButton = exportButton.cloneNode(true);
+            exportButton.parentNode.replaceChild(newExportButton, exportButton);
+            
+            // Add the event listener to the new element
+            newExportButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const table = document.getElementById('installments-table');
+                const rows = table.querySelectorAll('tr');
+                
+                let csv = [];
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll('td, th');
+                    
+                    for (let j = 0; j < cols.length - 1; j++) { // Skip the actions column
+                        // Get the text content and clean it
+                        let text = cols[j].textContent.trim();
+                        
+                        // Replace the Rupee symbol with 'Rs.' for Excel compatibility
+                        // text = text.replace(/₹/g, 'Rs.');
+                        
+                        // Replace any commas in the text with spaces to avoid CSV issues
+                        text = text.replace(/,/g, ' ');
+                        
+                        // Add quotes around the text
+                        row.push('"' + text + '"');
+                    }
+                    csv.push(row.join(','));
+                }
+                
+                // Download the CSV file with BOM for proper UTF-8 encoding in Excel
+                const BOM = '\uFEFF'; // Byte Order Mark for UTF-8
+                const csvContent = "data:text/csv;charset=utf-8," + BOM + csv.join('\n');
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', 'subscription_installments.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+        
+        // Load transactions for an installment
+        $('#transactionsModal').on('show.bs.modal', function (event) {
+            const button = $(event.relatedTarget);
+            const installmentId = button.data('installment-id');
+            const modal = $(this);
+            
+            // Reset modal content
+            $('#transaction-loading').show();
+            $('#transaction-content').hide();
+            $('#no-transactions').hide();
+            $('#transaction-table-body').html('');
+            
+            // Simulate loading transactions (in a real app, you would fetch from server)
+            setTimeout(function() {
+                $('#transaction-loading').hide();
+                $('#transaction-content').show();
+                
+                // Check if there are transactions for this installment
+                // This is a placeholder - in a real app, you would check the actual data
+                const hasTransactions = Math.random() > 0.5;
+                
+                if (hasTransactions) {
+                    // Sample transaction data - in a real app, this would come from the server
+                    const transactions = [
+                        {
+                            id: 'TXN-' + Math.floor(Math.random() * 1000000),
+                            date: new Date().toLocaleDateString(),
+                            amount: '₹' + (Math.random() * 1000).toFixed(2),
+                            status: Math.random() > 0.7 ? 'SUCCESS' : (Math.random() > 0.5 ? 'FAILURE' : 'CANCELLED'),
+                            mode: Math.random() > 0.5 ? 'ONLINE' : 'MANUAL'
+                        }
+                    ];
+                    
+                    let html = '';
+                    transactions.forEach(function(txn) {
+                        let statusClass = txn.status === 'SUCCESS' ? 'bg-success' : 
+                                         (txn.status === 'FAILURE' ? 'bg-danger' : 'bg-warning');
+                        
+                        html += `
+                        <tr>
+                            <td>${txn.id}</td>
+                            <td>${txn.date}</td>
+                            <td>${txn.amount}</td>
+                            <td><span class="badge ${statusClass}">${txn.status}</span></td>
+                            <td>${txn.mode}</td>
+                        </tr>
+                        `;
+                    });
+                    
+                    $('#transaction-table-body').html(html);
+                } else {
+                    $('#no-transactions').show();
+                }
+            }, 1000);
+        });
+    });
+</script>
+
+<!-- Add Payment Plan Modal -->
+<div class="modal fade" id="addPaymentPlanModal" tabindex="-1" aria-labelledby="addPaymentPlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'dashboard-add-payment-plan' subscription_id=subscription.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPaymentPlanModalLabel">Add Payment Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="payment_plan_type" id="existingPlan" value="existing" checked>
+                                <label class="form-check-label" for="existingPlan">
+                                    Use Existing Plan
+                                </label>
+                            </div>
+                            <div id="existingPlanSection">
+                                <div class="mb-3">
+                                    <label for="existing_plan" class="form-label">Select Payment Plan</label>
+                                    <select class="form-select" id="existing_plan" name="existing_plan">
+                                        <option value="">-- Select a plan --</option>
+                                        {% for plan in payment_plans %}
+                                        <option value="{{ plan.id }}">{{ plan.name }} - ₹{{ plan.total_amount }} ( {{ plan.number_of_installments }} installments )</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="payment_plan_type" id="newPlan" value="new">
+                                <label class="form-check-label" for="newPlan">
+                                    Create New Plan
+                                </label>
+                            </div>
+                            
+                        </div>
+                        <div class="col-md-8">
+                            <div id="newPlanSection" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="plan_name" class="form-label">Plan Name</label>
+                                    <input type="text" class="form-control" id="plan_name" name="plan_name" placeholder="Enter plan name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="total_amount" class="form-label">Total Amount</label>
+                                    <input type="number" class="form-control" id="total_amount" name="total_amount" step="0.01" min="0" placeholder="Enter total amount">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="number_of_installments" class="form-label">Number of Installments</label>
+                                    <input type="number" class="form-control" id="number_of_installments" name="number_of_installments" min="1" placeholder="Enter number of installments">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="installment_frequency" class="form-label">Installment Frequency</label>
+                                    <select class="form-select" id="installment_frequency" name="installment_frequency">
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly" selected>Monthly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="discount" class="form-label">Discount (optional)</label>
+                                    <input type="number" class="form-control" id="discount" name="discount" step="0.01" min="0" value="0.00" placeholder="Enter discount amount">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Installment Preview Section -->
+                    <div id="installmentPreviewSection" class="mt-3" style="display: none;">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0 fs-6">Installment Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm" id="installment-preview-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Installment #</th>
+                                                <th>Due Date</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="3" class="text-center">Configure the payment plan to see installments</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Payment Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle between existing and new plan sections
+    document.addEventListener('DOMContentLoaded', function() {
+        const existingPlanRadio = document.getElementById('existingPlan');
+        const newPlanRadio = document.getElementById('newPlan');
+        const existingPlanSection = document.getElementById('existingPlanSection');
+        const newPlanSection = document.getElementById('newPlanSection');
+        const installmentPreviewSection = document.getElementById('installmentPreviewSection');
+        
+        // Fields for installment preview calculation
+        const totalAmountField = document.getElementById('total_amount');
+        const numberOfInstallmentsField = document.getElementById('number_of_installments');
+        const discountField = document.getElementById('discount');
+        const frequencySelect = document.getElementById('installment_frequency');
+        const previewTable = document.getElementById('installment-preview-table');
+        
+        existingPlanRadio.addEventListener('change', function() {
+            if (this.checked) {
+                existingPlanSection.style.display = 'block';
+                newPlanSection.style.display = 'none';
+                installmentPreviewSection.style.display = 'none';
+            }
+        });
+        
+        newPlanRadio.addEventListener('change', function() {
+            if (this.checked) {
+                existingPlanSection.style.display = 'none';
+                newPlanSection.style.display = 'block';
+                installmentPreviewSection.style.display = 'block';
+                updateInstallmentPreview(); // Update preview when switching to new plan
+            }
+        });
+        
+        // Generate installment preview when inputs change
+        function updateInstallmentPreview() {
+            const totalAmount = parseFloat(totalAmountField.value) || 0;
+            const numberOfInstallments = parseInt(numberOfInstallmentsField.value) || 0;
+            const discount = parseFloat(discountField.value) || 0;
+            const frequency = frequencySelect.value || 'monthly';
+
+            if (totalAmount > 0 && numberOfInstallments > 0) {
+                const totalAfterDiscount = totalAmount - discount;
+                const amountPerInstallment = totalAfterDiscount / numberOfInstallments;
+
+                // Generate preview table rows
+                let tableHtml = '';
+                const today = new Date();
+
+                for (let i = 0; i < numberOfInstallments; i++) {
+                    let dueDate = new Date(today);
+
+                    if (frequency === 'weekly') {
+                        dueDate.setDate(today.getDate() + (7 * i));
+                    } else if (frequency === 'yearly') {
+                        dueDate.setFullYear(today.getFullYear() + i);
+                    } else { // monthly
+                        dueDate.setMonth(today.getMonth() + i);
+                    }
+
+                    const formattedDate = dueDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+
+                    tableHtml += `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${formattedDate}</td>
+                    <td>₹${amountPerInstallment.toFixed(2)}</td>
+                </tr>`;
+                }
+
+                // Update the table
+                previewTable.querySelector('tbody').innerHTML = tableHtml;
+            } else {
+                // Reset the table if inputs are invalid
+                previewTable.querySelector('tbody').innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center">Configure the payment plan to see installments</td>
+            </tr>`;
+            }
+        }
+
+        // Add event listeners to update preview
+        if (totalAmountField && numberOfInstallmentsField && discountField && frequencySelect) {
+            [totalAmountField, numberOfInstallmentsField, discountField, frequencySelect].forEach(field => {
+                field.addEventListener('input', updateInstallmentPreview);
+                field.addEventListener('change', updateInstallmentPreview);
+            });
+        }
+    });
+</script>
+{% endblock %}

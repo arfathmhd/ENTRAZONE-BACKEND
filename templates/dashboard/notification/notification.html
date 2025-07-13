@@ -1,0 +1,385 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content%}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Notification</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-subject' %}">Notification</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-notification-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Notification</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Notification List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+
+                <div class="card-body p-0 py-3">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="thead-light">
+                                <tr>
+
+                                    <th>ID</th>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>message</th>
+                                    <th>Target</th>
+                                    <th>Created</th>
+                                    <!-- <th>Action</th> -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for notification in notifications %}
+                                <tr>
+                                    <!-- Checkbox -->
+                                    
+                
+                                    <!-- Subject ID -->
+                                    <td>{{ notification.id }}</td>
+                
+                                    <!-- Subject Image -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <a  class="avatar avatar-md">
+                                                {% if notification.image %}
+                                                    <img src="{{ notification.image.url }}" class="img-fluid rounded-circle" alt="" />
+                                                {% else %}
+                                                    <i class="bi bi-card-image fs-3 text-dark"></i>
+                                                {% endif %}
+                                            </a>
+                                        </div>
+                                    </td>
+                
+                                    <!-- Subject Name -->
+                                    <td>
+                                        <a >{{ notification.title }}</a>
+                                    </td>
+                
+                                    <!-- Course Name -->
+                                    <td style="max-width: 300px; white-space: pre-wrap; word-break: break-word; max-height: 150px; overflow-y: auto;">{{ notification.message }}</td>
+                
+                                    <td>{{ notification.notification_type }}</td>
+                                    <!-- Created Date -->
+                                    <td>{{ notification.created|date:"d-m-Y"}}</td>
+                
+                                    <!-- Actions -->
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <!-- Edit Subject -->
+                                            <a href="{% url 'dashboard-notification-update' pk=notification.id %}" class="text-primary me-3" title="Edit Subject">
+                                                <i class="bi bi-pencil-square me-2"></i> 
+                                            </a>
+                
+                                            <!-- Delete Subject -->
+                                            <a class="btn-delete" href="#" data-bs-toggle="modal" data-notification-id="{{ notification.id }}" data-bs-target="#delete-modal" title="Delete Notification">
+                                                <i class="bi bi-trash me-2"></i>
+                                            </a>
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No Notifications found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="pagination">
+                            {% if notifications.has_previous %}
+                                <a href="?page=1" class="btn btn-primary" title="First Page">
+                                    <i class="fas fa-angle-double-left"></i> First
+                                </a>
+                                <a href="?page={{ notifications.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                    <i class="fas fa-angle-left"></i> Previous
+                                </a>
+                            {% endif %}
+                            
+                            <span class="pagination-info">Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>
+                            
+                            {% if notifications.has_next %}
+                                <a href="?page={{ notifications.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                    Next <i class="fas fa-angle-right"></i>
+                                </a>
+                                <a href="?page={{ notifications.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                    <i class="fas fa-angle-double-right"></i> Last
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+                </div>
+                
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected notification. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.btn-delete', function () {
+            var notificationId = $(this).data('notification-id');
+            $('#delete-record').data('notification-id', notificationId);
+        });
+    
+        $('#delete-record').click(function () {
+            var notificationId = $(this).data('notification-id');
+    
+            console.log("Deleting Notification ID: " + notificationId);
+    
+            $.ajax({
+                url: '/notification/delete/' + notificationId + '/', 
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',  
+                },
+                success: function (data) {
+                    console.log("Notification deleted successfully");
+                    window.location.reload();  
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error deleting notification:", error);
+                }
+            });
+        });
+    });
+    </script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    // Get the current sort parameter
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    // Update URL with date range and sort parameter
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            // Set date range parameters
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            // Set or preserve sorting parameter
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            // Get existing date range parameters
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            // Update URL with sorting parameter
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add event listener to sorting links
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            // Optionally: Remove date range and sorting parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+    
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+
+
+<!-- <script data-cfasync="false"
+    src="https://preskool.dreamstechnologies.com/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/jquery-3.7.1.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/bootstrap.bundle.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/moment.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+<script
+    src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/daterangepicker/daterangepicker.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/bootstrap-datetimepicker.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/feather.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/jquery.slimscroll.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/apexchart/apexcharts.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/apexchart/chart-data.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script
+    src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/owlcarousel/owl.carousel.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/select2/js/select2.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+<script
+    src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/countup/jquery.counterup.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+<script
+    src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/plugins/countup/jquery.waypoints.min.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+
+
+<script src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/js/script.js"
+    type="951e427b5babc1ab7c00a70e-text/javascript"></script>
+
+
+
+<script src="https://preskool.dreamstechnologies.com/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js"
+    data-cf-settings="951e427b5babc1ab7c00a70e-|49" defer></script>
+ -->
+
+ {% endblock %}  
+</body>
+
+
+</html>
+

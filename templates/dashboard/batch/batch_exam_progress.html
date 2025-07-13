@@ -1,0 +1,296 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">{{ batch.batch_name }} - Exam Progress Report</h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch' %}">Batch</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch-students' batch.id %}">Students</a></li>
+                        <li class="custom-breadcrumb-item">Exam Progress</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-batch-students' batch.id %}" class="btn btn-outline-primary d-flex align-items-center">
+                        <i class="bi bi-arrow-left me-2"></i> Back to Students
+                    </a>
+                </div>
+                <div class="mb-2 ms-2">
+                    <div class="dropdown">
+                        <button class="btn btn-success dropdown-toggle d-flex align-items-center" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i> Export Report
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li><a class="dropdown-item d-flex align-items-center" href="?format=excel{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}">
+                                <i class="bi bi-file-earmark-excel me-2"></i> CSV
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center" href="?format=pdf{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}">
+                                <i class="bi bi-file-earmark-pdf me-2"></i> PDF
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row align-items-center" id="filterForm">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label for="exam_filter" class="form-label">Filter by Exam:</label>
+                        <select class="form-select" id="exam_filter" name="exam_id">
+                            <option value="">All Exams</option>
+                            {% for exam in exams %}
+                                <option value="{{ exam.id }}" {% if selected_exam_id == exam.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ exam.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label for="exam_type_filter" class="form-label">Filter by Exam Type:</label>
+                        <select class="form-select" id="exam_type_filter" name="exam_type">
+                            <option value="">All Types</option>
+                            {% for exam_type in exam_types %}
+                                <option value="{{ exam_type }}" {% if selected_exam_type == exam_type %}selected{% endif %}>
+                                    {{ exam_type }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end mb-3 mb-md-0">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-filter me-1"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'dashboard-batch-exam-progress' batch.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Batch Toppers Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Batch Toppers</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Overall Batch Topper -->
+                    {% if batch_topper %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Overall Batch Topper</h5>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="avatar avatar-xl bg-primary text-white rounded-circle">
+                                            <i class="bi bi-trophy-fill fs-3"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="mb-1">{{ batch_topper.student.name }}</h5>
+                                        <p class="mb-1"><strong>Average Score:</strong> {{ batch_topper.avg_score }}%</p>
+                                        <p class="mb-1"><strong>Exams Taken:</strong> {{ batch_topper.exams_taken }}</p>
+                                        <p class="mb-0"><strong>Pass Rate:</strong> {{ batch_topper.exams_passed|percentage:batch_topper.exams_taken }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Exam Type Toppers -->
+                    {% if exam_type_toppers %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Exam Type Toppers</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                                    {% for exam_type, topper in exam_type_toppers.items %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">{{ exam_type }} Topper</h6>
+                                                <p class="mb-0">{{ topper.student.name }}</p>
+                                            </div>
+                                            <div class="text-end">
+                                                <h6 class="mb-1">{{ topper.exam_type_scores|get_item:exam_type|get_item:'avg_score' }}%</h6>
+                                                <small>{{ topper.exam_type_scores|get_item:exam_type|get_item:'exams_taken' }} exams</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Exam Progress Report ({{ total_students }})</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Search Box -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search students...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table" id="studentTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Exams Taken</th>
+                                <th>Exams Passed</th>
+                                <th>Pass Rate</th>
+                                <th>Avg. Score (%)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in students %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ data.student.name|default:"N/A" }}</td>
+                                <td>{{ data.student.email|default:"N/A" }}</td>
+                                <td>{{ data.exams_taken }}</td>
+                                <td>{{ data.exams_passed }}</td>
+                                <td>
+                                    {% if data.exams_taken > 0 %}
+                                        {{ data.exams_passed|percentage:data.exams_taken }}%
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if data.avg_score >= 75 %}bg-success{% elif data.avg_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ data.avg_score }}%;" 
+                                            aria-valuenow="{{ data.avg_score }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">{{ data.avg_score }}%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard-student-exam-detail' batch.id data.student.id %}" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye me-1"></i> View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No exam data found for students in this batch.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination Controls -->
+                    <div class="pagination">
+                        {% if students.has_previous %}
+                            <a href="?page=1{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ students.previous_page_number }}{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ students.number }} of {{ students.paginator.num_pages }}</span>
+                        
+                        {% if students.has_next %}
+                            <a href="?page={{ students.next_page_number }}{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ students.paginator.num_pages }}{% if selected_exam_id %}&exam_id={{ selected_exam_id }}{% endif %}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple client-side search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('studentTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchText = searchInput.value.toLowerCase();
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+                
+                // Skip the "No students found" row
+                if (cells.length === 1 && cells[0].colSpan > 1) {
+                    continue;
+                }
+                
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.indexOf(searchText) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    });
+    
+    // Function to print the page
+    function printPage() {
+        window.print();
+    }
+</script>
+
+{% endblock %}

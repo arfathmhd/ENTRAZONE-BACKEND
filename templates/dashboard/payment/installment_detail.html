@@ -1,0 +1,504 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Installment Details{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+<div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                <div class="my-auto mb-2">
+                    <h3 class="mb-1">Installment Details</h3>
+                    <nav aria-label="breadcrumbs">
+                        <ol class="custom-breadcrumb">
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-payment' %}">Fee Collection</a></li>
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-installment-list' %}">Installments</a></li>
+                            <li class="custom-breadcrumb-item active">Details</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Installment Details Card -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Installment Information</h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-nowrap mb-0">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Installment ID</th>
+                                    <td>{{ installment.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Student</th>
+                                    <td>
+                                        <a href="{% url 'dashboard-user-detail' pk=student.id %}">
+                                            {{ student.name }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ student.username }}</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Batch</th>
+                                    <td>
+                                        {% if batch %}
+                                            {{ batch.batch_name }} ({{ batch.course.course_name }})
+                                        {% else %}
+                                            No Batch
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Amount Due</th>
+                                    <td>
+                                        <h4 class="mb-0">₹{{ installment.amount_due|floatformat:2 }}</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Due Date</th>
+                                    <td>{{ installment.due_date|date:"d M Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Status</th>
+                                    <td>
+                                        {% if installment.status == 'PENDING' %}
+                                        <span class="badge bg-info">Pending</span>
+                                        {% elif installment.status == 'PAID' %}
+                                        <span class="badge bg-success">Paid</span>
+                                        {% elif installment.status == 'OVERDUE' %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% elif installment.status == 'PROCESSING' %}
+                                        <span class="badge bg-warning">Processing</span>
+                                        {% elif installment.status == 'FAILED' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if installment.is_paid %}
+                                <tr>
+                                    <th scope="row">Paid On</th>
+                                    <td>{{ installment.paid_on|date:"d M Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Payment Reference</th>
+                                    <td>{{ installment.payment_reference|default:"N/A" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if installment.discount_applied > 0 %}
+                                <tr>
+                                    <th scope="row">Discount Applied</th>
+                                    <td>₹{{ installment.discount_applied|floatformat:2 }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th scope="row">Payment Attempts</th>
+                                    <td>{{ installment.payment_attempts }}</td>
+                                </tr>
+                                {% if installment.notes %}
+                                <tr>
+                                    <th scope="row">Notes</th>
+                                    <td>{{ installment.notes }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if not installment.status == 'PAID' %}
+                    <div class="mt-4">
+                        <h5>Payment Link</h5>
+                        {% if installment.payment_link %}
+                        <div class="d-flex align-items-center mb-3">
+                            <input type="text" class="form-control payment-link-input" 
+                                value="{{ installment.payment_link }}" readonly>
+                            <button class="btn btn-light ms-2 copy-link-btn" 
+                                data-link="{{ installment.payment_link }}" data-bs-toggle="tooltip" title="Copy link">
+                                <i class="bi bi-clipboard copy-icon"></i>
+                                <i class="bi bi-check-lg check-icon d-none text-success"></i>
+                            </button>
+                            <a href="{{ installment.payment_link }}" target="_blank" 
+                                class="btn btn-light ms-1" data-bs-toggle="tooltip" title="Open link">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <button class="btn btn-light ms-1 share-link-btn"
+                                data-link="{{ installment.payment_link }}" data-bs-toggle="tooltip" title="Share link">
+                                <i class="bi bi-share"></i>
+                            </button>
+
+                            <!-- Notification Button -->
+                            <!-- <button class="btn btn-light ms-1 send-notification-btn"
+                                data-student-id="{{ student.id }}" data-link="{{ installment.payment_link }}" 
+                                data-amount="{{ installment.amount_due|floatformat:2 }}" data-bs-toggle="tooltip" 
+                                title="Send notification">
+                                <i class="bi bi-bell"></i>
+                            </button> -->
+                        </div>
+                        <div class="copy-success-message alert alert-success py-1 px-2 mt-1 d-none">
+                            <small><i class="bi bi-check-circle-fill me-1"></i> Link copied to clipboard!</small>
+                        </div>
+                        
+                        {% if installment.payment_link_expires %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-clock me-1"></i>
+                            Link expires on {{ installment.payment_link_expires|date:"d M Y H:i" }}
+                            {% if installment.is_expired %}
+                            <span class="badge bg-danger ms-2">Expired</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            No payment link has been generated yet.
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'dashboard-subscription-detail' pk=subscription.id %}" class="btn btn-info">
+                            <i class="bi bi-list-ul me-1"></i> View Subscription
+                        </a>
+                        
+                        <div>
+                            {% if not installment.is_paid %}
+                            <a href="{% url 'dashboard-generate-payment-link' installment_id=installment.id %}" class="btn btn-primary">
+                                <i class="bi bi-link me-1"></i> Generate Link
+                            </a>
+                            <a href="{% url 'dashboard-mark-installment-paid' installment_id=installment.id %}" class="btn btn-success ms-2">
+                                <i class="bi bi-check-circle me-1"></i> Mark as Paid
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction History Card -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Transaction History</h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Transaction ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>
+                                        <span class="text-body fw-bold">{{ transaction.order_id }}</span>
+                                        {% if transaction.transaction_id %}
+                                        <br>
+                                        <small class="text-muted">Ref: {{ transaction.transaction_id|truncatechars:12 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.created|date:"d M Y H:i" }}</td>
+                                    <td>₹{{ transaction.amount|floatformat:2 }}</td>
+                                    <td>
+                                        {% if transaction.status == 'SUCCESS' %}
+                                        <span class="badge bg-success">Success</span>
+                                        {% elif transaction.status == 'FAILURE' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% elif transaction.status == 'CANCELLED' %}
+                                        <span class="badge bg-warning">Cancelled</span>
+                                        {% elif transaction.status == 'INITIATED' %}
+                                        <span class="badge bg-info">Initiated</span>
+                                        {% elif transaction.status == 'PENDING' %}
+                                        <span class="badge bg-secondary">Pending</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">{{ transaction.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.payment_mode|default:"--" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {% if transactions %}
+                    <div class="mt-4">
+                        <h5>Transaction Details</h5>
+                        <div class="accordion" id="transactionAccordion">
+                            {% for transaction in transactions %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ transaction.id }}">
+                                    <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ transaction.id }}" 
+                                        aria-expanded="false" 
+                                        aria-controls="collapse{{ transaction.id }}">
+                                        {{ transaction.created|date:"d M Y H:i" }} - {{ transaction.status }}
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ transaction.id }}" 
+                                    class="accordion-collapse collapse" 
+                                    aria-labelledby="heading{{ transaction.id }}" 
+                                    data-bs-parent="#transactionAccordion">
+                                    <div class="accordion-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-nowrap mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <th>Order ID</th>
+                                                        <td>{{ transaction.order_id }}</td>
+                                                    </tr>
+                                                    {% if transaction.transaction_id %}
+                                                    <tr>
+                                                        <th>Transaction ID</th>
+                                                        <td>{{ transaction.transaction_id }}</td>
+                                                    </tr>
+                                                    {% endif %}
+                                                    {% if transaction.bank_ref_number %}
+                                                    <tr>
+                                                        <th>Bank Reference</th>
+                                                        <td>{{ transaction.bank_ref_number }}</td>
+                                                    </tr>
+                                                    {% endif %}
+                                                    <tr>
+                                                        <th>Amount</th>
+                                                        <td>₹{{ transaction.amount|floatformat:2 }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Status</th>
+                                                        <td>{{ transaction.status }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Payment Mode</th>
+                                                        <td>{{ transaction.payment_mode|default:"--" }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Created</th>
+                                                        <td>{{ transaction.created|date:"d M Y H:i:s" }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Updated</th>
+                                                        <td>{{ transaction.updated|date:"d M Y H:i:s" }}</td>
+                                                    </tr>
+                                                    {% if transaction.gateway_response %}
+                                                    <tr>
+                                                        <th>Gateway Response</th>
+                                                        <td>
+                                                            <pre class="mb-0" style="max-height: 200px; overflow-y: auto;">{{ transaction.gateway_response|pprint }}</pre>
+                                                        </td>
+                                                    </tr>
+                                                    {% endif %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+        
+        // Copy payment link to clipboard
+        $('.copy-link-btn').click(function() {
+            var $btn = $(this);
+            var link = $btn.data('link');
+            var $copyIcon = $btn.find('.copy-icon');
+            var $checkIcon = $btn.find('.check-icon');
+            var $successMsg = $('.copy-success-message');
+            
+            navigator.clipboard.writeText(link).then(function() {
+                // Show check icon
+                $copyIcon.addClass('d-none');
+                $checkIcon.removeClass('d-none');
+                
+                // Show success message
+                $successMsg.removeClass('d-none');
+                
+                // Reset after 2 seconds
+                setTimeout(function() {
+                    $copyIcon.removeClass('d-none');
+                    $checkIcon.addClass('d-none');
+                    $successMsg.addClass('d-none');
+                }, 2000);
+            });
+        });
+        
+        // Send notification with payment link
+        $('.send-notification-btn').click(function() {
+            var $btn = $(this);
+            var studentId = $btn.data('student-id');
+            var link = $btn.data('link');
+            var amount = $btn.data('amount');
+            var installmentId = "{{ installment.id }}";
+            
+            // Disable button and show spinner
+            $btn.prop('disabled', true);
+            var originalHtml = $btn.html();
+            $btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            
+            // Send AJAX request to send notification
+            $.ajax({
+                url: '{% url "api-send-payment-notification" %}',
+                type: 'POST',
+                data: {
+                    'student_id': studentId,
+                    'payment_link': link,
+                    'amount': amount,
+                    'installment_id': installmentId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // Show success toast
+                    var toast = `
+                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                        <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="bi bi-check-circle me-2"></i> Notification sent successfully!
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    // Remove any existing toast
+                    $('#notificationToast').remove();
+                    
+                    // Add the toast to the page
+                    $('body').append(toast);
+                    
+                    // Show the toast
+                    var toastEl = document.getElementById('notificationToast');
+                    var toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+                    toast.show();
+                },
+                error: function(xhr) {
+                    // Show error toast
+                    var errorMessage = 'Failed to send notification';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    
+                    var toast = `
+                    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                        <div id="notificationErrorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="bi bi-exclamation-triangle me-2"></i> ${errorMessage}
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    // Remove any existing toast
+                    $('#notificationErrorToast').remove();
+                    
+                    // Add the toast to the page
+                    $('body').append(toast);
+                    
+                    // Show the toast
+                    var toastEl = document.getElementById('notificationErrorToast');
+                    var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                    toast.show();
+                },
+                complete: function() {
+                    // Re-enable button and restore original content
+                    $btn.prop('disabled', false);
+                    $btn.html(originalHtml);
+                }
+            });
+        });
+        
+        // Share payment link
+        $('.share-link-btn').click(function() {
+            var link = $(this).data('link');
+            
+            // Check if Web Share API is supported
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Payment Link',
+                    text: 'Here is your payment link',
+                    url: link
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(console.error);
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                var tempInput = document.createElement('input');
+                document.body.appendChild(tempInput);
+                tempInput.value = link;
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                // Show a modal or alert for sharing options
+                var shareModal = `
+                <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Share Payment Link</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Link copied to clipboard! Share it via:</p>
+                                <div class="d-flex justify-content-center gap-3">
+                                    <a href="https://wa.me/?text=${encodeURIComponent(link)}" target="_blank" class="btn btn-success"><i class="bi bi-whatsapp me-1"></i> WhatsApp</a>
+                                    <a href="mailto:?subject=Payment Link&body=${encodeURIComponent(link)}" class="btn btn-primary"><i class="bi bi-envelope me-1"></i> Email</a>
+                                    <a href="sms:?body=${encodeURIComponent(link)}" class="btn btn-info"><i class="bi bi-chat me-1"></i> SMS</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                
+                // Remove any existing modal
+                $('#shareModal').remove();
+                
+                // Add the modal to the page
+                $('body').append(shareModal);
+                
+                // Show the modal
+                var shareModalEl = document.getElementById('shareModal');
+                var modal = new bootstrap.Modal(shareModalEl);
+                modal.show();
+            }
+        });
+    });
+</script>
+{% endblock %}

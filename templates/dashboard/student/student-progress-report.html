@@ -1,0 +1,800 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Progress bar styles */
+    .progress-bar-container {
+        height: 6px;
+    }
+    .progress-bar-success {
+        background-color: var(--bs-success) !important;
+    }
+    .progress-bar-warning {
+        background-color: var(--bs-warning) !important;
+    }
+    .progress-bar-danger {
+        background-color: var(--bs-danger) !important;
+    }
+    .progress-bar-info {
+        background-color: var(--bs-info) !important;
+    }
+    .progress-bar-secondary {
+        background-color: var(--bs-secondary) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+<div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ customer.name }}'s Exam Progress Report</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-user-detail' pk=customer.id %}">{{ customer.name }}</a></li>
+                        <li class="breadcrumb-item active">Progress Report</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Filter Results</h5>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="examTypeFilter" class="form-label">Exam Type</label>
+                            <select id="examTypeFilter" name="exam_type" class="form-select">
+                                <option value="" {% if not selected_exam_type %}selected{% endif %}>All Types</option>
+                                {% for type_value, type_label in exam_types %}
+                                    <option value="{{ type_value }}" {% if selected_exam_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateFrom" class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="dateFrom" name="date_from" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateTo" class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="dateTo" name="date_to" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Exams</p>
+                            <h4 class="mb-0">{{ total_exams }}</h4>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-primary align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-primary">
+                                <i class="bi bi-journal-check font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Passed Exams</p>
+                            <h4 class="mb-0">{{ passed_exams }} ({{ pass_rate|floatformat:1 }}%)</h4>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-success align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-success">
+                                <i class="bi bi-check-circle font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Average Score</p>
+                            <h4 class="mb-0">{{ avg_score_percentage|floatformat:1 }}%</h4>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-info align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-info">
+                                <i class="bi bi-graph-up font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Export Report</p>
+                            <div class="btn-group">
+                                <a href="{% url 'dashboard-export-exam-results' pk=customer.id %}?format=excel{% if selected_exam_type %}&exam_type={{ selected_exam_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-file-earmark-excel me-1"></i> CSV
+                                </a>
+                                <a href="{% url 'dashboard-export-exam-results' pk=customer.id %}?format=pdf{% if selected_exam_type %}&exam_type={{ selected_exam_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                                </a>
+                            </div>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-warning align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-warning">
+                                <i class="bi bi-download font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance by Exam Type Charts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Performance by Exam Type</h4>
+                    
+                    <!-- Daily Exams Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">Daily Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="dailyExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Weekly Exams Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">Weekly Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="weeklyExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Exams Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">Monthly Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="monthlyExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Model Exams Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">Model Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="modelExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Exams Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">Live Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="liveExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Consolidated Chart -->
+                    <div class="mb-5">
+                        <h5 class="card-subtitle mb-3">All Exams</h5>
+                        <div class="chart-scroll-container" style="overflow-x: auto; overflow-y: hidden;">
+                            <div class="chart-container" style="height: 300px; min-width: 800px;">
+                                <canvas id="consolidatedExamChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Trend -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Performance Trend (Last 10 Exams)</h4>
+                    {% if trend_data %}
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="performanceTrendChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No trend data available.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Exam Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Detailed Exam Results</h4>
+                    {% if detailed_exam_data %}
+                        <div class="table-responsive">
+                            <table class="table table-centered table-nowrap mb-0 datatable2">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Exam</th>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Score</th>
+                                        <th>Questions</th>
+                                        <th>Correct</th>
+                                        <th>Wrong</th>
+                                        <th>Unanswered</th>
+                                        <th>Accuracy</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in detailed_exam_data %}
+                                    <tr>
+                                        <td>{{ data.exam.title }}</td>
+                                        <td>{{ data.date|date:"M d, Y" }}</td>
+                                        <td>{{ data.exam.get_exam_type_display }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 progress-bar-container">
+                                                    <div class="progress-bar {% if data.percentage >= 60 %}progress-bar-success{% elif data.percentage >= 40 %}progress-bar-warning{% else %}progress-bar-danger{% endif %}" role="progressbar" style="width: {{ data.percentage }}%"></div>
+                                                </div>
+                                                <span class="ms-2">{{ data.percentage|floatformat:1 }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ data.total_questions }}</td>
+                                        <td class="text-success">{{ data.correct_answers }}</td>
+                                        <td class="text-danger">{{ data.wrong_answers }}</td>
+                                        <td class="text-warning">{{ data.unanswered }}</td>
+                                        <td>{{ data.accuracy|floatformat:1 }}%</td>
+                                        <td>
+                                            {% if data.passed %}
+                                                <span class="badge bg-success">Passed</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary view-details" 
+                                                    data-bs-toggle="modal" data-bs-target="#examDetailModal" 
+                                                    data-exam-title="{{ data.exam.title }}"
+                                                    data-exam-date="{{ data.date|date:"M d, Y" }}"
+                                                    data-exam-type="{{ data.exam.get_exam_type_display }}"
+                                                    data-exam-score="{{ data.percentage|floatformat:1 }}"
+                                                    data-exam-correct="{{ data.correct_answers }}"
+                                                    data-exam-wrong="{{ data.wrong_answers }}"
+                                                    data-exam-unanswered="{{ data.unanswered }}"
+                                                    data-exam-accuracy="{{ data.accuracy|floatformat:1 }}">
+                                                <i class="bi bi-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No exam data available.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- Exam Detail Modal -->
+<div class="modal fade" id="examDetailModal" tabindex="-1" aria-labelledby="examDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="examDetailModalLabel">Exam Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Exam:</strong> <span id="modal-exam-title"></span></p>
+                        <p><strong>Date:</strong> <span id="modal-exam-date"></span></p>
+                        <p><strong>Type:</strong> <span id="modal-exam-type"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Score:</strong> <span id="modal-exam-score"></span>%</p>
+                        <p><strong>Accuracy:</strong> <span id="modal-exam-accuracy"></span>%</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Question Analysis</h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-success" id="modal-correct-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-correct-text">Correct: 0</span>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-danger" id="modal-wrong-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-wrong-text">Wrong: 0</span>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-secondary" id="modal-unanswered-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-unanswered-text">Unanswered: 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+               
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable only if not already initialized
+ 
+            $('.datatable2').DataTable({
+                "ordering": false,
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "responsive": true,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": -1 }
+                ],
+                "order": [[0, 'desc']]
+            });
+        
+        
+        // Handle modal data
+        $('.view-details').on('click', function() {
+            var examTitle = $(this).data('exam-title');
+            var examDate = $(this).data('exam-date');
+            var examType = $(this).data('exam-type');
+            var examScore = $(this).data('exam-score');
+            var examCorrect = parseInt($(this).data('exam-correct'));
+            var examWrong = parseInt($(this).data('exam-wrong'));
+            var examUnanswered = parseInt($(this).data('exam-unanswered'));
+            var examAccuracy = $(this).data('exam-accuracy');
+            
+            $('#modal-exam-title').text(examTitle);
+            $('#modal-exam-date').text(examDate);
+            $('#modal-exam-type').text(examType);
+            $('#modal-exam-score').text(examScore);
+            $('#modal-exam-accuracy').text(examAccuracy);
+            
+            // Calculate percentages for progress bars
+            var total = examCorrect + examWrong + examUnanswered;
+            var correctPct = (examCorrect / total) * 100;
+            var wrongPct = (examWrong / total) * 100;
+            var unansweredPct = (examUnanswered / total) * 100;
+            
+            // Update progress bars
+            $('#modal-correct-bar').css('width', correctPct + '%');
+            $('#modal-wrong-bar').css('width', wrongPct + '%');
+            $('#modal-unanswered-bar').css('width', unansweredPct + '%');
+            
+            // Update text
+            $('#modal-correct-text').text('Correct: ' + examCorrect);
+            $('#modal-wrong-text').text('Wrong: ' + examWrong);
+            $('#modal-unanswered-text').text('Unanswered: ' + examUnanswered);
+            
+            // Update view full details link
+            var studentId = "{{ customer.id }}";
+            var examId = $(this).data('exam-id');
+            if (examId) {
+                $('#view-full-details-link').attr('href', '/dashboard/customer/exam-result/' + studentId + '/' + examId + '/');
+            }
+        });
+        
+        {% if trend_data %}
+        // Performance Trend Chart
+        var ctx = document.getElementById('performanceTrendChart').getContext('2d');
+        
+        // Prepare data from Django template
+        var chartLabels = [];
+        var chartData = [];
+        var pointColors = [];
+        var examNames = [];
+        
+        {% for item in trend_data reversed %}
+            chartLabels.push("{{ item.date|date:'M d, Y' }}");
+            chartData.push({{ item.score|floatformat:1 }});
+            pointColors.push({% if item.passed %}"rgba(40, 167, 69, 1)"{% else %}"rgba(220, 53, 69, 1)"{% endif %});
+            examNames.push("{{ item.exam.title }}");
+        {% endfor %}
+        
+        console.log(chartLabels);
+        console.log(chartData);
+        console.log(pointColors);
+        console.log(examNames);
+        
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Score %',
+                    data: chartData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointBackgroundColor: pointColors,
+                    pointBorderColor: pointColors,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Score Percentage'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Exam Date'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                var idx = tooltipItems[0].dataIndex;
+                                return examNames[idx];
+                            },
+                            label: function(context) {
+                                return 'Score: ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        // Chart.js setup
+        console.log('Chart.js version:', Chart.version);
+        
+        {% if detailed_exam_data %}
+        // Define exam type colors
+        var examTypeColors = {
+            'daily': '#6bc2be',
+            'weekly': '#86b6d9',
+            'monthly': '#e49855',
+            'model': '#beb2d7',
+            'live': '#eb609d',
+            'default': 'rgba(54, 162, 235, 0.7)'
+        };
+        
+        // Function to create bar charts for exam performance
+        function createExamBarChart(canvasId, chartLabels, chartMarks, chartTotalMarks, chartColor) {
+            console.log('Creating chart for:', canvasId);
+            console.log('Labels:', chartLabels);
+            console.log('Marks:', chartMarks);
+            console.log('Total marks:', chartTotalMarks);
+            console.log('Chart color:', chartColor);
+            
+            var canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.error('Canvas element not found:', canvasId);
+                return null;
+            }
+            
+            var ctx = canvas.getContext('2d');
+            
+            // Create custom labels that include marks/total
+            var customLabels = [];
+            for (var i = 0; i < chartLabels.length; i++) {
+                customLabels.push(chartLabels[i] + ' (' + chartMarks[i] + '/' + chartTotalMarks[i] + ')');
+            }
+            
+            // Use the specified color or default
+            var backgroundColor = chartColor || 'rgba(54, 162, 235, 0.7)';
+            var borderColor = chartColor || 'rgba(54, 162, 235, 1)';
+            
+            // Create a simple dataset with marks obtained
+            var barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Marks Obtained',
+                        data: chartMarks,
+                        backgroundColor: backgroundColor,
+                        borderColor: borderColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Marks'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Exams'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return tooltipItems[0].label;
+                                },
+                                label: function(context) {
+                                    var value = context.raw;
+                                    var totalMark = chartTotalMarks[context.dataIndex];
+                                    return 'Marks: ' + value + '/' + totalMark;
+                                },
+                                afterLabel: function(context) {
+                                    var marksObtained = context.raw;
+                                    var totalMarks = chartTotalMarks[context.dataIndex];
+                                    var percentage = ((marksObtained / totalMarks) * 100).toFixed(1);
+                                    return 'Percentage: ' + percentage + '%';
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+            
+            // Add marks/total as text above each bar
+            var originalDraw = barChart.draw;
+            barChart.draw = function() {
+                originalDraw.apply(this, arguments);
+                
+                var ctx = this.ctx;
+                var meta = this.getDatasetMeta(0);
+                
+                ctx.save();
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#000';
+                
+                for (var i = 0; i < meta.data.length; i++) {
+                    var model = meta.data[i];
+                    var marks = chartMarks[i];
+                    var total = chartTotalMarks[i];
+                    
+                    ctx.fillText(
+                        marks + '/' + total,
+                        model.x,
+                        model.y - 10
+                    );
+                }
+                
+                ctx.restore();
+            };
+            
+            return barChart;
+        }
+        
+        // Organize data by exam type
+        var examDataByType = {
+            'daily': { labels: [], marks: [], totalMarks: [] },
+            'weekly': { labels: [], marks: [], totalMarks: [] },
+            'monthly': { labels: [], marks: [], totalMarks: [] },
+            'model': { labels: [], marks: [], totalMarks: [] },
+            'live': { labels: [], marks: [], totalMarks: [] }
+        };
+        
+        // Populate data by exam type
+        {% for exam in detailed_exam_data %}
+            var examType = '{{ exam.exam.exam_type|lower }}';
+            if (examDataByType[examType]) {
+                examDataByType[examType].labels.push('{{ exam.exam.title }}');
+                examDataByType[examType].marks.push({{ exam.marks_obtained }});
+                examDataByType[examType].totalMarks.push({{ exam.total_marks }});
+            }
+        {% endfor %}
+        
+        // Create charts for each exam type
+        for (var examType in examDataByType) {
+            if (examDataByType[examType].labels.length > 0) {
+                var chartId = examType + 'ExamChart';
+                var chartColor = examTypeColors[examType] || examTypeColors['default'];
+                createExamBarChart(
+                    chartId, 
+                    examDataByType[examType].labels, 
+                    examDataByType[examType].marks, 
+                    examDataByType[examType].totalMarks, 
+                    chartColor
+                );
+                console.log('Created chart for ' + examType + ' with ' + examDataByType[examType].labels.length + ' exams');
+            } else {
+                console.log('No data for exam type: ' + examType);
+            }
+        }
+        
+        // Create consolidated chart with all exams - using different colors for each exam type
+        var allExamLabels = [];
+        var allExamMarks = [];
+        var allExamTotalMarks = [];
+        var allExamColors = [];
+        
+        {% for exam in detailed_exam_data %}
+            allExamLabels.push('{{ exam.exam.title }} ({{ exam.exam.exam_type }})');
+            allExamMarks.push({{ exam.marks_obtained }});
+            allExamTotalMarks.push({{ exam.total_marks }});
+            var examType = '{{ exam.exam.exam_type|lower }}';
+            allExamColors.push(examTypeColors[examType] || examTypeColors['default']);
+        {% endfor %}
+        
+        // Create consolidated chart with multiple colors
+        if (allExamLabels.length > 0) {
+            // Need to create a custom chart for the consolidated view with multiple colors
+            var canvas = document.getElementById('consolidatedExamChart');
+            if (canvas) {
+                var ctx = canvas.getContext('2d');
+                
+                var consolidatedChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: allExamLabels,
+                        datasets: [{
+                            label: 'Marks Obtained',
+                            data: allExamMarks,
+                            backgroundColor: allExamColors,
+                            borderColor: allExamColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Marks'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Exams'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    title: function(tooltipItems) {
+                                        return tooltipItems[0].label;
+                                    },
+                                    label: function(context) {
+                                        var value = context.raw;
+                                        var totalMark = allExamTotalMarks[context.dataIndex];
+                                        return 'Marks: ' + value + '/' + totalMark;
+                                    },
+                                    afterLabel: function(context) {
+                                        var marksObtained = context.raw;
+                                        var totalMarks = allExamTotalMarks[context.dataIndex];
+                                        var percentage = ((marksObtained / totalMarks) * 100).toFixed(1);
+                                        return 'Percentage: ' + percentage + '%';
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        }
+                    }
+                });
+                
+                // Add marks/total as text above each bar
+                var originalDraw = consolidatedChart.draw;
+                consolidatedChart.draw = function() {
+                    originalDraw.apply(this, arguments);
+                    
+                    var ctx = this.ctx;
+                    var meta = this.getDatasetMeta(0);
+                    
+                    ctx.save();
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#000';
+                    
+                    for (var i = 0; i < meta.data.length; i++) {
+                        var model = meta.data[i];
+                        var marks = allExamMarks[i];
+                        var total = allExamTotalMarks[i];
+                        
+                        ctx.fillText(
+                            marks + '/' + total,
+                            model.x,
+                            model.y - 10
+                        );
+                    }
+                    
+                    ctx.restore();
+                };
+                
+                console.log('Created consolidated chart with ' + allExamLabels.length + ' exams and multiple colors');
+            } else {
+                console.error('Consolidated chart canvas not found');
+            }
+        } else {
+            console.log('No data for consolidated chart');
+        }
+        {% endif %}
+    });
+</script>
+{% endblock content %}

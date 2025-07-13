@@ -1,0 +1,158 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css">
+<link href="{% static 'dashboard/assets/libs/sweetalert2/sweetalert2.min.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'dashboard/assets/libs/swiper/swiper-bundle.min.css' %}" rel="stylesheet" type="text/css"/>
+<link rel="stylesheet" href="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.css">
+{% endblock css %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Update Question</h3>
+                <!-- <nav>
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'dashboard-home' %}">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="">Exam</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Update Question</li>
+                    </ol>
+                </nav> -->
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST" enctype="multipart/form-data" action="">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.question_type|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                 <label for="hint">Hint</label>
+                                 {{ form.hint }}
+                             </div>
+                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="question_description">Question Description</label>
+                        <textarea id="editor1" name="question_description" class="form-control">{{ form.question_description.value|safe }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="options">Options</label>
+                                <div id="options-container">
+                                    {% for option in options %}
+                                    <div class="option-field">
+                                        <input type="text" name="options[]" value="{{ option }}" class="form-control mb-2" placeholder="Enter option">
+                                        <button type="button" class="btn btn-danger btn-sm mt-2 remove-btn remove-option">Remove</button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" id="add-option" class="btn btn-secondary mt-2">Add Option</button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="answers">Right Answers</label>
+                                <div id="answers-container">
+                                    {% for answer in answers %}
+                                    <div class="answers-field">
+                                        <input type="text" name="answers[]" value="{{ answer }}" class="form-control mb-2" placeholder="Enter answer">
+                                        <button type="button" class="btn btn-danger btn-sm mt-2 remove-btn remove-answer">Remove</button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" id="add-answers" class="btn btn-secondary mt-2">Add Answer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+                        <button type="submit" class="btn btn-primary mt-2">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script src="{% static 'dashboard/assets/libs/sweetalert2/sweetalert2.min.js' %}"></script>
+
+    <script src="{% static 'dashboard/assets/libs/apexcharts/apexcharts.min.js' %}"></script>
+    <script src="{% static 'dashboard/assets/js/pages/modal.init.js' %}"></script>
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
+    <script>
+    CKEDITOR.plugins.addExternal('mathjax', 'https://cdn.ckeditor.com/4.22.1/full-all/plugins/mathjax/', 'plugin.js');
+
+    CKEDITOR.replace('question_description', {
+        extraPlugins: 'uploadimage,image,mathjax',
+        filebrowserUploadUrl: '{% url "ckeditor_upload" %}',
+        filebrowserBrowseUrl: '{% url "ckeditor_browse" %}',
+        height: 200,
+        removeDialogTabs: 'image:advanced;link:advanced',
+        mathJaxLib: '//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+        mathJaxClass: 'equation'
+    });
+
+
+        // JavaScript for dynamically adding/removing options and answers
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('add-option').addEventListener('click', function() {
+                const container = document.getElementById('options-container');
+                const newField = document.createElement('div');
+                newField.className = 'option-field';
+                newField.innerHTML = `
+                    <input type="text" name="options[]" class="form-control" placeholder="Enter option">
+                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-btn remove-option">Remove</button>
+                `;
+                container.appendChild(newField);
+            });
+
+            document.getElementById('options-container').addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-option')) {
+                    e.target.parentElement.remove();
+                }
+            });
+
+            document.getElementById('add-answers').addEventListener('click', function() {
+                const container = document.getElementById('answers-container');
+                const newField = document.createElement('div');
+                newField.className = 'answers-field';
+                newField.innerHTML = `
+                    <input type="text" name="answers[]" class="form-control" placeholder="Enter answer">
+                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-btn remove-answer">Remove</button>
+                `;
+                container.appendChild(newField);
+            });
+
+            document.getElementById('answers-container').addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-answer')) {
+                    e.target.parentElement.remove();
+                }
+            });
+        });
+    </script>
+{% endblock js %}

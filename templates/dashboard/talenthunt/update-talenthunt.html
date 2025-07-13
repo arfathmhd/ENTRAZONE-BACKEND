@@ -1,0 +1,181 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content%}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Update TalentHunt</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-talenthunt-manager' %}">TalentHunt</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Update TalentHunt</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="card">
+        <!-- Header Section -->
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center">
+                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                    <i class="bi bi-info-circle"></i>
+                </span>
+                <h4 class="text-dark">TalentHunt Information</h4>
+            </div>
+        </div>
+    
+        <!-- Card Body -->
+        {% load crispy_forms_tags %}
+        <div class="card-body pb-1">
+            <!-- Custom Image Upload Field with Preview -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                   
+                </div>
+            </div>
+    
+            <!-- Form Fields Rendering -->
+            <div class="row">
+                <!-- Title Field -->
+                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                    {{ form.title|as_crispy_field }}
+                </div>
+                
+                <!-- Course Field -->
+                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                    {{ form.course|as_crispy_field }}
+                </div>
+            </div>
+            
+            
+    
+            
+        </div>
+    </div>
+    
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+{% endblock content %}
+
+</body>
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/add-student by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 18 Sep 2024 09:29:11 GMT -->
+
+</html>
+
+
+{% block script %}
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var imageInput = document.querySelector('input[type="file"].image-sign');
+        var imagePreview = document.getElementById('image-preview');
+        var imagePlaceholder = document.getElementById('image-placeholder-icon');
+
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                var file = imageInput.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (imagePreview) {
+                            imagePreview.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                            if (imagePlaceholder) {
+                                imagePlaceholder.style.display = 'none';
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // Clear the preview if no file is selected
+                    if (imagePreview) {
+                        imagePreview.src = '';
+                        imagePreview.style.display = 'none';
+                        if (imagePlaceholder) {
+                            imagePlaceholder.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Handle the case where an image might already be present
+        if (imagePreview && imagePreview.src) {
+            imagePreview.style.display = 'block';
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'none';
+            }
+        }
+    });
+</script>
+
+<!-- 
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery-3.7.1.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/bootstrap.bundle.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/moment.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script
+    src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/daterangepicker/daterangepicker.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/bootstrap-datetimepicker.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/moment/moment.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/feather.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery.slimscroll.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/apexchart/apexcharts.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/apexchart/chart-data.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/owlcarousel/owl.carousel.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/select2/js/select2.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery.dataTables.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/dataTables.bootstrap5.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/script.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js"
+    data-cf-settings="258cb1a13ffa524f61e4e219-|49" defer></script> -->
+
+
+
+{% endblock script %}

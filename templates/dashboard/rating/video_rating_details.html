@@ -1,0 +1,120 @@
+{% load dashboard_filters %}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ video.title }}</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="star-rating me-3">
+                            {% for i in "12345"|make_list %}
+                                {% if forloop.counter <= avg_rating|floatformat:0|add:"0" %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% elif forloop.counter <= avg_rating|floatformat:1|add:"0.5" %}
+                                    <i class="bi bi-star-half"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div>
+                            <span class="h4 mb-0">{{ avg_rating|floatformat:1 }}</span>
+                            <span class="text-muted">/5</span>
+                            <small class="d-block text-muted">{{ total_ratings }} rating{{ total_ratings|pluralize }}</small>
+                        </div>
+                    </div>
+                    
+                    {% if video.lesson %}
+                        <p><strong>Location:</strong> <span class="badge bg-info">Lesson: {{ video.lesson.title }}</span></p>
+                    {% elif video.currentaffair %}
+                        <p><strong>Location:</strong> <span class="badge bg-warning">Current Affairs: {{ video.currentaffair.title }}</span></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Distribution -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Rating Distribution</h6>
+                </div>
+                <div class="card-body">
+                    {% for i in "54321"|make_list %}
+                        {% with i|add:"0" as rating %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="me-2" style="width: 30px;">{{ rating }} <i class="bi bi-star-fill text-warning"></i></div>
+                            <div class="progress flex-grow-1" style="height: 10px;">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ rating_percentages|get_item:rating|floatformat:0 }}%;" 
+                                    aria-valuenow="{{ rating_percentages|get_item:rating|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="ms-2" style="width: 60px;">
+                                {{ rating_counts|get_item:rating }} ({{ rating_percentages|get_item:rating|floatformat:0 }}%)
+                            </div>
+                        </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Ratings -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Individual Ratings</h6>
+                </div>
+                <div class="card-body">
+                    {% if ratings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Rating</th>
+                                        <th>Comment</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rating in ratings %}
+                                    <tr>
+                                        <td>{{ rating.student.name|default:rating.student.email }}</td>
+                                        <td>
+                                            <div class="star-rating">
+                                                {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= rating.rating %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-1">{{ rating.rating }}/5</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if rating.comment %}
+                                                {{ rating.comment }}
+                                            {% else %}
+                                                <span class="text-muted">No comment</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ rating.created_at|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No ratings have been submitted for this video yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

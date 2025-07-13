@@ -1,0 +1,473 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Current Affair </h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-currentaffair' %}">Current Affair</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-currentaffair-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Current Affair</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Current Affair List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Video</th>
+                                <th>PDF</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for current_affair in current_affairs %}
+                            <tr>
+                                <td>{{ current_affair.id }}</td>
+                                <td>
+                                    {% if current_affair.image %}
+                                        <img src="{{ current_affair.image.url }}" alt="{{ current_affair.title }}" style="width: 50px;">
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td style="white-space: pre-line; word-wrap: break-word; max-width: 200px;">
+                                    <a href="{% url 'dashboard-currentaffair-detail' pk=current_affair.id %}" class="link-primary">{{ current_affair.title }}</a>
+                                </td>
+                                
+                               
+            
+                                <!-- Video Section -->
+                                <td>
+                                    {% if current_affair.currentaffair_videos.all %}
+                                        {% for video in current_affair.currentaffair_videos.all %}
+                                            <strong>{{ video.title|default:"N/A"  }}</strong><br>
+                                            
+                                            <!-- Check for URL (YouTube video URL or other video URLs) -->
+                                            {% if video.url %}
+                                                <!-- If URL is a YouTube link, embed the video -->
+                                                {% if video.url|lower|slice:":18" == "https://www.youtube" %}
+                                                    <iframe width="250" height="140" src="https://www.youtube.com/embed/{{ video.url|slice:32 }}" 
+                                                            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                            allowfullscreen></iframe>
+                                                {% else %}
+                                                    <!-- For other types of video URLs -->
+                                                    <a href="{{ video.url }}"  target="_blank">Watch Video (youtube)</a>
+                                                {% endif %}
+                                            {% endif %}
+                                            <br>
+                                            
+                                            <!-- Check for m3u8 (another video format) -->
+                                            {% if video.m3u8 %}
+                                            <a href="{{ video.m3u8 }}" target="_blank" >
+                                               </i> Watch Video (m3u8)
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% if video.tp_stream %}
+                                            <a href="{{ video.tp_stream }}" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-stream"></i> TP Stream ID: {{ video.tp_stream }}
+                                            </a>
+                                        {% endif %}
+                                        
+                                            
+                                            <!-- If neither URL nor m3u8 is available -->
+                                            {% if not video.url and not video.m3u8 %}
+                                                <span class="text-danger">Video URL or m3u8 not available</span>
+                                            {% endif %}
+                                            <br>
+                                            {% if video.is_free %}
+                                                <span class="badge bg-success">Free</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Paid</span>
+                                            {% endif %}
+                                            {% if video.is_downloadable %}
+                                                <span class="badge bg-info">Downloadable</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Not Downloadable</span>
+                                            {% endif %}
+                                            <br><br>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">No videos available</span>
+                                    {% endif %}
+                                </td>
+                                
+            
+                                <!-- PDF Section -->
+                                <td>
+                                    {% if current_affair.currentaffair_pdf_notes.all %}
+                                        {% for pdf in current_affair.currentaffair_pdf_notes.all %}
+                                            <strong>{{ pdf.title|default:"N/A" }}</strong><br>
+                                            {% if pdf.file %}
+                                                <a href="{{ pdf.file.url }}" target="_blank">Download PDF</a>
+                                            {% else %}
+                                                <span class="text-danger">File not available</span>
+                                            {% endif %}
+                                            <br>
+                                            {% if pdf.is_free %}
+                                                <span class="badge bg-success">Free</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Paid</span>
+                                            {% endif %}
+                                            {% if pdf.is_downloadable %}
+                                                <span class="badge bg-info">Downloadable</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Not Downloadable</span>
+                                            {% endif %}
+                                            <br><br>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted">No PDFs available</span>
+                                    {% endif %}
+                                </td>
+            
+                                <td>{{ current_affair.created|date:"d-m-Y" }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a href="{% url 'dashboard-currentaffair-update' pk=current_affair.id %}" class="text-primary me-3" title="Edit current affair">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-user-id="{{ current_affair.id }}" title="Delete Course">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No current affairs found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+            
+                    <!-- Pagination -->
+                    <div class="pagination">
+                        {% if current_affairs.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ current_affairs.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+            
+                        <span class="pagination-info">Page {{ current_affairs.number }} of {{ current_affairs.paginator.num_pages }}</span>
+            
+                        {% if current_affairs.has_next %}
+                            <a href="?page={{ current_affairs.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ current_affairs.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.btn-delete', function () {
+            var userId = $(this).data('user-id');
+            $('#delete-record').data('user-id', userId);
+        });
+        
+        $(document).on('click', '.btn-delete-exam', function () {
+            var examId = $(this).data('exam-id'); 
+            $('#delete-exam-form').attr('action', "{% url 'currentaffair-exam-delete' exam_id=0 %}".replace('0', examId));
+            $('#delete-exam-form').append('<input type="hidden" name="exam_id" value="' + examId + '">');
+        });
+
+        $(document).on('click', '.edit-exam', function() {
+            var examId = $(this).data('exam-id');
+            var examTitle = $(this).data('title');
+            var examDuration = $(this).data('duration');
+            var isFree = $(this).data('is-free') === 'true';
+            
+            // Format duration to HH:MM:SS if needed
+            if (examDuration) {
+                // Check if duration is already in HH:MM:SS format
+                if (!examDuration.includes(':')) {
+                    // If not, format it
+                    var durationParts = examDuration.split(' ');
+                    var hours = 0;
+                    var minutes = 0;
+                    var seconds = 0;
+                    
+                    for (var i = 0; i < durationParts.length; i++) {
+                        if (durationParts[i].includes('hour')) {
+                            hours = parseInt(durationParts[i-1]) || 0;
+                        } else if (durationParts[i].includes('minute')) {
+                            minutes = parseInt(durationParts[i-1]) || 0;
+                        } else if (durationParts[i].includes('second')) {
+                            seconds = parseInt(durationParts[i-1]) || 0;
+                        }
+                    }
+                    
+                    // Format as HH:MM:SS
+                    examDuration = 
+                        (hours < 10 ? '0' + hours : hours) + ':' + 
+                        (minutes < 10 ? '0' + minutes : minutes) + ':' + 
+                        (seconds < 10 ? '0' + seconds : seconds);
+                }
+            } else {
+                examDuration = '01:00:00'; // Default duration
+            }
+            
+            // Set modal title
+            $('#exam-modal-title').text('Update Exam');
+            
+            // Fill form fields
+            $('#exam-title').val(examTitle);
+            $('#exam-duration').val(examDuration);
+            $('#is-free').prop('checked', isFree);
+            
+            // Change form action
+            $('#exam-form').attr('action', "{% url 'currentaffair-exam-update' exam_id=0 %}".replace('0', examId));
+            
+            // Change button text
+            $('#exam-submit-btn').text('Update Exam');
+            
+            // Show modal
+            $('#add-exam-modal').modal('show');
+        });
+        
+        $(document).on('click', '.add-new-exam', function() {
+            // Reset modal title
+            $('#exam-modal-title').text('Add New Exam');
+            
+            // Clear form fields
+            $('#exam-form')[0].reset();
+            
+            // Reset form action
+            $('#exam-form').attr('action', "{% url 'currentaffair-exam-add' %}");
+            
+            // Reset button text
+            $('#exam-submit-btn').text('Save Exam');
+        });
+    
+        $('#delete-record').click(function () {
+            var userId = $(this).data('user-id');
+    
+            console.log("Deleting User ID: " + userId);
+    
+            $.ajax({
+                url: '/currentaffair/delete/' + userId + '/',
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function (data) {
+                    console.log("Deleted successfully");
+                    window.location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error deleting user:", error);
+                }
+            });
+        });
+    });
+    </script>
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    // Get the current sort parameter
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    // Update URL with date range and sort parameter
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            // Set date range parameters
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            // Set or preserve sorting parameter
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            // Get existing date range parameters
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            // Update URL with sorting parameter
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add event listener to sorting links
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            // Optionally: Remove date range and sorting parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+    
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+    {% endblock %}
+
+
+    
+
+</body>
+
+
+</html>

@@ -1,0 +1,60 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.sqlite3
+*.db
+*.log
+*.env
+*.venv
+*.idea/
+*.vscode/
+*.pytest_cache/
+*.coverage
+*.tox/
+*.nox/
+*.hypothesis/
+.coverage
+nosetests.xml
+test_*.xml
+coverage.xml 
+sshkey
+sshkey.pub
+# Django
+# media/
+course_images/
+uploads/
+pdf_notes/
+subject_images/
+chapter_images/
+lesson_images/
+banners/
+user_images/
+notification_images/
+talenthunt_images/
+currentaffairs_images/
+user_images/
+pdf_notes/
+# Environment Files
+.env
+.env.*
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+pdf_notes/

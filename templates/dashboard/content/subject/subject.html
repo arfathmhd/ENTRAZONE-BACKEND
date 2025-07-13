@@ -1,0 +1,702 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load dashboard_filters %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Subject</h3>
+               
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-course' %}">Course</a></li>
+                        <li class="custom-breadcrumb-item"><a href="#">Subject</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-course-subject-add' course_id=course.id %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Subject</a>
+                </div>
+                <div class="mb-2 ms-2">
+                    <button type="button" class="btn btn-primary d-flex align-items-center" 
+                        id="add-new-exam">
+                        <i class="bi bi-plus-circle me-2"></i>Add Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Subject List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a href="javascript:void(0);" data-sort="price_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_ascending' %}active{% endif %}">
+                                    Price Low to High
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="price_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_descending' %}active{% endif %}">
+                                    Price High to Low
+                                </a>
+                            </li> -->
+                        </ul>
+                        
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <!-- <th class="no-sort">
+                                    <div class="form-check form-check-md">
+                                        <input class="form-check-input" type="checkbox" id="select-all">
+                                    </div>
+                                </th> -->
+                                <th>ID</th>
+                                <th>Subject Name</th>
+                                <th>Description</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject in subjects %}
+                            <tr>
+                                <!-- <td>
+                                    <div class="form-check form-check-md">
+                                        <input class="form-check-input" type="checkbox">
+                                    </div>
+                                </td> -->
+                                <td><a href="{% url 'subject-chapters-list' subject_id=subject.id %}" class="link-primary">{{ subject.id }}</a></td>
+                                
+                                <td>
+                                    <div>
+                                        <a class="link-primary" href="{% url 'subject-chapters-list' subject_id=subject.id %}">{{ subject.subject_name }}</a>
+                                        {% if subject.is_free %}
+                                            <span class="badge bg-success ms-2">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning ms-2">Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ subject.description|truncatewords:10 }}</td>
+                                <td>{{ subject.created|date:"d-m-Y"}}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Edit Subject -->
+                                        <a href="{% url 'dashboard-course-subject-update' course_id=course.id subject_id=subject.id %}" class="text-primary me-3" title="Edit Subject">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <!-- Delete Subject (Delete confirmation via modal) -->
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-batch-id="{{ subject.id }}" title="Delete Subject">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No subjects found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        {% if subjects.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ subjects.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ subjects.number }} of {{ subjects.paginator.num_pages }}</span>
+                        
+                        {% if subjects.has_next %}
+                            <a href="?page={{ subjects.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ subjects.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Exams Table -->
+<div class="page-wrapper mt-4">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Course Exams</h3>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Exam List</h4>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Exam Title</th>
+                                <th>Exam Type</th>
+                                <th>Duration</th>
+                                <th>Number of Attempts</th>
+                                <th>Created</th>
+                                <th>Shuffle Questions</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr>
+                                <td>{{ exam.id }}</td>
+                                <td>
+                                    <div>
+                                        <a class="link-primary" href="{% url 'dashboard-exam-question-manager' exam_id=exam.id %}">{{ exam.title }}</a>
+                                        {% if exam.is_free %}
+                                            <span class="badge bg-success ms-2">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning ms-2">Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ exam.exam_type|default:"N/A" }}
+                                    <br>
+                                    <small>
+                                        {% if exam.start_date %}
+                                            {{ exam.start_date|date:"d-m-Y" }} -- {{ exam.end_date|date:"d-m-Y" }}
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% with duration=exam.duration %}
+                                    {% if duration %}
+                                        {% with hours=duration.hour minutes=duration.minute seconds=duration.second %}
+                                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}
+                                            {% if minutes > 0 %} {{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
+                                            {% if seconds > 0 %} {{ seconds }} second{% if seconds != 1 %}s{% endif %}{% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>{{ exam.number_of_attempt }}</td>
+                                <td>{{ exam.created|date:"d-m-Y"}}</td>
+                                <td>
+                                    {% if exam.is_shuffle %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Edit Exam -->
+                                        <a href="#" class="text-primary me-3 edit-exam" data-exam-id="{{ exam.id }}" data-title="{{ exam.title }}" 
+                                        data-duration="{{ exam.duration|time:'H:i:s' }}" 
+                                        data-is-free="{{ exam.is_free|yesno:'1,0' }}" 
+                                        data-attempts="{{ exam.number_of_attempt }}"
+                                        data-is-shuffle="{{ exam.is_shuffle|yesno:'1,0' }}"
+                                        data-exam-type="{{ exam.exam_type }}"
+                                        data-start-date="{{ exam.start_date|date:'Y-m-d' }}"
+                                        data-end-date="{{ exam.end_date|date:'Y-m-d' }}"
+                                        title="Edit Exam">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <!-- Delete Exam -->
+                                        <a class="btn-delete-exam" href="#" data-bs-toggle="modal" data-bs-target="#delete-exam-modal" data-exam-id="{{ exam.id }}" title="Delete Exam">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+
+                                        <!-- copy move dropdown -->
+                                        <div class="dropdown me-3">
+                                            <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ exam.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ exam.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showCopyExamModal({{ exam.id }}, '{{ exam.title|default:"Exam" }}')">
+                                                        <i class="bi bi-files me-2"></i>Copy
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showMoveExamModal({{ exam.id }}, '{{ exam.title|default:"Exam" }}')">
+                                                        <i class="bi bi-arrows-move me-2"></i>Move
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- end copy move dropdown -->
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No exams found for this course.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Exam Modal -->
+<div class="modal fade" id="delete-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete this exam. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <form id="delete-exam-form" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="add-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exam-modal-title">Add New Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="exam-form" action="{% url 'subject-exam-add' course_id=course.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="course_id" value="{{ course.id }}">
+                   
+                    <div class="mb-3">
+                        <label for="exam-title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="exam-title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exam-type" class="form-label">Exam Type</label>
+                        <select class="form-select" id="exam-type" name="exam_type" required>
+                            <option value="">Select Exam Type</option>
+                            {% for value, label in None|exam_type_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row" id="date-range">
+                        <div class="mb-3 col-md-6">
+                            <label for="start-date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start-date" name="start_date" required>
+                        </div>
+                        <div class="mb-3 col-md-6">
+                            <label for="end-date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end-date" name="end_date" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exam-duration" class="form-label">Duration (HH:MM:SS)</label>
+                        <input type="text" class="form-control" id="exam-duration" name="duration" placeholder="01:00:00" required>
+                        <small class="text-muted">Format: Hours:Minutes:Seconds</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="number-of-attempt" class="form-label">Number of Attempts</label>
+                        <input type="number" class="form-control" id="number-of-attempt" name="number_of_attempt" value="1" min="1" required>
+                        <small class="text-muted">Number of times a student can attempt this exam</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-shuffle" name="is_shuffle">
+                        <label class="form-check-label" for="is-shuffle">Shuffle Questions</label>
+                        <small class="d-block text-muted">Randomize question order for each attempt</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-free" name="is_free">
+                        <label class="form-check-label" for="is-free">Free Exam</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="exam-submit-btn">Save Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'dashboard/components/exam_copy_move.html' %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Set default date values for date inputs
+    function setDefaultDates() {
+        var today = new Date();
+        var tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 7); // Default end date is 7 days from today
+        
+        // Format dates as YYYY-MM-DD for the date input
+        var todayFormatted = today.toISOString().split('T')[0];
+        var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+        
+        // Set default values
+        $('#start-date').val(todayFormatted);
+        $('#end-date').val(tomorrowFormatted);
+        if($('#exam-type').val() == "") {
+        $('#date-range').hide();
+    }
+    }
+    
+    // Initialize default dates
+    setDefaultDates();
+    
+    $(document).on('click', '.btn-delete', function () {
+        var batchId = $(this).data('batch-id'); // Use batch-id instead of user-id
+        $('#delete-record').data('batch-id', batchId); // Store the batch ID in the modal button
+    });
+
+    if($('#exam-type').val() == "") {
+        $('#date-range').hide();
+    }
+
+    $('#exam-type').on('change', function(e) {
+        var examType = $(this).val();
+        if (examType !== 'Daily' || examType == '') {
+            $('#date-range').show();
+        } else {
+            $('#date-range').hide();
+        }
+    });
+
+    $(document).on('click', '.btn-delete-exam', function () {
+        var examId = $(this).data('exam-id'); 
+        $('#delete-exam-form').attr('action', "{% url 'subject-exam-delete' exam_id=0 %}".replace('0', examId));
+    });
+
+    $(document).on('click', '.edit-exam', function() {
+        var examId = $(this).data('exam-id');
+        var examTitle = $(this).data('title');
+        var examDuration = $(this).data('duration');
+        var examType = $(this).data('exam-type');
+        var examStartDate = $(this).data('start-date');
+        var examEndDate = $(this).data('end-date');
+        var attempts = $(this).data('attempts');
+        var isShuffle = $(this).attr('data-is-shuffle') === '1';
+        var isFree = $(this).attr('data-is-free') === '1';
+
+        
+        // If start date and end date are not provided, set defaults
+        if (!examStartDate) {
+            examStartDate = new Date().toISOString().split('T')[0];
+        }
+        if (!examEndDate) {
+            var endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            examEndDate = endDate.toISOString().split('T')[0];
+        }
+       
+        // Format duration to HH:MM:SS if needed
+        if (examDuration) {
+            // Check if duration is already in HH:MM:SS format
+            if (!examDuration.includes(':')) {
+                // If not, format it
+                var durationParts = examDuration.split(' ');
+                var hours = 0;
+                var minutes = 0;
+                var seconds = 0;
+                
+                for (var i = 0; i < durationParts.length; i++) {
+                    if (durationParts[i].includes('hour')) {
+                        hours = parseInt(durationParts[i-1]) || 0;
+                    } else if (durationParts[i].includes('minute')) {
+                        minutes = parseInt(durationParts[i-1]) || 0;
+                    } else if (durationParts[i].includes('second')) {
+                        seconds = parseInt(durationParts[i-1]) || 0;
+                    }
+                }
+                
+                // Format as HH:MM:SS
+                examDuration = 
+                    (hours < 10 ? '0' + hours : hours) + ':' + 
+                    (minutes < 10 ? '0' + minutes : minutes) + ':' + 
+                    (seconds < 10 ? '0' + seconds : seconds);
+            }
+        } else {
+            examDuration = '01:00:00'; // Default duration
+        }
+        
+        // Set modal title
+        $('#exam-modal-title').text('Update Exam');
+        
+        // Fill form fields
+        $('#exam-title').val(examTitle);
+        $('#exam-duration').val(examDuration);
+        
+        // Set exam type and show/hide date fields based on type
+        if (examType) {
+            $('#exam-type').val(examType);
+            if (examType !== 'Daily') {
+                $('#date-range').show();
+            } else {
+                $('#date-range').hide();
+            }
+        }
+        
+        // Set date values
+        if (examStartDate) {
+            $('#start-date').val(examStartDate);
+        }
+        if (examEndDate) {
+            $('#end-date').val(examEndDate);
+        }
+        
+        $('#is-free').prop('checked', isFree);
+        $('#number-of-attempt').val(attempts || 1);
+        $('#is-shuffle').prop('checked', isShuffle);
+        
+        // Ensure date fields have values
+        if (!$('#start-date').val()) {
+            $('#start-date').val(new Date().toISOString().split('T')[0]);
+        }
+        if (!$('#end-date').val()) {
+            var endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            $('#end-date').val(endDate.toISOString().split('T')[0]);
+        }
+        
+        // Change form action
+        $('#exam-form').attr('action', "{% url 'subject-exam-update' exam_id=0 %}".replace('0', examId));
+        
+        // Change button text
+        $('#exam-submit-btn').text('Update Exam');
+        
+        // Show modal
+        $('#add-exam-modal').modal('show');
+    });
+    
+    $("#add-new-exam").on('click', function() {
+        $('#add-exam-modal').modal('show');
+        // Reset modal title
+        $('#exam-modal-title').text('Add New Exam');
+        // Clear form fields
+        $('#exam-form')[0].reset();
+        
+        // Reset form action
+        $('#exam-form').attr('action', "{% url 'subject-exam-add' course_id=course.id %}");
+        
+        // Reset button text
+        $('#exam-submit-btn').text('Save Exam');
+        
+        // Set default dates for new exam
+        setDefaultDates();
+    });
+
+    $('#delete-record').click(function () {
+        var userId = $(this).data('batch-id');
+
+        console.log("Deleting User ID: " + userId);
+
+        $.ajax({
+            url: '/course/subject/delete/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Deleted successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error deleting user:", error);
+            }
+        });
+    });
+});
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    // Get the current sort parameter
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    // Update URL with date range and sort parameter
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            // Set date range parameters
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            // Set or preserve sorting parameter
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            // Get existing date range parameters
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            // Update URL with sorting parameter
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add event listener to sorting links
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            // Optionally: Remove date range and sorting parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+    
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+    
+{% endblock %}

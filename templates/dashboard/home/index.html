@@ -1,0 +1,273 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+<!-- templates\dashboard\base.html -->
+{% block content %}
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">{{ user.get_user_type_display }} Dashboard</h3>
+                <!-- <nav>
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ user.get_user_type_display }} Dashboard</li>
+                    </ol>
+                </nav> -->
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-customer-add' %}"
+                        class="btn btn-primary d-flex align-items-center me-3"><i
+                            class="ti ti-square-rounded-plus me-2"></i>Add New Student</a>
+                </div>
+                <!-- <div class="mb-2">
+                    <a href=""
+                        class="btn btn-light d-flex align-items-center">Fees Details</a>
+                </div> -->
+            </div>
+        </div>
+
+        <div class="row">
+            
+
+            <div class="card bg-dark">
+                <div class="overlay-img">
+                    <img src="{% static 'dashboard\ci\template\public\assets\images\shape-04.png' %}"
+                        alt="img" class="img-fluid shape-01">
+                    <img src="{% static 'dashboard\ci\template\public\assets\images\shape-01.png' %}"
+                        alt="img" class="img-fluid shape-02">
+                    <img src="{% static 'dashboard\ci\template\public\assets\images\shape-02.png' %}"
+                        alt="img" class="img-fluid shape-03">
+                    <img src="{% static 'dashboard\ci\template\public\assets\images\shape-03.png' %}"
+                        alt="img" class="img-fluid shape-04">
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-xl-center justify-content-xl-between flex-xl-row flex-column">
+                        <div class="mb-3 mb-xl-0">
+                            <div class="d-flex align-items-center flex-wrap mb-2">
+                                <h1 class="text-white me-2">Welcome Back, {{user}}</h1>
+                                <a href=""
+                                    class=" img-rounded bg-gray-800 dark-hover">
+                                    </a>
+                            </div>
+                            <p class="text-white">Have a Good day at work</p>
+                        </div>
+                        <!-- <p class="text-white"><i class="ti ti-refresh me-1"></i>Joined </p> -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row">
+
+        <div class="col-xxl-3 col-sm-6 d-flex">
+            <div class="card flex-fill animate-card border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-xl bg-danger-transparent me-2 p-1">
+                            <img src="{% static 'dashboard\ci\template\public\assets\images\student.svg' %}"
+                                alt="img">
+                        </div>
+                        <div class="overflow-hidden flex-fill">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h2 class="counter">{{customers}}</h2>
+                                <!-- <span class="badge bg-danger">1.2%</span> -->
+                            </div>
+                            <p>Total Students</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-top mt-3 pt-3">
+                        <p class="mb-0">Subscribed : <span class="text-dark fw-semibold">{{subscribed_users}}</span></p>
+                        <span class="text-light">|</span>
+                        <p>Un Subscribed : <span class="text-dark fw-semibold">{{non_subscribed_users}}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-xxl-3 col-sm-6 d-flex">
+            <div class="card flex-fill animate-card border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-xl me-2 bg-secondary-transparent p-1">
+                            <img src="{% static 'dashboard\ci\template\public\assets\images\teacher.svg' %}"
+                                alt="img">
+                        </div>
+                        <div class="overflow-hidden flex-fill">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h2 class="counter">{{ total_mentors }}</h2>
+                                <!-- <span class="badge bg-skyblue">1.2%</span> -->
+                            </div>
+                            <p>Total Mentors</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-top mt-3 pt-3">
+                        <p class="mb-0">Active : <span class="text-dark fw-semibold">{{ active_mentors }}</span></p>
+                        <span class="text-light">|</span>
+                        <p>Inactive : <span class="text-dark fw-semibold">{{ in_active_mentors }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-xxl-3 col-sm-6 d-flex">
+            <div class="card flex-fill animate-card border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-xl me-2 bg-warning-transparent p-1">
+                            <img src="{% static 'dashboard\ci\template\public\assets\images\staff.svg' %}"
+                                alt="img">
+                        </div>
+                        <div class="overflow-hidden flex-fill">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h2 class="counter">{{staff}}</h2>
+                                <!-- <span class="badge bg-warning">1.2%</span> -->
+                            </div>
+                            <p>Total Staff</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-top mt-3 pt-3">
+                        <p class="mb-0">Active : <span class="text-dark fw-semibold">{{active_staff}}</span></p>
+                        <span class="text-light">|</span>
+                        <p>Inactive : <span class="text-dark fw-semibold">{{in_active_staff}}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-xxl-3 col-sm-6 d-flex">
+            <div class="card flex-fill animate-card border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-xl me-2 bg-success-transparent p-1">
+                            <img src="{% static 'dashboard\ci\template\public\assets\images\subject.svg' %}"
+                                alt="img">
+                        </div>
+                        <div class="overflow-hidden flex-fill">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h2 class="counter">{{course_count}}</h2>
+                                <!-- <span class="badge bg-success">1.2%</span> -->
+                            </div>
+                            <p>Total Course</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between border-top mt-3 pt-3">
+                        <p class="mb-0">Popular : <span
+                                class="text-dark fw-semibold">{{most_subscribed_course_count}}</span></p>
+                        <span class="text-light">|</span>
+                        <p>Name : <span class="text-dark fw-semibold">{{ most_subscribed_course_name|default:"" }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+   
+    
+    <div class="row">
+
+            <!-- Table for Course Name and Earnings -->
+            <div class="col-xxl-6 col-xl-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-body">
+                        <h4 class="card-title">Courses and Earnings</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th>Course Name</th>
+                                        <th>Subscriptions</th>
+                                        <th>Total Earnings</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course_data in courses_with_subscriptions %}
+                                    <tr class="table-light">
+                                        <td>{{ course_data.course_name }}</td>
+                                        <td>{{ course_data.subscription_count }}</td>
+                                        <td class="text-end fw-bold">₹ {{ course_data.total_earnings|floatformat:2 }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    {% if courses_with_subscriptions %}
+                                    <tr class="table-secondary">
+                                        <td colspan="2" class="fw-bold">Total Earnings</td>
+                                        <td class="text-end fw-bold">₹ {{ total_earnings|default:"0.00" }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No course earnings data available</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        
+
+
+        <div class="col-xxl-6 col-xl-6 d-flex">
+            <div class="card flex-fill">
+                
+                <div class="card-body">
+                    <div class="alert alert-success d-flex align-items-center mb-24" role="alert">
+                        <i class="ti ti-info-square-rounded me-2 fs-14"></i>
+                        <div class="fs-14">
+                            These are popular courses
+                        </div>
+                    </div>
+                    <ul class="list-group">
+                        {% for course in courses_with_subscriptions %}
+                        <li class="list-group-item">
+                            <div class="row align-items-center">
+                                <div class="col-sm-4">
+                                    <p class="text-dark">{{ course.course_name }}</p>
+                                </div>
+                                <div class="col-sm-8">
+                                    <!-- Progress bar for course subscription -->
+                                    <div class="progress progress-xs flex-grow-1">
+                                        <div class="progress-bar bg-secondary rounded" role="progressbar"
+                                             style="width: {{ course.subscription_percentage|default:0 }}%;" 
+                                             aria-valuenow="{{ course.subscription_percentage }}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+   
+</div>
+</div>
+
+
+
+
+
+</div>
+
+{% endblock %}
+
+</body>
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 18 Sep 2024 04:06:32 GMT -->
+
+</html>

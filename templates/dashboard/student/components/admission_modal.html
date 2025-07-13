@@ -1,0 +1,394 @@
+<div class="modal fade" id="admission_detail">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add Admission</h4>
+                <button type="button" class="btn-close custom-btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="student-detail-info">
+                    <span class="student-img">
+                        {% if customer.image and customer.image.url %}
+                        <img src="{{ customer.image.url }}" alt="">
+                        {% else %}
+                        <i class="bi bi-person-circle fs-3 text-dark"></i>
+                        {% endif %}
+                    </span>
+                    <div class="name-info">
+                        <h6>{{ customer.name }}</h6>
+                    </div>
+                </div>
+                <form method="POST" id="admission-form" action="{% url 'dashboard-admission-add' pk=customer.id %}">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label for="batch">Select Batch</label>
+                        <select name="batch" id="batch" class="form-control">
+                            <option value="">Select a batch</option>
+                            {% for batch in available_batches %}
+                            <option value="{{ batch.id }}" data-start-date="{{ batch.start_date }}"
+                                data-end-date="{{ batch.batch_expiry }}">
+                                {{ batch.batch_name }} - {{ batch.start_date }} to {{ batch.batch_expiry }} ({{ batch.batch_price }})
+                            </option>
+                            {% empty %}
+                            <option>No batches available</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Payment Plan Section -->
+                    <div class="mt-4 mb-3">
+                        <h5 class="mb-3">Payment Plan</h5>
+                        <div class="form-group mb-3">
+                            <label class="form-label">Payment Plan Type</label>
+                            <div class="d-flex">
+                                <div class="form-check me-4">
+                                    <input class="form-check-input" type="radio" name="payment_plan_type"
+                                        id="existing_plan" value="existing" checked>
+                                    <label class="form-check-label" for="existing_plan">Use Existing Plan</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_plan_type" id="new_plan"
+                                        value="new">
+                                    <label class="form-check-label" for="new_plan">Create New Plan</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Plan Section -->
+                        <div id="existing-plan-section" class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="existing_plan_select">Select Existing Plan</label>
+                                    <select name="existing_plan" id="existing_plan_select" class="form-control">
+                                        <option value="">Select a payment plan</option>
+                                        {% for plan in available_payment_plans %}
+                                        <option value="{{ plan.id }}">
+                                            {{ plan.name }} - {{ plan.number_of_installments }} installments ({{ plan.total_amount|floatformat:2 }})
+                                        </option>
+                                        {% empty %}
+                                        <option value="" disabled>No payment plans available</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Plan Section -->
+                        <div id="new-plan-section" class="row" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="plan_name">Plan Name</label>
+                                    <input type="text" class="form-control" id="plan_name" name="plan_name"
+                                        placeholder="Enter plan name">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="total_amount">Total Amount</label>
+                                    <input type="number" class="form-control" id="total_amount" name="total_amount"
+                                        placeholder="Enter total amount">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="discount">Discount</label>
+                                    <input type="number" class="form-control" id="discount" name="discount"
+                                        placeholder="Enter discount amount" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="number_of_installments">Number of Installments</label>
+                                    <input type="number" class="form-control" id="number_of_installments"
+                                        name="number_of_installments" placeholder="Enter number of installments">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="installment_frequency">Installment Frequency</label>
+                                    <select class="form-control" id="installment_frequency"
+                                        name="installment_frequency">
+                                        <option value="monthly">Monthly</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="yearly">Yearly</option>
+                                        <option value="custom_date">Custom Date</option>
+                                        <option value="batch_duration">Batch Duration</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Custom date fields (initially hidden) -->
+                            <div id="custom-date-fields" class="row" style="display: none;">
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label for="custom_start_date">Start Date</label>
+                                        <input type="date" class="form-control" id="custom_start_date"
+                                            name="custom_start_date">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-group">
+                                        <label for="custom_end_date">End Date</label>
+                                        <input type="date" class="form-control" id="custom_end_date"
+                                            name="custom_end_date">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview Section -->
+                            <div class="col-md-12 mt-3">
+                                <div class="card border">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0">Installment Preview</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="installment-preview-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Installment #</th>
+                                                        <th>Due Date</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td colspan="3" class="text-center">Configure the payment plan
+                                                            to see installments</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Add Subscription</button>
+                        <a href="#" class="btn btn-light" data-bs-dismiss="modal">Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Payment plan form functionality
+        const paymentPlanTypeRadios = document.querySelectorAll('input[name="payment_plan_type"]');
+        const existingPlanSection = document.getElementById('existing-plan-section');
+        const newPlanSection = document.getElementById('new-plan-section');
+
+        // Fields for installment preview calculation
+        const totalAmountField = document.querySelector('#new-plan-section input[name="total_amount"]');
+        const numberOfInstallmentsField = document.querySelector('#new-plan-section input[name="number_of_installments"]');
+        const discountField = document.querySelector('#new-plan-section input[name="discount"]');
+        const frequencySelect = document.querySelector('#new-plan-section select[name="installment_frequency"]');
+        const previewTable = document.getElementById('installment-preview-table');
+        const batchSelect = document.querySelector('select[name="batch"]');
+        const customDateFields = document.getElementById('custom-date-fields');
+        const customStartDateField = document.querySelector('input[name="custom_start_date"]');
+        const customEndDateField = document.querySelector('input[name="custom_end_date"]');
+
+        // Toggle between existing and new plan sections
+        paymentPlanTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'existing') {
+                    existingPlanSection.style.display = 'flex';
+                    newPlanSection.style.display = 'none';
+                } else {
+                    existingPlanSection.style.display = 'none';
+                    newPlanSection.style.display = 'flex';
+                }
+            });
+        });
+
+        // Show/hide custom date fields based on frequency selection
+        if (frequencySelect) {
+            frequencySelect.addEventListener('change', function () {
+                if (this.value === 'custom_date') {
+                    customDateFields.style.display = 'flex';
+                } else {
+                    customDateFields.style.display = 'none';
+                }
+                updateInstallmentPreview();
+            });
+        }
+
+        // Generate installment preview when inputs change
+        function updateInstallmentPreview() {
+            if (!previewTable || !totalAmountField || !numberOfInstallmentsField) return;
+
+            const totalAmount = parseFloat(totalAmountField.value) || 0;
+            const numberOfInstallments = parseInt(numberOfInstallmentsField.value) || 0;
+            const discount = parseFloat(discountField.value) || 0;
+            const frequency = frequencySelect.value || 'monthly';
+
+            if (totalAmount > 0 && numberOfInstallments > 0) {
+                const totalAfterDiscount = totalAmount - discount;
+                const amountPerInstallment = totalAfterDiscount / numberOfInstallments;
+
+                // Generate preview table rows
+                let tableHtml = '';
+                let startDate, endDate;
+
+                // Handle different frequency types
+                if (frequency === 'custom_date') {
+                    // Use custom date range if both dates are provided
+                    if (customStartDateField.value && customEndDateField.value) {
+                        startDate = new Date(customStartDateField.value);
+                        endDate = new Date(customEndDateField.value);
+
+                        // Calculate date intervals
+                        const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+                        const intervalDays = Math.max(1, Math.floor(totalDays / numberOfInstallments));
+
+                        for (let i = 0; i < numberOfInstallments; i++) {
+                            let dueDate;
+
+                            // For the last installment, use the end date
+                            if (i === numberOfInstallments - 1) {
+                                dueDate = new Date(endDate);
+                            } else {
+                                dueDate = new Date(startDate);
+                                dueDate.setDate(startDate.getDate() + (intervalDays * i));
+                            }
+
+                            const formattedDate = dueDate.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+
+                            tableHtml += `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${formattedDate}</td>
+                                <td>₹${amountPerInstallment.toFixed(2)}</td>
+                            </tr>`;
+                        }
+                    } else {
+                        tableHtml = `<tr><td colspan="3" class="text-center">Please select both start and end dates</td></tr>`;
+                    }
+                } else if (frequency === 'batch_duration') {
+                    // Get selected batch details
+                    const selectedBatchOption = batchSelect.options[batchSelect.selectedIndex];
+                    if (selectedBatchOption && selectedBatchOption.value) {
+                        // Get batch dates from data attributes
+                        const startDateStr = selectedBatchOption.getAttribute('data-start-date');
+                        const endDateStr = selectedBatchOption.getAttribute('data-end-date');
+
+                        if (startDateStr && endDateStr) {
+                            startDate = new Date(startDateStr);
+                            endDate = new Date(endDateStr);
+
+                            // Calculate date intervals
+                            const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+                            const intervalDays = Math.max(1, Math.floor(totalDays / numberOfInstallments));
+
+                            for (let i = 0; i < numberOfInstallments; i++) {
+                                let dueDate;
+
+                                // For the last installment, use the end date
+                                if (i === numberOfInstallments - 1) {
+                                    dueDate = new Date(endDate);
+                                } else {
+                                    dueDate = new Date(startDate);
+                                    dueDate.setDate(startDate.getDate() + (intervalDays * i));
+                                }
+
+                                const formattedDate = dueDate.toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+
+                                tableHtml += `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td>${formattedDate}</td>
+                                    <td>₹${amountPerInstallment.toFixed(2)}</td>
+                                </tr>`;
+                            }
+                        } else {
+                            tableHtml = `<tr><td colspan="3" class="text-center">Could not extract batch dates. Please select a different batch.</td></tr>`;
+                        }
+                    } else {
+                        tableHtml = `<tr><td colspan="3" class="text-center">Please select a batch</td></tr>`;
+                    }
+                } else {
+                    // Standard frequency options (weekly, monthly, yearly)
+                    const today = new Date();
+
+                    for (let i = 0; i < numberOfInstallments; i++) {
+                        let dueDate = new Date(today);
+
+                        if (frequency === 'weekly') {
+                            dueDate.setDate(today.getDate() + (7 * i));
+                        } else if (frequency === 'yearly') {
+                            dueDate.setFullYear(today.getFullYear() + i);
+                        } else { // monthly
+                            dueDate.setMonth(today.getMonth() + i);
+                        }
+
+                        const formattedDate = dueDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+
+                        tableHtml += `
+                        <tr>
+                        <td>${i + 1}</td>
+                        <td>${formattedDate}</td>
+                        <td>₹${amountPerInstallment.toFixed(2)}</td>
+                        </tr>`;
+                    }
+                }
+
+                // Update the table
+                const tbody = previewTable.querySelector('tbody');
+                if (tbody) {
+                    tbody.innerHTML = tableHtml;
+                }
+            } else {
+                // Reset the table if inputs are invalid
+                const tbody = previewTable.querySelector('tbody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                    <tr>
+                    <td colspan="3" class="text-center">Configure the payment plan to see installments</td>
+                    </tr>`;
+                }
+            }
+        }
+
+        // Add event listeners to update preview
+        if (totalAmountField && numberOfInstallmentsField && discountField && frequencySelect) {
+            [totalAmountField, numberOfInstallmentsField, discountField, frequencySelect, customStartDateField, customEndDateField, batchSelect].forEach(field => {
+                if (field) { // Check if field exists
+                    field.addEventListener('input', updateInstallmentPreview);
+                    field.addEventListener('change', updateInstallmentPreview);
+                }
+            });
+        }
+
+        // Initial setup based on default selection
+        const initialSelectedType = document.querySelector('input[name="payment_plan_type"]:checked');
+        if (initialSelectedType) {
+            if (initialSelectedType.value === 'existing') {
+                existingPlanSection.style.display = 'flex';
+                newPlanSection.style.display = 'none';
+            } else {
+                existingPlanSection.style.display = 'none';
+                newPlanSection.style.display = 'flex';
+            }
+        }
+    });
+</script>

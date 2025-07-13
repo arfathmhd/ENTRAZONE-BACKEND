@@ -1,0 +1,134 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Payment Gateway Configuration{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+<div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                <div class="my-auto mb-2">
+                    <h3 class="mb-1">HDFC HyperCheckout Configuration</h3>
+                    <nav aria-label="breadcrumbs">
+                        <ol class="custom-breadcrumb">
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-payment' %}">Fee Collection</a></li>
+                            <li class="custom-breadcrumb-item active">Payment Gateway</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">HDFC HyperCheckout Settings</h4>
+                    
+                    <form method="post" action="{% url 'dashboard-payment-config' %}">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <label for="merchant_id" class="col-sm-3 col-form-label">Merchant ID</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="merchant_id" name="merchant_id" 
+                                    value="{{ config.merchant_id }}" required>
+                                <small class="form-text text-muted">
+                                    The merchant ID provided by HDFC for your account
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <label for="access_code" class="col-sm-3 col-form-label">Access Code</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="access_code" name="access_code" 
+                                    value="{{ config.access_code }}" required>
+                                <small class="form-text text-muted">
+                                    The access code provided by HDFC for API access
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <label for="working_key" class="col-sm-3 col-form-label">Working Key</label>
+                            <div class="col-sm-9">
+                                <input type="password" class="form-control" id="working_key" name="working_key" 
+                                    {% if not config %}required{% endif %}>
+                                <small class="form-text text-muted">
+                                    The encryption key provided by HDFC. 
+                                    {% if config %}Leave blank to keep using the current key.{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <label for="webhook_secret" class="col-sm-3 col-form-label">Webhook Secret</label>
+                            <div class="col-sm-9">
+                                <input type="password" class="form-control" id="webhook_secret" name="webhook_secret" 
+                                    value="{{ config.webhook_secret }}">
+                                <small class="form-text text-muted">
+                                    Secret key for validating webhook callbacks (optional)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <label class="col-sm-3 col-form-label">Environment</label>
+                            <div class="col-sm-9">
+                                <div class="form-check form-switch form-switch-lg mb-3">
+                                    <input class="form-check-input" type="checkbox" id="is_production" name="is_production"
+                                        {% if config.is_production %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_production">
+                                        Production Mode
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Toggle between test and production environments. 
+                                    <strong class="text-danger">Warning:</strong> Production mode will process real payments.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-sm-9 offset-sm-3">
+                                <div class="alert alert-info">
+                                    <h5 class="alert-heading">Webhook URL</h5>
+                                    <p class="mb-0">Configure your HDFC webhook to point to:</p>
+                                    <code>{{ request.scheme }}://{{ request.get_host }}{% url 'payment-webhook' %}</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row justify-content-end">
+                            <div class="col-sm-9">
+                                <div>
+                                    <button type="submit" class="btn btn-primary w-md">Save Settings</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Toggle production warning
+        $('#is_production').change(function() {
+            if($(this).is(':checked')) {
+                if(!confirm('WARNING: Enabling production mode will process real payments. Are you sure?')) {
+                    $(this).prop('checked', false);
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

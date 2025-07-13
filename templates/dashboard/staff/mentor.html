@@ -1,0 +1,748 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load dashboard_filters %}
+{% block content%}
+
+<div class="page-wrapper">
+    
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Mentor Management</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-mentor-manager' %}">Mentor</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-staff-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Staff</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Mentor List</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Assigned Batches</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for mentor in mentors %}
+                                    <tr>
+                                        <td>{{ mentor.id }}</td>
+                                        <td>{{ mentor.name }}</td>
+                                        <td>{{ mentor.phone_number|default:"N/A" }}</td>
+                                        <td>{{ mentor.email|default:"N/A" }}</td>
+                                        <td>
+                                            <!-- Handle batch display with proper filtering for non-deleted batches -->
+                                            {% with mentor_batches=mentor.mentor_batches.all %}
+                                                {% if mentor_batches.exists %}
+                                                    <!-- Count active batches -->
+                                                    
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="badge bg-secondary me-2">{{ mentor.mentor_batches.all|count_active }} batch(es)</span>
+                                                            <a href="#" class="view-batches-link" data-mentor-id="{{ mentor.id }}" data-mentor-name="{{ mentor.name }}">View All</a>
+                                                        </div>
+                                                        <!-- Hidden batch list that will be shown in modal -->
+                                                        <div class="d-none batch-details" id="mentor-batches-{{ mentor.id }}">
+                                                            <ul class="list-unstyled mb-0">
+                                                                {% for batch_mentor in mentor_batches %}
+                                                                    {% if not batch_mentor.is_deleted %}
+                                                                    <li class="mb-1 d-flex align-items-center">
+                                                                        <span class="badge bg-primary me-2">{{ batch_mentor.batch.batch_name }} ({{ batch_mentor.batch.course.course_name }})</span>
+                                                                        <button type="button" class="btn btn-sm btn-danger btn-icon remove-batch" 
+                                                                            data-assignment-id="{{ batch_mentor.id }}" 
+                                                                            data-bs-toggle="tooltip" 
+                                                                            title="Remove from batch">
+                                                                            <i class="bi bi-x"></i>
+                                                                        </button>
+                                                                    </li>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                {% else %}
+                                                    <span class="text-muted">No batches assigned</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-primary btn-sm assign-batch" 
+                                                data-mentor-id="{{ mentor.id }}" 
+                                                data-mentor-name="{{ mentor.name }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignBatchModal">
+                                                Assign to Batch
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No mentors found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- View Batches Modal -->
+<div class="modal fade" id="viewBatchesModal" tabindex="-1" aria-labelledby="viewBatchesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewBatchesModalLabel">Assigned Batches</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 id="viewBatchesMentorName" class="mb-3"></h6>
+                <div id="viewBatchesContent">
+                    <!-- Batch list will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Batch Modal -->
+<div class="modal fade" id="assignBatchModal" tabindex="-1" aria-labelledby="assignBatchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignBatchModalLabel">Assign Mentor to Batch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignBatchForm">
+                    <input type="hidden" id="mentorId" name="mentor_id">
+                    <div class="mb-3">
+                        <label for="mentorName" class="form-label">Mentor</label>
+                        <input type="text" class="form-control" id="mentorName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="batchSearch" class="form-label">Search Batch</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="batchSearch" placeholder="Type to search batches...">
+                            <button class="btn btn-outline-secondary" type="button" id="showAllBatches">
+                                <i class="bi bi-list"></i> Show All
+                            </button>
+                        </div>
+                        <div id="batchSearchResults" class="mt-2 list-group" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="selectedBatches" class="form-label">Selected Batches</label>
+                        <div id="selectedBatchesList" class="border rounded p-2" style="min-height: 40px;">
+                            <span class="text-muted" id="noBatchesSelected">No batches selected</span>
+                        </div>
+                        <input type="hidden" id="selectedBatchIds" name="batch_ids">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Batches by Course</label>
+                        <div class="card">
+                            <div class="card-header p-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllBatches">
+                                            <label class="form-check-label" for="selectAllBatches">
+                                                Select All Batches
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <span class="badge bg-secondary" id="batchCount">0 selected</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-2" style="max-height: 300px; overflow-y: auto;">
+                                <div class="accordion batch-accordion" id="batchAccordion">
+                                    {% regroup batches by course as course_list %}
+                                    {% for course in course_list %}
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                                        data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false"
+                                                        aria-controls="collapse{{ forloop.counter }}">
+                                                    {% if course.grouper %}
+                                                        {{ course.grouper.course_name }} <span class="ms-2 badge bg-primary">{{ course.list|length }}</span>
+                                                    {% else %}
+                                                        Uncategorized <span class="ms-2 badge bg-primary">{{ course.list|length }}</span>
+                                                    {% endif %}
+                                                </button>
+                                            </h2>
+                                            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse"
+                                                 aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#batchAccordion">
+                                                <div class="accordion-body p-0">
+                                                    <div class="list-group batch-list">
+                                                        {% for batch in course.list %}
+                                                            <div class="list-group-item batch-item" data-batch-id="{{ batch.id }}" data-batch-name="{{ batch.batch_name }}">
+                                                                <div class="form-check d-flex align-items-center">
+                                                                    <input class="form-check-input batch-checkbox me-2" type="checkbox" 
+                                                                           id="batch{{ batch.id }}" value="{{ batch.id }}">
+                                                                    <label class="form-check-label w-100" for="batch{{ batch.id }}">
+                                                                        {{ batch.batch_name }}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="alert alert-info mb-0">No batches available</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBatchAssignment">Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        // Handle View All batches link
+        $('.view-batches-link').on('click', function(e) {
+            e.preventDefault();
+            const mentorId = $(this).data('mentor-id');
+            const mentorName = $(this).data('mentor-name');
+            
+            // Set mentor name in modal
+            $('#viewBatchesMentorName').text(`Mentor: ${mentorName}`);
+            
+            // Get batch details from hidden div and clone to modal
+            const batchDetails = $(`#mentor-batches-${mentorId}`).html();
+            $('#viewBatchesContent').html(batchDetails);
+            
+            // Initialize tooltips for the remove buttons
+            $('#viewBatchesContent [data-bs-toggle="tooltip"]').tooltip();
+            
+            // Show the modal
+            $('#viewBatchesModal').modal('show');
+        });
+        
+        // Handle remove batch button in the view batches modal
+        $(document).on('click', '#viewBatchesContent .remove-batch', function() {
+            const assignmentId = $(this).data('assignment-id');
+            const batchItem = $(this).closest('li');
+            
+            if (confirm('Are you sure you want to remove this mentor from the batch?')) {
+                $.ajax({
+                    url: '{% url "dashboard-mentor-remove" %}',
+                    method: 'POST',
+                    data: {
+                        assignment_id: assignmentId,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            // Remove the batch from the list
+                            batchItem.fadeOut(300, function() {
+                                $(this).remove();
+                                
+                                // If no batches left, close modal and reload page
+                                if ($('#viewBatchesContent li').length === 0) {
+                                    $('#viewBatchesModal').modal('hide');
+                                    location.reload();
+                                }
+                            });
+                        } else {
+                            alert(response.message || 'Error removing mentor from batch');
+                        }
+                    },
+                    error: function() {
+                        alert('Error removing mentor from batch');
+                    }
+                });
+            }
+        });
+        
+        // Track selected batches
+        let selectedBatches = {};
+        
+        // Assign batch button click
+        $('.assign-batch').on('click', function() {
+            const mentorId = $(this).data('mentor-id');
+            const mentorName = $(this).data('mentor-name');
+            
+            // Reset selections
+            $('#mentorId').val(mentorId);
+            $('#mentorName').val(mentorName);
+            selectedBatches = {};
+            updateSelectedBatchesDisplay();
+            $('#batchSearchResults').hide();
+            
+            // Uncheck all checkboxes
+            $('.batch-checkbox, .search-batch-checkbox').prop('checked', false);
+            $('.batch-item').removeClass('active');
+            
+            // Load already assigned batches
+            loadMentorBatches(mentorId);
+        });
+        
+        // Load mentor's existing batch assignments
+        function loadMentorBatches(mentorId) {
+            $.ajax({
+                url: '{% url "dashboard-mentor-get-batches" %}',
+                data: { mentor_id: mentorId },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        const assignedBatches = response.assigned_batches;
+                        
+                        // Pre-select already assigned batches
+                        assignedBatches.forEach(function(batch) {
+                            const batchId = batch.id;
+                            const batchName = batch.name;
+                            
+                            // Check the checkbox
+                            $(`.batch-checkbox[value="${batchId}"]`).prop('checked', true);
+                            
+                            // Add to selected batches
+                            selectedBatches[batchId] = batchName;
+                        });
+                        
+                        // Update the display
+                        updateSelectedBatchesDisplay();
+                        updateBatchCount();
+                        
+                        // Open accordions that have selected batches
+                        if (assignedBatches.length > 0) {
+                            $('.batch-checkbox:checked').each(function() {
+                                $(this).closest('.accordion-collapse').addClass('show');
+                            });
+                        }
+                    }
+                },
+                error: function() {
+                    console.error('Error loading mentor batches');
+                }
+            });
+        }
+        
+        // Show all batches button
+        $('#showAllBatches').on('click', function() {
+            $('#batchSearchResults').hide();
+            $('#batchSearch').val('');
+            // Scroll to the batch list
+            $('.batch-list').closest('.card-body').scrollTop(0);
+            // Highlight the batch list section
+            $('.batch-list').closest('.card').addClass('border-primary').delay(1000).queue(function(next){
+                $(this).removeClass('border-primary');
+                next();
+            });
+        });
+        
+        // Batch search
+        let searchTimeout;
+        $('#batchSearch').on('keyup', function() {
+            clearTimeout(searchTimeout);
+            const query = $(this).val();
+            
+            if (query.length < 2) {
+                $('#batchSearchResults').hide();
+                return;
+            }
+            
+            searchTimeout = setTimeout(function() {
+                $.ajax({
+                    url: '{% url "dashboard-mentor-search-batches" %}',
+                    data: { query: query },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const results = response.results;
+                            let html = '';
+                            
+                            if (results.length > 0) {
+                                results.forEach(function(batch) {
+                                    const isChecked = selectedBatches[batch.id] ? 'checked' : '';
+                                    html += `<div class="list-group-item batch-result" data-batch-id="${batch.id}" data-batch-name="${batch.name}">
+                                                <div class="form-check d-flex align-items-center">
+                                                    <input class="form-check-input search-batch-checkbox me-2" type="checkbox" 
+                                                           id="searchBatch${batch.id}" value="${batch.id}" ${isChecked}>
+                                                    <label class="form-check-label w-100" for="searchBatch${batch.id}">
+                                                        ${batch.name} <small class="text-muted">(${batch.course})</small>
+                                                    </label>
+                                                </div>
+                                            </div>`;
+                                });
+                            } else {
+                                html = '<div class="list-group-item">No batches found</div>';
+                            }
+                            
+                            $('#batchSearchResults').html(html).show();
+                        }
+                    },
+                    error: function() {
+                        $('#batchSearchResults').html('<div class="list-group-item text-danger">Error searching batches</div>').show();
+                    }
+                });
+            }, 300);
+        });
+        
+        // Filter the batch list as user types
+        $('#batchSearch').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            
+            if (query.length > 0) {
+                $('.batch-item').each(function() {
+                    const batchName = $(this).data('batch-name').toLowerCase();
+                    if (batchName.includes(query)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            } else {
+                // If search is cleared, show all batches
+                $('.batch-item').show();
+            }
+        });
+        
+        // Batch selection from search results - clicking on the item
+        $(document).on('click', '.batch-result', function(e) {
+            if (!$(e.target).is('input:checkbox')) {
+                const checkbox = $(this).find('input:checkbox');
+                checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+            }
+        });
+        
+        // Handle search checkbox selection
+        $(document).on('change', '.search-batch-checkbox', function() {
+            const batchItem = $(this).closest('.batch-result');
+            const batchId = batchItem.data('batch-id');
+            const batchName = batchItem.data('batch-name');
+            const isChecked = $(this).prop('checked');
+            
+            // Update the main list checkbox to match
+            $(`.batch-item[data-batch-id="${batchId}"] .batch-checkbox`).prop('checked', isChecked);
+            
+            toggleBatchSelection(batchId, batchName, isChecked);
+        });
+        
+        // Batch selection from list - handle clicking on the list item
+        $('.batch-item').on('click', function(e) {
+            if (!$(e.target).is('input:checkbox')) {
+                const checkbox = $(this).find('input:checkbox');
+                checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+            }
+        });
+        
+        // Handle checkbox selection from the main list
+        $('.batch-checkbox').on('change', function() {
+            const batchItem = $(this).closest('.batch-item');
+            const batchId = batchItem.data('batch-id');
+            const batchName = batchItem.data('batch-name');
+            const isChecked = $(this).prop('checked');
+            
+            toggleBatchSelection(batchId, batchName, isChecked);
+        });
+        
+        // Helper function to toggle batch selection
+        function toggleBatchSelection(batchId, batchName, isSelected) {
+            if (isSelected) {
+                selectedBatches[batchId] = batchName;
+            } else {
+                delete selectedBatches[batchId];
+            }
+            
+            updateSelectedBatchesDisplay();
+        }
+        
+        // Update the display of selected batches
+        function updateSelectedBatchesDisplay() {
+            const batchIds = Object.keys(selectedBatches);
+            $('#selectedBatchIds').val(batchIds.join(','));
+            
+            if (batchIds.length === 0) {
+                $('#selectedBatchesList').html('<span class="text-muted" id="noBatchesSelected">No batches selected</span>');
+                $('#selectAllBatches').prop('checked', false);
+            } else if (batchIds.length === $('.batch-checkbox').length) {
+                $('#selectAllBatches').prop('checked', true);
+            } else {
+                $('#selectAllBatches').prop('checked', false);
+            }
+            
+            updateBatchCount();
+            
+            if (batchIds.length === 0) {
+                return;
+            }
+            
+            let html = '';
+            for (const batchId in selectedBatches) {
+                html += `<span class="badge bg-primary me-2 mb-2">${selectedBatches[batchId]} 
+                            <button type="button" class="btn-close btn-close-white ms-1" 
+                                    data-batch-id="${batchId}" aria-label="Remove"></button>
+                        </span>`;
+            }
+            
+            $('#selectedBatchesList').html(html);
+            
+            // Add event listener for removing batches via the badge close button
+            $('.btn-close').on('click', function() {
+                const batchId = $(this).data('batch-id');
+                $(`.batch-checkbox[value="${batchId}"]`).prop('checked', false);
+                $(`.search-batch-checkbox[value="${batchId}"]`).prop('checked', false);
+                delete selectedBatches[batchId];
+                updateSelectedBatchesDisplay();
+            });
+        }
+        
+        // Update batch count display
+        function updateBatchCount() {
+            const count = Object.keys(selectedBatches).length;
+            const total = $('.batch-checkbox').length;
+            $('#batchCount').text(`${count} of ${total} selected`);
+        }
+        
+        // Save batch assignment
+        $('#saveBatchAssignment').on('click', function() {
+            const mentorId = $('#mentorId').val();
+            const batchIds = $('#selectedBatchIds').val();
+            
+            if (!mentorId || !batchIds) {
+                alert('Please select at least one batch');
+                return;
+            }
+            
+            $.ajax({
+                url: '{% url "dashboard-mentor-assign" %}',
+                method: 'POST',
+                data: {
+                    mentor_id: mentorId,
+                    batch_ids: batchIds,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(response.message || 'Error assigning mentor to batches');
+                    }
+                },
+                error: function() {
+                    alert('Error assigning mentor to batches');
+                }
+            });
+        });
+        
+        // Remove batch assignment
+        $('.remove-batch').on('click', function() {
+            if (!confirm('Are you sure you want to remove this mentor from the batch?')) {
+                return;
+            }
+            
+            const assignmentId = $(this).data('assignment-id');
+            
+            $.ajax({
+                url: '{% url "dashboard-mentor-remove" %}',
+                method: 'POST',
+                data: {
+                    assignment_id: assignmentId,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert(response.message || 'Error removing mentor from batch');
+                    }
+                },
+                error: function() {
+                    alert('Error removing mentor from batch');
+                }
+            });
+        });
+        
+        // Select All Batches functionality
+        $('#selectAllBatches').on('change', function() {
+            const isChecked = $(this).prop('checked');
+            
+            // Check/uncheck all batch checkboxes
+            $('.batch-checkbox').prop('checked', isChecked);
+            
+            // Update selected batches
+            if (isChecked) {
+                // Add all batches to selection
+                $('.batch-checkbox').each(function() {
+                    const batchId = $(this).val();
+                    const batchName = $(this).closest('.batch-item').data('batch-name');
+                    selectedBatches[batchId] = batchName;
+                });
+            } else {
+                // Clear all selections
+                selectedBatches = {};
+            }
+            
+            // Update display
+            updateSelectedBatchesDisplay();
+        });
+        
+        // Open all accordions button
+        $('#showAllBatches').on('click', function() {
+            // Toggle between opening and closing all accordions
+            const allCollapsed = $('.accordion-button.collapsed').length === $('.accordion-button').length;
+            
+            if (allCollapsed) {
+                // Open all accordions
+                $('.accordion-collapse').addClass('show');
+                $('.accordion-button').removeClass('collapsed').attr('aria-expanded', 'true');
+            } else {
+                // Close all accordions
+                $('.accordion-collapse').removeClass('show');
+                $('.accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+            }
+        });
+        
+        // Clear search and hide results when modal is closed
+        $('#assignBatchModal').on('hidden.bs.modal', function () {
+            $('#batchSearch').val('');
+            $('#batchSearchResults').hide();
+            $('.batch-item').show();
+            $('.accordion-item').show();
+        });
+        
+        // Filter batches by search term - both in accordions and search results
+        $('#batchSearch').on('input', function() {
+            const query = $(this).val().toLowerCase();
+            
+            if (query.length === 0) {
+                // Show all accordions and items
+                $('.accordion-item').show();
+                $('.batch-item').show();
+                $('#batchSearchResults').hide();
+                return;
+            }
+            
+            // Filter items in the accordion
+            let matchFound = false;
+            
+            // First hide all accordion items
+            $('.accordion-item').hide();
+            
+            // Then show only those with matching batches
+            $('.batch-item').each(function() {
+                const batchName = $(this).data('batch-name').toLowerCase();
+                const matches = batchName.includes(query);
+                
+                if (matches) {
+                    $(this).show();
+                    // Show the parent accordion item
+                    $(this).closest('.accordion-item').show();
+                    // Open the accordion
+                    $(this).closest('.accordion-collapse').addClass('show');
+                    $(this).closest('.accordion-item').find('.accordion-button')
+                        .removeClass('collapsed')
+                        .attr('aria-expanded', 'true');
+                    
+                    matchFound = true;
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            // If no matches found in the accordion, show a message
+            if (!matchFound && query.length >= 2) {
+                // Perform AJAX search as before
+                performBatchSearch(query);
+            } else {
+                $('#batchSearchResults').hide();
+            }
+        });
+        
+        // Function to perform AJAX search for batches
+        function performBatchSearch(query) {
+            clearTimeout(searchTimeout);
+            
+            searchTimeout = setTimeout(function() {
+                $.ajax({
+                    url: '{% url "dashboard-mentor-search-batches" %}',
+                    data: { query: query },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const results = response.results;
+                            let html = '';
+                            
+                            if (results.length > 0) {
+                                results.forEach(function(batch) {
+                                    const isChecked = selectedBatches[batch.id] ? 'checked' : '';
+                                    html += `<div class="list-group-item batch-result" data-batch-id="${batch.id}" data-batch-name="${batch.name}">
+                                                <div class="form-check d-flex align-items-center">
+                                                    <input class="form-check-input search-batch-checkbox me-2" type="checkbox" 
+                                                           id="searchBatch${batch.id}" value="${batch.id}" ${isChecked}>
+                                                    <label class="form-check-label w-100" for="searchBatch${batch.id}">
+                                                        ${batch.name} <small class="text-muted">(${batch.course})</small>
+                                                    </label>
+                                                </div>
+                                            </div>`;
+                                });
+                            } else {
+                                html = '<div class="list-group-item">No batches found</div>';
+                            }
+                            
+                            $('#batchSearchResults').html(html).show();
+                        }
+                    },
+                    error: function() {
+                        $('#batchSearchResults').html('<div class="list-group-item text-danger">Error searching batches</div>').show();
+                    }
+                });
+            }, 300);
+        }
+    });
+</script>
+{% endblock %}

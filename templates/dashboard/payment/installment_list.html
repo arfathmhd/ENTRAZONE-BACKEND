@@ -1,0 +1,403 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Installment List{% endblock %}
+
+{% block content %}
+<style>
+    /* Premium filter styles */
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+    }
+    .filter-card .card-body {
+        padding: 1.5rem;
+    }
+    .filter-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #344767;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+    .filter-title i {
+        margin-right: 0.5rem;
+        color: #5e72e4;
+    }
+    .status-filter .form-check-input:checked {
+        background-color: #5e72e4;
+        border-color: #5e72e4;
+    }
+    .status-filter .form-check-input:focus {
+        box-shadow: 0 0 0 0.15rem rgba(94, 114, 228, 0.25);
+    }
+    .status-filter .form-check-label {
+        color: #525f7f;
+        font-weight: 400;
+        font-size: 0.875rem;
+    }
+    .filter-label {
+        color: #8898aa;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        letter-spacing: 0.03em;
+    }
+    .filter-btn {
+        border-radius: 4px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: none;
+    }
+    .filter-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .filter-select {
+        border-radius: 4px;
+        border-color: #e9ecef;
+        font-size: 0.875rem;
+        color: #525f7f;
+    }
+    .filter-select:focus {
+        border-color: #5e72e4;
+        box-shadow: 0 0 0 0.15rem rgba(94, 114, 228, 0.25);
+    }
+    .date-input {
+        border-color: #e9ecef;
+        font-size: 0.875rem;
+    }
+    .date-input-group .input-group-text {
+        background-color: #f8f9fe;
+        border-color: #e9ecef;
+        color: #8898aa;
+    }
+</style>
+<div class="page-wrapper">
+<div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                <div class="my-auto mb-2">
+                    <h3 class="mb-1">Fee Installments</h3>
+                    <nav aria-label="breadcrumbs">
+                        <ol class="custom-breadcrumb">
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-payment' %}">Fee Collection</a></li>
+                            <li class="custom-breadcrumb-item active">Installments</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <h5 class="filter-title"><i class="bx bx-filter-alt"></i>Filter Installments</h5>
+                    
+                    <form method="get" action="{% url 'dashboard-installment-list' %}">
+                        <div class="row">
+                            <!-- Status Filter -->
+                            <div class="col-md-4 mb-3">
+                                <label class="filter-label">Status</label>
+                                <div class="status-filter d-flex flex-wrap">
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="checkbox" id="status_pending" name="status" value="PENDING" {% if 'PENDING' in filters.status %}checked{% endif %}>
+                                        <label class="form-check-label" for="status_pending">Pending</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="checkbox" id="status_paid" name="status" value="PAID" {% if 'PAID' in filters.status %}checked{% endif %}>
+                                        <label class="form-check-label" for="status_paid">Paid</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="checkbox" id="status_overdue" name="status" value="OVERDUE" {% if 'OVERDUE' in filters.status %}checked{% endif %}>
+                                        <label class="form-check-label" for="status_overdue">Overdue</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="checkbox" id="status_processing" name="status" value="PROCESSING" {% if 'PROCESSING' in filters.status %}checked{% endif %}>
+                                        <label class="form-check-label" for="status_processing">Processing</label>
+                                    </div>
+                                    <div class="form-check me-3 mb-2">
+                                        <input class="form-check-input" type="checkbox" id="status_failed" name="status" value="FAILED" {% if 'FAILED' in filters.status %}checked{% endif %}>
+                                        <label class="form-check-label" for="status_failed">Failed</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Student Filter -->
+                            <div class="col-md-4 mb-3">
+                                <label for="student_id" class="filter-label">Student</label>
+                                <select class="form-select filter-select form-control-sm" id="student_id" name="student_id">
+                                    <option value="">All Students</option>
+                                    {% for student in students %}
+                                    <option value="{{ student.id }}" {% if filters.student_id == student.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ student.name|default:student.email }} {% if student.email %} ({{ student.email }}) {% endif %} -- {{ student.phone_number }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Batch Filter -->
+                            <div class="col-md-4 mb-3">
+                                <label for="batch_id" class="filter-label">Batch</label>
+                                <select class="form-select filter-select form-control-sm" id="batch_id" name="batch_id">
+                                    <option value="">All Batches</option>
+                                    {% for batch in batches %}
+                                    <option value="{{ batch.id }}" {% if filters.batch_id == batch.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ batch.batch_name }} ({{ batch.course.course_name|default:"" }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Date Range Filter -->
+                            <div class="col-md-4 mb-3">
+                                <label for="date_range" class="filter-label">Due Date Range</label>
+                                <div class="input-group date-input-group">
+                                    <input type="date" class="form-control form-control-sm date-input" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}" placeholder="From Date">
+                                    <span class="input-group-text">to</span>
+                                    <input type="date" class="form-control form-control-sm date-input" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}" placeholder="To Date">
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mt-4">
+                                <div class="col-12 d-flex justify-content-end">
+                                    <a href="{% url 'dashboard-installment-list' %}" class="btn btn-sm btn-light filter-btn me-2">
+                                        <i class="bx bx-reset me-1"></i> Reset
+                                    </a>
+                                    <button type="submit" class="btn btn-sm btn-primary filter-btn">
+                                        <i class="bx bx-filter-alt me-1"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Installments Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Link</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for installment in page_obj %}
+                                <tr>
+                                    <td>{{ installment.id }}</td>
+                                    <td>
+                                        <a href="{% url 'dashboard-user-detail' pk=installment.subscription.user.id %}" class="text-body fw-bold">
+                                            {{ installment.subscription.user.name }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ installment.subscription.user.username }}</small>
+                                    </td>
+                                    <td>
+                                        {{ installment.due_date|date:"d M Y" }}
+                                        {% if installment.status == 'OVERDUE' %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>₹{{ installment.amount_due|floatformat:2 }}</td>
+                                    <td>
+                                        {% if installment.status == 'PENDING' %}
+                                        <span class="badge bg-info">Pending</span>
+                                        {% elif installment.status == 'PAID' %}
+                                        <span class="badge bg-success">Paid</span>
+                                        <br>
+                                        <small class="text-muted">{{ installment.paid_on|date:"d M Y" }}</small>
+                                        <br>
+                                        {% elif installment.status == 'OVERDUE' %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% elif installment.status == 'PROCESSING' %}
+                                        <span class="badge bg-warning">Processing</span>
+                                        {% elif installment.status == 'FAILED' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if installment.payment_link %}
+                                        <div class="d-flex align-items-center">
+                                            <input type="text" class="form-control form-control-sm payment-link-input" 
+                                                value="{{ installment.payment_link }}" readonly>
+                                            <button class="btn btn-sm btn-light ms-2 copy-link-btn" 
+                                                data-link="{{ installment.payment_link }}" title="Copy Link">
+                                                <i class="bx bx-copy"></i>
+                                            </button>
+                                            <a href="{{ installment.payment_link }}" target="_blank" 
+                                                class="btn btn-sm btn-light ms-1" title="Open Link">
+                                                <i class="bx bx-link-external"></i>
+                                            </a>
+                                        </div>
+                                        {% if installment.payment_link_expires %}
+                                        <small class="text-muted">
+                                            Expires: {{ installment.payment_link_expires|date:"d M Y" }}
+                                        </small>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">No link generated</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a class="btn btn-sm btn-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                                Actions
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-installment-detail' pk=installment.id %}">
+                                                        <i class="bx bx-show-alt me-1"></i> View Details
+                                                    </a>
+                                                </li>
+                                                {% if not installment.is_paid %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-generate-payment-link' installment_id=installment.id %}">
+                                                        <i class="bx bx-link me-1"></i> Generate Link
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-mark-installment-paid' installment_id=installment.id %}">
+                                                        <i class="bx bx-check-circle me-1"></i> Mark as Paid
+                                                    </a>
+                                                </li>
+                                                {% endif %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-subscription-detail' pk=installment.subscription.id %}">
+                                                        <i class="bx bx-list-ul me-1"></i> View Subscription
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No installments found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="row mt-4">
+                        <div class="col-sm-6">
+                            <div>
+                                <p class="mb-sm-0">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="float-sm-end">
+                                <ul class="pagination mb-sm-0">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            <i class="mdi mdi-chevron-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            <i class="mdi mdi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            <i class="mdi mdi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            <i class="mdi mdi-chevron-double-right"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+    $(document).ready(function() {
+        // Copy payment link to clipboard
+        $('.copy-link-btn').click(function() {
+            var link = $(this).data('link');
+            navigator.clipboard.writeText(link).then(function() {
+                alert('Payment link copied to clipboard!');
+            });
+        });
+        
+        // Initialize select2 for better dropdown experience
+        setTimeout(function() {
+            if($.fn.select2) {
+                $('#student_id').select2({
+                    placeholder: 'Select a student',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#student_id').parent()
+                });
+                
+                $('#batch_id').select2({
+                    placeholder: 'Select a batch',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#batch_id').parent()
+                });
+                
+                console.log('Select2 initialized');
+            } else {
+                console.log('Select2 not found');
+            }
+        }, 500); // Small delay to ensure DOM is fully loaded
+    });
+</script>
+{% endblock %}

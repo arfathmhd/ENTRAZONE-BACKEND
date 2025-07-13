@@ -1,0 +1,261 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+<style>
+    .action-btns {
+        white-space: nowrap;
+    }
+    .video-title {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .star-rating {
+        color: #ffc107;
+        font-size: 1.2rem;
+    }
+    .rating-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Video Ratings</h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item active">Video Ratings</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- Video Ratings Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Video Ratings Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="videoRatingsTable">
+                        <thead>
+                            <tr>
+                                <th>Video ID</th>
+                                <th>Title</th>
+                                <th>Average Rating</th>
+                                <th>Total Ratings</th>
+                                <th>Location</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if page_obj %}
+                                {% for video in page_obj %}
+                                <tr>
+                                    <td>{{ video.id }}</td>
+                                    <td class="video-title" title="{{ video.title }}">{{ video.title }}</td>
+                                    <td>
+                                        {% if video.avg_rating %}
+                                            <div class="star-rating">
+                                                {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= video.avg_rating|floatformat:0|add:"0" %}
+                                                        <i class="bi bi-star-fill"></i>
+                                                    {% elif forloop.counter <= video.avg_rating|floatformat:1|add:"0.5" %}
+                                                        <i class="bi bi-star-half"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-2">{{ video.avg_rating|floatformat:1 }}</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">No ratings</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="rating-count">{{ video.rating_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if video.lesson %}
+                                            <span class="badge bg-info">Lesson</span>
+                                        {% elif video.currentaffair %}
+                                            <span class="badge bg-warning">Current Affairs</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Other</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ video.created|date:"M d, Y" }}</td>
+                                    <td class="action-btns">
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                onclick="viewRatingDetails({{ video.id }});">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No video ratings found</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                            {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+                                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rating Details Modal -->
+<div class="modal fade" id="ratingDetailsModal" tabindex="-1" aria-labelledby="ratingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingDetailsModalLabel">Video Rating Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="ratingDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable if there are records
+        if ($('#videoRatingsTable tbody tr').length > 0 && 
+            !$('#videoRatingsTable tbody tr td[colspan]').length) {
+            $('#videoRatingsTable').DataTable({
+                "order": [[2, "desc"]],  // Sort by average rating by default
+                "pageLength": 25,
+                "columnDefs": [
+                    { "width": "15%", "targets": 1 },  // Title column width
+                    { "width": "15%", "targets": 2 }   // Rating column width
+                ]
+            });
+        }
+    });
+
+    function viewRatingDetails(videoId) {
+        // Show the modal
+        $('#ratingDetailsModal').modal('show');
+        
+        // Fetch rating details for this video
+        var url = `/video-ratings/${videoId}/`;
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function(data) {
+                // Update modal content with the fetched data
+                $('#ratingDetailsContent').html(data);
+            },
+            error: function() {
+                $('#ratingDetailsContent').html('<div class="alert alert-danger">Failed to load rating details</div>');
+            }
+        });
+    }
+
+    function printPage() {
+        window.print();
+    }
+</script>
+
+{% endblock %}

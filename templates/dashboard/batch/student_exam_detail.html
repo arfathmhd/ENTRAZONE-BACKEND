@@ -1,0 +1,382 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Exam Performance - {{ student.name }}</h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch' %}">Batch</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch-students' batch.id %}">Students</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch-exam-progress' batch.id %}">Exam Progress</a></li>
+                        <li class="custom-breadcrumb-item">{{ student.name }}</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-batch-exam-progress' batch.id %}" class="btn btn-outline-primary d-flex align-items-center">
+                        <i class="bi bi-arrow-left me-2"></i> Back to Exam Progress
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 mb-3 mb-md-0">
+                        <div class="text-center">
+                            {% if student.image %}
+                                <img src="{{ student.image.url }}" alt="{{ student.name }}" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                                <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center bg-light" style="width: 100px; height: 100px; font-size: 2rem;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-5 mb-3 mb-md-0">
+                        <h5>{{ student.name }}</h5>
+                        <p class="mb-1"><i class="bi bi-envelope me-2"></i>{{ student.email|default:"No email" }}</p>
+                        <p class="mb-1"><i class="bi bi-telephone me-2"></i>{{ student.phone_number|default:"No phone" }}</p>
+                        <p class="mb-0"><i class="bi bi-geo-alt me-2"></i>{{ student.get_district_display|default:"No district" }}</p>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center py-2">
+                                        <h3 class="mb-0">{{ exam_details|length }}</h3>
+                                        <p class="mb-0 small">Exams Taken</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center py-2">
+                                        <h3 class="mb-0">{{ exam_details|passed_exams }}</h3>
+                                        <p class="mb-0 small">Exams Passed</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center py-2">
+                                        <h3 class="mb-0">{{ exam_details|avg_score }}%</h3>
+                                        <p class="mb-0 small">Average Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center py-2">
+                                        <h3 class="mb-0">{{ exam_details|highest_score }}%</h3>
+                                        <p class="mb-0 small">Highest Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Performance Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Exam Performance Summary</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Exam Title</th>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Questions</th>
+                                <th>Correct</th>
+                                <th>Incorrect</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in exam_details %}
+                            <tr>
+                                <td>{{ detail.exam.title }}</td>
+                                <td>{{ detail.date|date:"d M Y, H:i" }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress me-2" style="width: 80px; height: 10px">
+                                            <div 
+                                                class="progress-bar {% if detail.percentage >= 75 %}bg-success{% elif detail.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                                role="progressbar"
+                                                aria-valuenow="{{ detail.percentage }}"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100"
+                                                style="width: {{ detail.percentage }}%"
+                                            ></div>
+                                        </div>
+                                        <span>{{ detail.percentage }}%</span>
+                                    </div>
+                                    <small class="text-muted">{{ detail.marks_obtained }}/{{ detail.total_marks }}</small>
+                                </td>
+                                <td>{{ detail.total_questions }}</td>
+                                <td class="text-success">{{ detail.correct_answers }}</td>
+                                <td class="text-danger">{{ detail.incorrect_answers }}</td>
+                                <td>
+                                    {% if detail.passed %}
+                                        <span class="badge bg-success">Passed</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#examDetail{{ forloop.counter }}" aria-expanded="false" 
+                                            aria-controls="examDetail{{ forloop.counter }}">
+                                        <i class="bi bi-list-ul me-1"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse" id="examDetail{{ forloop.counter }}">
+                                <td colspan="8" class="p-0">
+                                    <div class="card card-body m-2 border">
+                                        <h6>Question Details</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Question</th>
+                                                        <th>Answer</th>
+                                                        <th>Correct</th>
+                                                        <th>Marks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for q_detail in detail.question_details %}
+                                                    <tr>
+                                                        <td>{{ forloop.counter }}</td>
+                                                        <td>{{ q_detail.question.question_description|safe|truncatechars_html:100 }}</td>
+                                                        <td>
+                                                            {% if q_detail.selected_option %}
+                                                                {{ q_detail.selected_option|join:", " }}
+                                                            {% else %}
+                                                                Not answered
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if q_detail.is_correct %}
+                                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                                            {% else %}
+                                                                <i class="bi bi-x-circle-fill text-danger"></i>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if q_detail.marks_obtained %}
+                                                                {{ q_detail.marks_obtained }}
+                                                            {% elif q_detail.negative_marks %}
+                                                                -{{ q_detail.negative_marks }}
+                                                            {% else %}
+                                                                0
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr>
+                                                        <td colspan="5" class="text-center">No question details available</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No exam data available for this student</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Analytics -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Performance Analytics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <canvas id="scoreProgressChart"></canvas>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <canvas id="correctVsIncorrectChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Function to print the page
+    function printPage() {
+        window.print();
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Prepare data for charts using Django's json_script template tag
+        const examDataElement = document.getElementById('exam-data');
+        const examData = examDataElement ? JSON.parse(examDataElement.textContent) : [];
+        
+        if (examData.length > 0) {
+            // Score Progress Chart
+            const scoreCtx = document.getElementById('scoreProgressChart').getContext('2d');
+            const scoreChart = new Chart(scoreCtx, {
+                type: 'line',
+                data: {
+                    labels: examData.map(function(item) { return item.title; }),
+                    datasets: [{
+                        label: 'Score (%)',
+                        data: examData.map(function(item) { return item.percentage; }),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Score Progress Over Time'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Score (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Exams'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Correct vs Incorrect Chart
+            const correctVsIncorrectCtx = document.getElementById('correctVsIncorrectChart').getContext('2d');
+            const correctVsIncorrectChart = new Chart(correctVsIncorrectCtx, {
+                type: 'bar',
+                data: {
+                    labels: examData.map(function(item) { return item.title; }),
+                    datasets: [
+                        {
+                            label: 'Correct Answers',
+                            data: examData.map(function(item) { return item.correct; }),
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Incorrect Answers',
+                            data: examData.map(function(item) { return item.incorrect; }),
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Correct vs Incorrect Answers'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Questions'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Exams'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<!-- Store exam data in a JSON script tag for clean separation of concerns -->
+{% with exam_data=exam_details %}
+<script id="exam-data" type="application/json">
+[
+    {% for detail in exam_data %}
+        {
+            "title": "{{ detail.exam.title|escapejs }}",
+            "date": "{{ detail.date|date:'d M Y'|escapejs }}",
+            "percentage": {{ detail.percentage }},
+            "correct": {{ detail.correct_answers }},
+            "incorrect": {{ detail.incorrect_answers }}
+        }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+{% endwith %}
+
+{% endblock %}

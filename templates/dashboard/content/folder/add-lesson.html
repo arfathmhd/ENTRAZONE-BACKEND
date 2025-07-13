@@ -1,0 +1,277 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Lesson</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        {% for crumb in current_folder.get_breadcrumbs %}
+                            {% if crumb.type == 'course' %}
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-course' %}">Course</a></li>
+                            {% elif crumb.type == 'subject' %}
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-course-subjects-list' pk=crumb.id %}">Subject</a></li>
+                            {% elif crumb.type == 'chapter' %}
+                            <li class="custom-breadcrumb-item"><a href="{% url 'subject-chapters-list' subject_id=crumb.id %}">Chapter</a></li>
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-chapters-lesson-list' chapter_id=crumb.id %}">Lessons</a></li>
+                            {% elif crumb.type == 'folder' %}
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-folder' folder_id=crumb.id %}">{{ crumb.title }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="custom-breadcrumb-item active"><span>Add Lesson</span></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% load crispy_forms_tags %}
+                    <div class="card-body pb-1">
+                        
+                        <!-- Form Fields Rendering -->
+                        <div class="row mb-3">
+                            <!-- Chapter Fields -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.lesson_name|as_crispy_field }}
+                                </div>
+                            </div>
+        
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.visible_in_days|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.order|as_crispy_field }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+            
+                        <!-- Section Toggles -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="showVideo">
+                                    <label class="form-check-label" for="showVideo">
+                                        <i class="fas fa-video me-2"></i>Add Video
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="showPdf">
+                                    <label class="form-check-label" for="showPdf">
+                                        <i class="fas fa-file-pdf me-2"></i>Add PDF
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Fields -->
+                        <div class="row mb-3" id="videoSection" style="display: none;">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {{ form.video_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {{ form.video_url|as_crispy_field }}
+                                </div>
+                            </div>
+                           
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {{ form.m3u8|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    {{ form.tp_stream|as_crispy_field }}
+                                </div>
+                            </div>
+                            
+                            <!-- More Video Fields -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form.video_is_free|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form.m3u8_is_downloadable|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form.video_is_downloadable|as_crispy_field }}
+                                    </div>
+                                </div>
+                               
+                               
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form.m3u8_is_free|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        <!-- PDF Note Fields -->
+                        <div class="row mb-3" id="pdfSection" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_file|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+            
+                        <!-- Description and Visibility Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form.description|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+            
+                    </div>
+                
+                    <!-- Submit and Cancel buttons -->
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+
+<!-- JavaScript for toggle functionality -->
+<script>
+     document.getElementById('showVideo').addEventListener('change', function() {
+        const videoSection = document.getElementById('videoSection');
+        const pdfSection = document.getElementById('pdfSection');
+        const showPdfCheckbox = document.getElementById('showPdf');
+        
+        if (this.checked) {
+            videoSection.style.display = 'flex';
+            pdfSection.style.display = 'none';
+            showPdfCheckbox.checked = false;
+            showPdfCheckbox.disabled = true;
+        } else {
+            videoSection.style.display = 'none';
+            showPdfCheckbox.disabled = false;
+        }
+    });
+
+    document.getElementById('showPdf').addEventListener('change', function() {
+        const pdfSection = document.getElementById('pdfSection');
+        const videoSection = document.getElementById('videoSection');
+        const showVideoCheckbox = document.getElementById('showVideo');
+        
+        if (this.checked) {
+            pdfSection.style.display = 'flex';
+            videoSection.style.display = 'none';
+            showVideoCheckbox.checked = false;
+            showVideoCheckbox.disabled = true;
+        } else {
+            pdfSection.style.display = 'none';
+            showVideoCheckbox.disabled = false;
+        }
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var imageInput = document.querySelector('input[type="file"].image-sign');
+        var imagePreview = document.getElementById('image-preview');
+        var imagePlaceholder = document.getElementById('image-placeholder-icon');
+
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                var file = imageInput.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (imagePreview) {
+                            imagePreview.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                            if (imagePlaceholder) {
+                                imagePlaceholder.style.display = 'none';
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // Clear the preview if no file is selected
+                    if (imagePreview) {
+                        imagePreview.src = '';
+                        imagePreview.style.display = 'none';
+                        if (imagePlaceholder) {
+                            imagePlaceholder.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Handle the case where an image might already be present
+        if (imagePreview && imagePreview.src) {
+            imagePreview.style.display = 'block';
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'none';
+            }
+        }
+    });
+</script>
+
+{% endblock%}
+
+</body>
+
+
+</html>
+
+
+
+

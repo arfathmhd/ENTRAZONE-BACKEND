@@ -1,0 +1,372 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style >
+.custom-breadcrumb {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-breadcrumb-item {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.custom-breadcrumb-item a {
+    text-decoration: none;
+    color: #0275d8;
+}
+
+.custom-breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.custom-breadcrumb-item:not(:last-child)::after {
+    content: ">";
+    margin-left: 10px;
+}
+
+.custom-breadcrumb-item.current-page {
+    color: #6c757d;
+    pointer-events: none;
+}
+
+.custom-breadcrumb-item.current-page::after {
+    content: "";
+}
+
+</style>
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Course</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="#">Course</a></li>
+                    </ol>
+                </nav>
+              
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-course-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Course</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Course List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a href="javascript:void(0);" data-sort="price_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_ascending' %}active{% endif %}">
+                                    Price Low to High
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="price_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_descending' %}active{% endif %}">
+                                    Price High to Low
+                                </a>
+                            </li> -->
+                        </ul>
+                        
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <!-- <th class="no-sort">
+                                    <div class="form-check form-check-md">
+                                        <input class="form-check-input" type="checkbox" id="select-all">
+                                    </div>
+                                </th> -->
+                                <th>ID</th>
+
+                                <th>Course Name</th>
+                                <th>Duration</th>
+                                <th>Number of Lesson</th>
+                                <th>Description</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <!-- <td>
+                                    <div class="form-check form-check-md">
+                                        <input class="form-check-input" type="checkbox">
+                                    </div>
+                                </td> -->
+                                <td><a href="{% url 'dashboard-course-subjects-list' course.id %}" class="link-primary">{{ course.id }}</a></td>
+                                
+                                <td>
+                                    <a href="{% url 'dashboard-course-subjects-list' course.id %}" class="link-primary">
+                                        {{ course.course_name }}
+                                    </a>
+                                </td>
+                                
+                                <td>{{ course.duration|default:"0" }}</td>
+
+                                <td>{{ course.number_of_lessons  }}</td>
+                                <td>{{ course.description|truncatewords:10 }}</td>
+                                <td>{{ course.created|date:"d-m-Y"}}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Edit Course -->
+                                        <a href="{% url 'dashboard-course-update' pk=course.id %}" class="text-primary me-3" title="Edit Course">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <!-- Delete Course (Delete confirmation via modal) -->
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-batch-id="{{ course.id }}" title="Delete Course">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No courses found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        {% if courses.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ courses.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ courses.number }} of {{ courses.paginator.num_pages }}</span>
+                        
+                        {% if courses.has_next %}
+                            <a href="?page={{ courses.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ courses.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+    
+
+    
+
+</body>
+
+
+</html>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    $(document).on('click', '.btn-delete', function () {
+        var batchId = $(this).data('batch-id'); // Use batch-id instead of user-id
+        $('#delete-record').data('batch-id', batchId); // Store the batch ID in the modal button
+    });
+    // $('#global-loader').show();
+
+    $('#delete-record').click(function () {
+        var userId = $(this).data('batch-id');
+
+        console.log("Deleting User ID: " + userId);
+
+        $.ajax({
+            url: '/course/delete/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Deleted successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error deleting user:", error);
+            }
+        });
+    });
+});
+</script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    // Get the current sort parameter
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    // Update URL with date range and sort parameter
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            // Set date range parameters
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            // Set or preserve sorting parameter
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            // Get existing date range parameters
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            // Update URL with sorting parameter
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add event listener to sorting links
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            // Optionally: Remove date range and sorting parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+    
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+    {% endblock%}

@@ -1,0 +1,427 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Payment Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                <div class="my-auto mb-2">
+                    <h3 class="page-title mb-1">Fee Collection Dashboard</h3>
+                    <nav aria-label="breadcrumbs">
+                        <ol class="custom-breadcrumb">
+                            <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                            <li class="custom-breadcrumb-item">Fee Collection</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Stats Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Due</p>
+                            <h4 class="mb-0">₹{{ total_due|floatformat:2 }}</h4>
+                        </div>
+                        <div class="mini-stat-icon avatar-sm align-self-center">
+                            <span class="avatar-title rounded-circle">
+                                <i class="bi bi-wallet2 font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Paid</p>
+                            <h4 class="mb-0">₹{{ total_paid|floatformat:2 }}</h4>
+                        </div>
+                        <div class="mini-stat-icon avatar-sm align-self-center">
+                            <span class="avatar-title rounded-circle ">
+                                <i class="bi bi-cash-coin font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total Overdue</p>
+                            <h4 class="mb-0">₹{{ total_overdue|floatformat:2 }}</h4>
+                        </div>
+                        <div class="mini-stat-icon avatar-sm align-self-center">
+                            <span class="avatar-title rounded-circle ">
+                                <i class="bi bi-exclamation-octagon font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Transactions -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
+                        <h4 class="card-title mb-0">Recent Transactions</h4>
+                        <div class="search-box">
+                            <div class="position-relative">
+                                <input type="text" class="form-control form-control-sm" id="transactionSearch" placeholder="Search by Order ID or Student...">
+                                <i class="bx bx-search-alt search-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-centered table-nowrap mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Student/Batch</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'dashboard-installment-detail' pk=transaction.installment.id %}" class="text-body fw-bold">
+                                            {{ transaction.order_id }}
+                                        </a>
+                                    </td>
+                                    <td>{{ transaction.installment.subscription.user.name }}
+                                        {% with batch=transaction.installment.subscription.batch.first %}{% if batch %}/{{ batch.batch_name }}({{ batch.course.course_name }}){% else %}No Batch{% endif %}{% endwith %}</td>
+                                    <td>₹{{ transaction.amount|floatformat:2 }}</td>
+                                    <td>{{ transaction.created|date:"d M Y" }}</td>
+                                    <td>
+                                        {% if transaction.status == 'SUCCESS' %}
+                                        <span class="badge bg-success">Success</span>
+                                        {% elif transaction.status == 'FAILURE' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% elif transaction.status == 'CANCELLED' %}
+                                        <span class="badge bg-warning">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ transaction.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not transaction.order_id|stringformat:'s'|slice:':6' == 'MANUAL' %}
+                                        <button type="button" class="btn btn-sm btn-primary check-status-btn" data-order-id="{{ transaction.order_id }}">
+                                            <i class="bx bx-refresh"></i> Check Status
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Installments -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-3">
+                        <h4 class="card-title mb-0">Pending Installments</h4>
+                        
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="search-box">
+                                <div class="position-relative">
+                                    <input type="text" class="form-control form-control-sm" id="installmentSearch" placeholder="Search by Student name...">
+                                    <i class="bx bx-search-alt search-icon"></i>
+                                </div>
+                            </div>
+                            <a href="{% url 'dashboard-installment-list' %}" class="btn btn-sm btn-primary">
+                                <i class="bx bx-list-ul me-1"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-centered table-nowrap mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Student/Batch</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for installment in pending_installments %}
+                                <tr>
+                                    <td>{{ installment.subscription.user.name }}
+                                        {% with batch=installment.subscription.batch.first %}{% if batch %}/{{ batch.batch_name }}({{ batch.course.course_name }}){% else %}No Batch{% endif %}{% endwith %}
+                                    </td>
+                                    <td>{{ installment.due_date|date:"d M Y" }}</td>
+                                    <td>₹{{ installment.amount_due|floatformat:2 }}</td>
+                                    <td>
+                                        {% if installment.status == 'PENDING' %}
+                                        <span class="badge bg-info">Pending</span>
+                                        {% elif installment.status == 'OVERDUE' %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% elif installment.status == 'PROCESSING' %}
+                                        <span class="badge bg-warning">Processing</span>
+                                        {% elif installment.status == 'FAILED' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ installment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a class="btn btn-sm btn-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                                Actions
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-installment-detail' pk=installment.id %}">
+                                                        <i class="bx bx-show-alt me-1"></i> View Details
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-generate-payment-link' installment_id=installment.id %}">
+                                                        <i class="bx bx-link me-1"></i> Generate Link
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'dashboard-mark-installment-paid' installment_id=installment.id %}">
+                                                        <i class="bx bx-check-circle me-1"></i> Mark as Paid
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No pending installments found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Style for search box
+        $('<style>\n\
+            .search-box .position-relative {\n\
+                display: flex;\n\
+                align-items: center;\n\
+            }\n\
+            .search-box .search-icon {\n\
+                position: absolute;\n\
+                right: 10px;\n\
+                color: #adb5bd;\n\
+            }\n\
+        </style>').appendTo('head');
+
+        // Add IDs to tables if they don't have them
+        $(".card-body:contains('Recent Transactions') .table-responsive table").attr('id', 'transactionsTable');
+        $(".card-body:contains('Pending Installments') .table-responsive table").attr('id', 'installmentsTable');
+        
+        // Function to filter transactions table
+        $("#transactionSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            
+            // Use direct table selector instead of ID if ID is not working
+            var table = $("#transactionsTable").length ? $("#transactionsTable") : $(".table-responsive:eq(0) table");
+            
+            table.find("tbody tr").each(function() {
+                // Search in Order ID (column 0) and Student Name (column 1)
+                var orderIdText = $(this).find("td:eq(0)").text().toLowerCase();
+                var studentText = $(this).find("td:eq(1)").text().toLowerCase();
+                var matches = orderIdText.indexOf(value) > -1 || studentText.indexOf(value) > -1;
+                $(this).toggle(matches);
+            });
+        });
+
+        // Function to filter installments table
+        $("#installmentSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            
+            // Use direct table selector instead of ID if ID is not working
+            var table = $("#installmentsTable").length ? $("#installmentsTable") : $(".table-responsive:eq(1) table");
+            
+            table.find("tbody tr").each(function() {
+                // Search in Student Name (column 0)
+                var studentText = $(this).find("td:eq(0)").text().toLowerCase();
+                var matches = studentText.indexOf(value) > -1;
+                $(this).toggle(matches);
+            });
+        });
+        
+        // Handle check status button clicks
+        $('.check-status-btn').on('click', function() {
+            const orderId = $(this).data('order-id');
+            const button = $(this);
+            
+            // Disable button and show loading state
+            button.prop('disabled', true);
+            button.html('<i class="bx bx-loader bx-spin"></i> Checking...');
+            
+            // Make AJAX call to check order status
+            $.ajax({
+                url: `{% url 'api-check-order-status' order_id='ORDER_ID_PLACEHOLDER' %}`.replace('ORDER_ID_PLACEHOLDER', orderId),
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Show status details in a modal
+                        showStatusModal(response.data, orderId);
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            title: 'Error',
+                            text: response.message || 'Failed to check order status',
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Show error message
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to connect to payment gateway. Please try again.',
+                        icon: 'error'
+                    });
+                },
+                complete: function() {
+                    // Re-enable button and restore original text
+                    button.prop('disabled', false);
+                    button.html('<i class="bx bx-refresh"></i> Check Status');
+                }
+            });
+        });
+        
+        // Function to display status details in a modal
+        function showStatusModal(data, orderId) {
+            // Format the payment details
+            let statusClass = 'info';
+            if (data.status === 'CHARGED' || data.status === 'SUCCESS') {
+                statusClass = 'success';
+            } else if (data.status === 'FAILED' || data.status === 'FAILURE') {
+                statusClass = 'danger';
+            }
+            
+            // Create modal content
+            let modalContent = `
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th>Order ID</th>
+                                <td>${data.order_id || orderId}</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td><span class="badge bg-${statusClass}">${data.status || 'Unknown'}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Amount</th>
+                                <td>₹${(data.amount).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <td>${data.txn_id || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <th>Payment Method</th>
+                                <td>${data.payment_method || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <th>Date Created</th>
+                                <td>${data.date_created ? new Date(data.date_created).toLocaleString() : 'N/A'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            // If refunds exist, add refund information
+            if (data.refunds && data.refunds.length > 0) {
+                modalContent += `
+                    <h5 class="mt-4">Refund Information</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Refund ID</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.refunds.forEach(refund => {
+                    modalContent += `
+                        <tr>
+                            <td>${refund.id || 'N/A'}</td>
+                            <td>₹${(refund.amount).toFixed(2)}</td>
+                            <td><span class="badge bg-${refund.status === 'SUCCESS' ? 'success' : 'info'}">${refund.status || 'Unknown'}</span></td>
+                            <td>${refund.created ? new Date(refund.created).toLocaleString() : 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+                
+                modalContent += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            // Show modal with payment details
+            Swal.fire({
+                title: 'Payment Status Details',
+                html: modalContent,
+                width: '800px',
+                confirmButtonText: 'Close',
+                customClass: {
+                    container: 'swal-wide',
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

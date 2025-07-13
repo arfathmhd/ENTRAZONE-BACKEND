@@ -1,0 +1,242 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Notification</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-subject' %}">Notification</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Add Notification</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="card">
+        <!-- Header Section -->
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center">
+                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                    <i class="bi bi-info-circle"></i>
+                </span>
+                <h4 class="text-dark">Notification Information</h4>
+            </div>
+        </div>
+    
+        <!-- Card Body -->
+        {% load crispy_forms_tags %}
+        <div class="card-body pb-1">
+            <!-- Custom Image Upload Field with Preview -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
+                        <div id="image-preview-container" class="d-flex align-items-center justify-content-center avatar avatar-xxl border border-dashed me-2 flex-shrink-0 text-dark frames">
+                            {% if form.image.value %}
+                                <img id="image-preview" src="{{ form.image.value.url }}" alt="Profile Image" style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                            <i class="bi bi-image fs-16"></i>
+                            {% endif %}
+                        </div>
+                        <div class="profile-upload">
+                            <div class="profile-uploader d-flex align-items-center">
+                                <div class="drag-upload-btn mb-3">
+                                    Upload
+                                    <!-- Use Django crispy-forms to render the image input field -->
+                                    {{ form.image }}
+                                </div>
+                            </div>
+                            <p class="fs-12">Upload image size 4MB, Format JPG, PNG, SVG</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Form Fields Rendering -->
+            <div class="row">
+                <!-- Title Field -->
+                <div class="col-xxl-6 col-xl-6 col-md-6 mb-3">
+                    {{ form.title|as_crispy_field }}
+                </div>
+                
+                <!-- Notification Type Field -->
+                <div class="col-xxl-6 col-xl-6 col-md-6 mb-3">
+                    {{ form.notification_type|as_crispy_field }}
+                </div>
+            </div>
+            
+            <!-- Target Selection Fields (conditionally displayed) -->
+            <div class="row">
+                <!-- Course Selection (shown when notification_type is 'course') -->
+                <div id="courses_container" class="col-12 mb-3" style="display: none;">
+                    <label for="courses_select" class="form-label">Select Courses</label>
+                    {{ form.courses }}
+                    <div class="form-text">All students enrolled in these courses will receive the notification.</div>
+                </div>
+                
+                <!-- Batch Selection (shown when notification_type is 'batch') -->
+                <div id="batches_container" class="col-12 mb-3" style="display: none;">
+                    <label for="batches_select" class="form-label">Select Batches</label>
+                    {{ form.batches }}
+                    <div class="form-text">All students in these batches will receive the notification.</div>
+                </div>
+                
+                <!-- Student Selection (shown when notification_type is 'student') -->
+                <div id="students_container" class="col-12 mb-3" style="display: none;">
+                    <label for="students_select" class="form-label">Select Students</label>
+                    {{ form.students }}
+                    <div class="form-text">Only selected students will receive the notification.</div>
+                </div>
+            </div>
+            
+            <!-- Message Field -->
+            <div class="row">
+                <div class="col-12 mb-3">
+                    {{ form.message|as_crispy_field }}
+                </div>
+            </div>
+            
+    
+            
+        </div>
+    </div>
+    
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image preview functionality
+        const imageInput = document.querySelector('input[type="file"]');
+        const previewContainer = document.getElementById('image-preview-container');
+            
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Remove any existing preview
+                    const existingPreview = previewContainer.querySelector('img');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+                    
+                    // Remove the icon if it exists
+                    const existingIcon = previewContainer.querySelector('.bi-image');
+                    if (existingIcon) {
+                        existingIcon.remove();
+                    }
+                    
+                    // Create and add the new preview image
+                    const img = document.createElement('img');
+                    img.id = 'image-preview';
+                    img.src = e.target.result;
+                    img.alt = 'Profile Image';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    
+                    previewContainer.appendChild(img);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Initialize Select2 for better dropdown experience
+        function initializeSelect2() {
+            if (typeof $.fn.select2 !== 'undefined') {
+                // Destroy any existing Select2 instances first to prevent duplicates
+                $('.select2').each(function() {
+                    if ($(this).data('select2')) {
+                        $(this).select2('destroy');
+                    }
+                });
+                
+                // Initialize Select2 with options
+                $('.select2').select2({
+                    width: '100%',
+                    placeholder: 'Select options',
+                    allowClear: true,
+                    dropdownParent: $('body') // This helps with modal dialogs
+                });
+                
+            } else {
+                console.log('Select2 library not found');
+            }
+        }
+        
+        // Call the initialization function
+        initializeSelect2();
+
+        // Handle notification type change to show/hide relevant fields
+        // Use both direct DOM and jQuery selectors for better compatibility
+        const notificationTypeSelect = document.getElementById('notification_type');
+        const $notificationTypeSelect = $('#notification_type'); // jQuery selector
+        
+        const coursesContainer = document.getElementById('courses_container');
+        const batchesContainer = document.getElementById('batches_container');
+        const studentsContainer = document.getElementById('students_container');
+        
+        function updateTargetingFields() {
+            // Get selected value using jQuery for better compatibility
+            const selectedType = $notificationTypeSelect.length ? $notificationTypeSelect.val() : 'all';
+            
+            // Hide all targeting containers first using jQuery
+            $('#courses_container, #batches_container, #students_container').hide();
+            
+            // Show the relevant container based on notification type
+            if (selectedType === 'course') {
+                $('#courses_container').show();
+            } else if (selectedType === 'batch') {
+                $('#batches_container').show();
+            } else if (selectedType === 'student') {
+                $('#students_container').show();
+            }
+        }
+
+        // Set initial state
+        updateTargetingFields();
+        
+        // Bind change event using jQuery
+        $notificationTypeSelect.on('change', function() {
+            updateTargetingFields();
+        });
+        
+        // Also add native event listener as backup
+        if (notificationTypeSelect) {
+            notificationTypeSelect.addEventListener('change', function() {
+                updateTargetingFields();
+            });
+        }
+        
+        // Extra handling for Select2 events if it's being used
+        $notificationTypeSelect.on('select2:select', function(e) {
+            updateTargetingFields();
+        });
+    });
+    
+</script>
+
+{% endblock %}

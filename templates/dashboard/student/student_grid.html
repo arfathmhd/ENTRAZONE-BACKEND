@@ -1,0 +1,634 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Students</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-customer' %}">Student</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-customer-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>Add Student</a>
+                </div>
+                
+            </div>
+        </div>
+
+
+        <div
+            class="bg-white p-3 border rounded-1 d-flex align-items-center justify-content-between flex-wrap mb-4 pb-0">
+            <h4 class="mb-3">Students Grid</h4>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <!-- Search Input and Button -->
+                <div class="d-flex mb-3">
+                    <input type="text" id="searchInput" class="form-control me-2" placeholder="Search users...">
+                    <button type="submit" id="searchButton" class="btn btn-primary">Search</button>
+                </div>
+            
+                <!-- Date Range Picker -->
+                <div class="position-relative mb-3 me-2">
+                    <span class="icon-addon position-absolute top-50 start-0 translate-middle-y ms-3">
+                        <i class="bi bi-calendar"></i>
+                    </span>
+                    <input type="text" class="form-control ps-5 custom-date-picker" placeholder="Select Date Range">
+                </div>
+            
+                <!-- Sort by Dropdown -->
+                <div class="dropdown mb-3">
+                    <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                    </a>
+                    <ul class="dropdown-menu p-3">
+                        <li>
+                            <a href="javascript:void(0);" data-sort="name_ascending"
+                               class="dropdown-item alphabet-sort rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                Name A-Z
+                            </a>
+                        </li>
+                        <li>
+                            <a href="javascript:void(0);" data-sort="name_descending"
+                               class="dropdown-item alphabet-sort rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                Name Z-A
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            
+        </div>
+
+        <div class="row">
+
+            {% for user in users %}
+            <div class="col-xxl-3 col-xl-4 col-md-6 d-flex">
+                <div class="card flex-fill" style="min-width: 0;">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h6>{{ user.id }}</h6>
+                        <div class="d-flex align-items-center">
+                                {% if user.is_active %}
+                                    {% if user.is_suspended %}
+                                    <span class="badge badge-soft-danger d-inline-flex align-items-center me-1">
+                                        <i class="bi bi-circle-fill fs-5 me-1"></i>Suspended
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-soft-success d-inline-flex align-items-center me-1">
+                                        <i class="bi bi-circle-fill fs-5 me-1"></i>Active
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="badge badge-soft-danger d-inline-flex align-items-center me-1">
+                                    <i class="bi bi-circle-fill fs-5 me-1"></i>Deactive
+                                </span>
+                                {% endif %}
+                            <div class="dropdown">
+                                <a href="#" class="btn btn-white btn-icon btn-sm d-flex align-items-center justify-content-center rounded-circle p-0" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical fs-14"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right p-3">
+                                    <li>
+                                        <a class="dropdown-item rounded-1" href="{% url 'dashboard-user-detail' pk=user.id %}">
+                                            <i class="bi bi-eye me-2"></i>View Student
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item rounded-1" href="{% url 'dashboard-customer-update' pk=user.id %}">
+                                            <i class="bi bi-pencil me-2"></i>Edit
+                                        </a>
+                                    </li>
+                                    <!-- <li>
+                                        <a class="dropdown-item rounded-1" href="">
+                                            <i class="bi bi-arrow-right-circle me-2"></i>Promote Student
+                                        </a>
+                                    </li> -->
+                                    {% if user.user_type == 1 or user.user_type == 3 %}
+                                    <li>
+                                        <a class="dropdown-item rounded-1" href="#" data-bs-toggle="modal" data-user-id="{{ user.id }}" data-bs-target="#delete-modal">
+                                            <i class="bi bi-trash me-2"></i>Delete
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if user.is_suspended %}
+                                    <li>
+                                        <a class="dropdown-item rounded-1" href="#" data-bs-toggle="modal" data-user-id="{{ user.id }}" data-bs-target="#unsuspend-modal">
+                                            <i class="bi bi-trash me-2"></i>Unsuspend student
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                        <li>
+                                            <a class="dropdown-item rounded-1" href="#" data-bs-toggle="modal" data-user-id="{{ user.id }}" data-bs-target="#suspend-modal">
+                                                <i class="bi bi-trash me-2"></i>Suspend student
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                  
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="card-body">
+                        <div class="bg-light-300 rounded-2 p-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <a href="{% url 'dashboard-user-detail' pk=user.id %}" class="avatar avatar-lg flex-shrink-0">
+                                    {% if user.image %}
+                                        <img src="{{ user.image.url }}" class="img-fluid rounded-circle" alt="{{ user.name }}'s image" />
+                                    {% else %}
+                                    <i class="bi bi-person-circle fs-3 text-dark" style="background: #f0f0f0; border-radius: 50%; padding: 10px;"></i>
+
+                                    {% endif %}
+                                </a>
+                                <div class="ms-2 overflow-hidden">
+                                    <h5 class="mb-0 text-dark text-truncate" style="max-width: 150px;">
+                                        <a href="{% url 'dashboard-user-detail' pk=user.id %}" title="{{ user.name }}">{{ user.name }}</a>
+                                    </h5>
+                                    <p class="text-truncate" style="max-width: 150px;" title="{{ user.get_district_display }}">{{ user.get_district_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between gx-2">
+                           
+                            <div class="overflow-hidden" style="max-width: 50%;">
+                                <p class="mb-0">Email</p>
+                                <p class="text-dark text-truncate" title="{{ user.email }}">{{ user.email }}</p>
+                            </div>
+                            <div class="overflow-hidden" style="max-width: 50%;">
+                                <p class="mb-0">Phone</p>
+                                <p class="text-dark text-truncate" title="{{ user.phone_number }}">{{ user.phone_number }}</p>
+                            </div>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="col-md-12 text-center">
+            <!-- Pagination Controls -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <!-- First Page and Previous Page Buttons -->
+                    {% if users.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;&laquo;</span>
+                        </li>
+                    {% endif %}
+        
+                    <!-- Page Number Links -->
+                    {% for num in users.paginator.page_range %}
+                        {% if users.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ num }}<span class="sr-only">(current)</span></span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+        
+                    <!-- Next Page and Last Page Buttons -->
+                    {% if users.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ users.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+
+<div class="modal fade" id="add_fees_collect">
+    <div class="modal-dialog modal-dialog-centered  modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center">
+                    <h4 class="modal-title">Collect Fees</h4>
+                    <span class="badge badge-sm bg-primary ms-2">AD124556</span>
+                </div>
+                <button type="button" class="btn-close custom-btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <form action="https://preskool.dreamstechnologies.com/cakephp/template/student_grid">
+                <div class="modal-body">
+                    <div class="bg-light-300 p-3 pb-0 rounded mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <a href="https://preskool.dreamstechnologies.com/cakephp/template/student_details"
+                                        class="avatar avatar-md me-2">
+                                        <img src="https://preskool.dreamstechnologies.com/cakephp/template/webroot/img/students/student-01.jpg"
+                                            alt="img" /> </a>
+                                    <a href="https://preskool.dreamstechnologies.com/cakephp/template/student_details"
+                                        class="d-flex flex-column"><span class="text-dark">Janet</span>III, A</a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="mb-3">
+                                    <span class="fs-12 mb-1">Total Outstanding</span>
+                                    <p class="text-dark">2000</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="mb-3">
+                                    <span class="fs-12 mb-1">Last Date</span>
+                                    <p class="text-dark">25 May 2024</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="mb-3">
+                                    <span class="badge badge-soft-danger"><i
+                                            class="ti ti-circle-filled me-2"></i>Unpaid</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fees Group</label>
+                                <select class="select">
+                                    <option>Select</option>
+                                    <option>Class 1 General</option>
+                                    <option>Monthly Fees</option>
+                                    <option>Admission-Fees</option>
+                                    <option>Class 1- I Installment</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fees Type</label>
+                                <select class="select">
+                                    <option>Select</option>
+                                    <option>Tuition Fees</option>
+                                    <option>Monthly Fees</option>
+                                    <option>Admission Fees</option>
+                                    <option>Bus Fees</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Amount</label>
+                                <input type="text" class="form-control" placeholder="Enter Amout">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Collection Date</label>
+                                <div class="date-pic">
+                                    <input type="text" class="form-control datetimepicker" placeholder="Select">
+                                    <span class="cal-icon"><i class="ti ti-calendar"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Payment Type</label>
+                                <select class="select">
+                                    <option>Select</option>
+                                    <option>Paytm</option>
+                                    <option>Cash On Delivery</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Payment Reference No</label>
+                                <input type="text" class="form-control" placeholder="Enter Payment Reference No">
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="modal-satus-toggle d-flex align-items-center justify-content-between mb-3">
+                                <div class="status-title">
+                                    <h5>Status</h5>
+                                    <p>Change the Status by toggle </p>
+                                </div>
+                                <div class="status-toggle modal-status">
+                                    <input type="checkbox" id="user1" class="check">
+                                    <label for="user1" class="checktoggle"> </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-0">
+                                <label class="form-label">Notes</label>
+                                <textarea rows="4" class="form-control" placeholder="Add Notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-light me-2" data-bs-dismiss="modal">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Pay Fees</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="fas fa-trash-alt"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Suspend Student Modal -->
+<div class="modal fade" id="suspend-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="suspend-icon">
+                    <i class="fas fa-user-lock text-warning"></i>
+                </span>
+                <h4>Suspend Student</h4>
+                <p>Are you sure you want to suspend this student? They will not be able to access the system until unsuspended.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="suspend-student" class="btn btn-warning">Yes, Suspend</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unsuspend Student Modal -->
+<div class="modal fade" id="unsuspend-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="unsuspend-icon">
+                    <i class="fas fa-user-check text-success"></i>
+                </span>
+                <h4>Unsuspend Student</h4>
+                <p>Are you sure you want to unsuspend this student? This will restore their access to the system.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="unsuspend-student" class="btn btn-success">Yes, Unsuspend</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Delete functionality
+    $(document).on('click', '.dropdown-item[data-bs-target="#delete-modal"]', function () {
+        var userId = $(this).data('user-id');
+        $('#delete-record').data('user-id', userId);
+    });
+
+    $('#delete-record').click(function () {
+        var userId = $(this).data('user-id');
+
+        console.log("Deleting User ID: " + userId);
+
+        $.ajax({
+            url: '/customer/delete/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Deleted successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error deleting user:", error);
+            }
+        });
+    });
+    
+    // Suspend functionality
+    $(document).on('click', '.dropdown-item[data-bs-target="#suspend-modal"]', function () {
+        var userId = $(this).data('user-id');
+        $('#suspend-student').data('user-id', userId);
+    });
+    
+    $('#suspend-student').click(function () {
+        var userId = $(this).data('user-id');
+        
+        console.log("Suspending User ID: " + userId);
+        
+        $.ajax({
+            url: '/customer/suspend/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Suspended successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error suspending user:", error);
+            }
+        });
+    });
+    
+    // Unsuspend functionality
+    $(document).on('click', '.dropdown-item[data-bs-target="#unsuspend-modal"]', function () {
+        var userId = $(this).data('user-id');
+        $('#unsuspend-student').data('user-id', userId);
+    });
+    
+    $('#unsuspend-student').click(function () {
+        var userId = $(this).data('user-id');
+        
+        console.log("Unsuspending User ID: " + userId);
+        
+        $.ajax({
+            url: '/customer/unsuspend/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Unsuspended successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error unsuspending user:", error);
+            }
+        });
+    });
+});
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+                    updateURL(startDate, endDate, null); // Pass null for sort
+                }
+            }
+        });
+
+        // Search button event listener
+        const searchButton = document.getElementById('searchButton');
+        const searchInput = document.getElementById('searchInput');
+
+        searchButton.addEventListener('click', function() {
+            updateURL(); // Update without date or sort parameters
+        });
+
+        function updateURL(startDate = null, endDate = null, sort = null) {
+            const url = new URL(window.location.href);
+
+            // Set date range parameters if provided
+            if (startDate && endDate) {
+                url.searchParams.set('start_date', startDate);
+                url.searchParams.set('end_date', endDate);
+            }
+
+            // Set search parameter
+            const searchTerm = searchInput.value.trim();
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+
+            // Set sort parameter if provided
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            updateURL(null, null, sort); // Only pass sort parameter
+        }
+
+        // Add event listener to sorting links
+        document.querySelectorAll('.alphabet-sort .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+
+            // Optionally: Remove date range, sorting, and search parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+            url.searchParams.delete('search');
+
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+
+        // Debounce function to limit how often a function can fire
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    });
+</script>
+
+{% endblock%}
+

@@ -1,0 +1,338 @@
+
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="content container-fluid">
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">Assign Live Classes</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-live-class-manager' %}">Live Classes</a></li>
+                        <li class="breadcrumb-item active">Assign Live Class</li>
+                    </ul>
+                </div>
+                <div class="col-auto text-end">
+                    <a href="{% url 'dashboard-live-class-manager' %}" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-arrow-left"></i> Back to Live Classes
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Select Live Class</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="live-class-form" method="get">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Live Class <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="live_class_id" id="live-class-select" required>
+                                            <option value="">Select Live Class</option>
+                                            {% for live_class in live_classes %}
+                                            <option value="{{ live_class.id }}" {% if selected_live_class_id == live_class.id|stringformat:'i' %}selected{% endif %}>
+                                                {{ live_class.title }} ({{ live_class.platform }}) - {{ live_class.start_time|date:"d M Y, h:i A" }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary">Select</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if selected_live_class %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Live Class Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Title:</label>
+                                    <p class="form-control-static"><strong>{{ selected_live_class.title }}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Platform:</label>
+                                    <p class="form-control-static">
+                                        {% if selected_live_class.platform == 'google_meet' %}
+                                        <span class="badge bg-info">Google Meet</span>
+                                        {% else %}
+                                        <span class="badge bg-primary">Zoom</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Start Time:</label>
+                                    <p class="form-control-static">{{ selected_live_class.start_time|date:"d M Y, h:i A" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>End Time:</label>
+                                    <p class="form-control-static">{{ selected_live_class.end_time|date:"d M Y, h:i A" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Meeting URL:</label>
+                                    <p class="form-control-static">
+                                        <a href="{{ selected_live_class.meeting_url }}" target="_blank" class="text-primary">
+                                            {{ selected_live_class.meeting_url }}
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                            {% if selected_live_class.description %}
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Description:</label>
+                                    <p class="form-control-static">{{ selected_live_class.description }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Assign to Batches</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'dashboard-live-class-assign' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="live_class_id" value="{{ selected_live_class.id }}">
+                            <input type="hidden" name="assignment_type" value="batch">
+                            
+                            <div class="form-group mb-3">
+                                <label>Search Batches</label>
+                                <input type="text" class="form-control" id="batch-search" placeholder="Search by batch name or course...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Select Batches </label>
+                                <div class="batch-list" style="max-height: 400px; overflow-y: auto;">
+                                    {% for batch in batches %}
+                                    <div class="form-check batch-item" data-name="{{ batch.batch_name|lower }}" data-course="{{ batch.course.course_name|lower }}">
+                                        <input class="form-check-input" type="checkbox" name="batch_ids" value="{{ batch.id }}" id="batch-{{ batch.id }}" {% if batch.id in assigned_batch_ids %}checked{% endif %}>
+                                        <label class="form-check-label" for="batch-{{ batch.id }}">
+                                            {{ batch.batch_name }} <span class="text-muted">({{ batch.course.course_name }})</span>
+                                            <small class="d-block text-muted">Expires: {{ batch.batch_expiry|date:"d M Y" }}</small>
+                                        </label>
+                                    </div>
+                                    {% empty %}
+                                    <p>No batches available</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-sm btn-primary">Assign to Batches</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="select-all-batches">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="deselect-all-batches">Deselect All</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Assign to Courses</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'dashboard-live-class-assign' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="live_class_id" value="{{ selected_live_class.id }}">
+                            <input type="hidden" name="assignment_type" value="course">
+                            
+                            <div class="form-group mb-3">
+                                <label>Search Courses</label>
+                                <input type="text" class="form-control" id="course-search" placeholder="Search by course name...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Select Courses</label>
+                                <div class="course-list" style="max-height: 400px; overflow-y: auto;">
+                                    {% for course in courses %}
+                                    <div class="form-check course-item" data-name="{{ course.course_name|lower }}">
+                                        <input class="form-check-input" type="checkbox" name="course_ids" value="{{ course.id }}" id="course-{{ course.id }}" {% if course.id in assigned_course_ids %}checked{% endif %}>
+                                        <label class="form-check-label" for="course-{{ course.id }}">
+                                            {{ course.course_name }}
+                                        </label>
+                                    </div>
+                                    {% empty %}
+                                    <p>No courses available</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-sm btn-primary">Assign to Courses</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="select-all-courses">Select All</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="deselect-all-courses">Deselect All</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Current Assignments</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignment in current_assignments %}
+                                    <tr>
+                                        <td>
+                                            {% if assignment.type == 'batch' %}
+                                            <span class="badge bg-primary">Batch</span>
+                                            {% else %}
+                                            <span class="badge bg-info">Course</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ assignment.name }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'dashboard-live-class-assignment-delete' %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="assignment_id" value="{{ assignment.assignment_id }}">
+                                                <button type="submit" class="btn btn-sm bg-danger-light" onclick="return confirm('Are you sure you want to remove this assignment?')">
+                                                    <i class="bi bi-trash"></i> Remove
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No assignments found</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Live class select change handler
+        $('#live-class-select').change(function() {
+            if ($(this).val()) {
+                $('#live-class-form').submit();
+            }
+        });
+        
+        // Batch search functionality
+        $('#batch-search').keyup(function() {
+            const searchTerm = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            
+            $('.batch-item').each(function() {
+                const batchName = $(this).attr('data-name') || '';
+                const courseName = $(this).attr('data-course') || '';
+                const matchesSearch = batchName.indexOf(searchTerm) !== -1 || courseName.indexOf(searchTerm) !== -1;
+                
+                if (matchesSearch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            $('#batch-count').text(visibleCount);
+        });
+        
+        // Course search functionality
+        $('#course-search').keyup(function() {
+            const searchTerm = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            
+            $('.course-item').each(function() {
+                const courseName = $(this).attr('data-name') || '';
+                const matchesSearch = courseName.indexOf(searchTerm) !== -1;
+                
+                if (matchesSearch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            
+            $('#course-count').text(visibleCount);
+        });
+        
+        // Select/Deselect all batches
+        $('#select-all-batches').click(function(e) {
+            e.preventDefault();
+            $('.batch-item:visible input[type="checkbox"]').prop('checked', true);
+        });
+        
+        $('#deselect-all-batches').click(function(e) {
+            e.preventDefault();
+            $('.batch-item:visible input[type="checkbox"]').prop('checked', false);
+        });
+        
+        // Select/Deselect all courses
+        $('#select-all-courses').click(function(e) {
+            e.preventDefault();
+            $('.course-item:visible input[type="checkbox"]').prop('checked', true);
+        });
+        
+        $('#deselect-all-courses').click(function(e) {
+            e.preventDefault();
+            $('.course-item:visible input[type="checkbox"]').prop('checked', false);
+        });
+        
+        // Initialize counts
+        $('#batch-count').text($('.batch-item').length);
+        $('#course-count').text($('.course-item').length);
+    });
+</script>
+{% endblock %}

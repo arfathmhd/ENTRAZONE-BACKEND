@@ -1,0 +1,454 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+    .question-description {
+        max-width: 300px;  
+        white-space: normal;   
+        
+        word-wrap: break-word;  
+        overflow: hidden;  
+        /* text-overflow: ellipsis;   */
+    }
+    
+    .question-description {
+        max-height: 100px;  
+        overflow: auto;  
+    }
+        .options-field {
+            max-width: 200px;  
+            max-height: 100px;  
+            overflow-y: auto; 
+            word-wrap: break-word;  
+        }
+    
+        .options-field ul {
+            padding-left: 20px;  
+            margin: 0;
+        }
+    
+        .options-field ul li {
+            list-style-type: disc; 
+            margin-bottom: 5px; 
+        }
+
+
+
+        .option-list {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+}
+
+.option-item {
+    padding-left: 15px; /* Indentation for options */
+    position: relative; /* Relative positioning for pseudo-element */
+    margin-bottom: 5px; /* Space between options */
+    font-size: 15px; /* Adjust font size */
+    color: #333; /* Text color */
+}
+
+.option-item::before {
+    content: '➤'; /* Custom bullet or icon */
+    position: absolute; /* Absolute position for alignment */
+    left: 0; /* Align to the left */
+    color: #007bff; /* Color of the bullet/icon */
+}
+
+.no-options {
+    color: #6c757d; /* Grey color for "no options" message */
+    font-style: italic; /* Italic for emphasis */
+}
+
+</style>
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Question</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-talenthunt-manager' %}">TalentHunt</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-talenthunt-subject-manager' pk=level.talenthuntsubject.talentHunt.id %}">TalentHunt-Subject</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-level-manager' pk=level.talenthuntsubject.id %}">Level</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Question</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                    <div class="pe-1 mb-2">
+            <form method="POST" enctype="multipart/form-data" action="{% url 'dashboard-level-question-import' level_id=pk %}">
+                {% csrf_token %}
+                <label for="docx-upload" class="btn btn-outline-light bg-white btn-icon me-1" 
+                       data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Import Questions" 
+                       data-bs-original-title="Import Questions">
+                    <i class="bi bi-file-earmark-arrow-down"></i> <!-- Import Icon -->
+                </label>
+                <input type="file" id="docx-upload" name="file" style="display:none;" accept=".docx" onchange="this.form.submit()">
+            </form>
+        </div>
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-level-question-add' pk %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Question</a>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Question List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                     1-9
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                     9-0
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a href="javascript:void(0);" data-sort="duration_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'duration_ascending' %}active{% endif %}">
+                                    Duration Ascending
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="duration_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'duration_descending' %}active{% endif %}">
+                                    Duration Descending
+                                </a>
+                            </li> -->
+                        </ul>
+                        
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+
+                                <th>ID</th>
+                                <th>Question Description</th>
+                                <!-- <th>Hint</th> -->
+                                <th>Options</th>
+                                <th>Correct Answers</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                            <tr>
+                                <!-- Checkbox -->
+
+                
+                                <!-- Question ID -->
+                                <td>{{ question.id }}</td>
+                
+                                <!-- Question Description -->
+                                <td class="question-description">{{ question.question_description|safe }}</td>
+                
+                                <!-- Hint -->
+                                <!-- <td class="question-description">{{ question.hint|default:"N/A" }}</td> -->
+                
+                                <!-- Options -->
+                                <td class="question-description">
+                                    <ul class="option-list">
+                                        {% for option in question.options %}
+                                            <li class="option-item">{{ option.text }}</li>
+                                        {% empty %}
+                                            <li class="no-options">No options available</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                
+                                
+                
+                                <!-- Correct Answers -->
+                                <td class="question-description">
+                                    <ul class="option-list">
+                                        {% for answer in question.right_answers %}
+                                            <li class="option-item">{{ answer.text }}</li>
+                                        {% empty %}
+                                            <li>No correct answers available</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                
+                
+                                <!-- Created Date -->
+                                <td>{{ question.created|date:"d-m-Y" }}</td>
+                
+                                <!-- Action (Edit/Delete) -->
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a href="{% url 'dashboard-level-question-update' pk=question.id %}" class="text-primary me-3" title="Edit Question">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-question-id="{{ question.id }}" title="Delete Question">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No questions found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                
+                    <!-- Pagination controls -->
+                    <div class="pagination">
+                        {% if questions.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ questions.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ questions.number }} of {{ questions.paginator.num_pages }}</span>
+                        
+                        {% if questions.has_next %}
+                            <a href="?page={{ questions.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ questions.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                
+                
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+
+
+
+
+
+<script src="{% static 'dashboard/sweetalert2/sweetalert2.min.js' %}"></script>
+<script src="{% static 'dashboard/assets/libs/apexcharts/apexcharts.min.js' %}"></script>
+<script src="{% static 'dashboard/assets/js/pages/modal.init.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).on('click', '.btn-delete', function () {
+    var questionId = $(this).data('question-id');  
+    $('#delete-record').data('question-id', questionId);  
+});
+
+$('#delete-record').click(function () {
+    var examId = "{{ Level }}";  
+    var questionId = $(this).data('question-id');  
+
+    console.log("Deleting Question ID: " + questionId + " for Exam ID: " + examId);
+
+    $.ajax({
+        url: '/level/question/delete/'  + questionId + '/',  
+        type: 'POST',
+        data: {
+            csrfmiddlewaretoken: '{{ csrf_token }}',  
+        },
+        success: function (data) {
+            console.log("Deleted successfully");
+            window.location.reload();  
+        },
+        error: function(xhr, status, error) {
+            console.error("Error deleting question:", error);
+        }
+    });
+});
+
+
+    </script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            updateURL(startDate, endDate, sort);
+        }
+    
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            window.history.replaceState(null, '', url);
+        }
+    
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+    
+
+
+    
+{% endblock %}
+ 
+
+</body>
+
+
+</html>
+
+
+
+
+<!-- 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const descriptions = document.querySelectorAll('.question-description');
+    
+            descriptions.forEach(function(description) {
+                let text = description.textContent.trim();  
+                let words = text.split(/\s+/);  
+                let newText = '';
+    
+                words.forEach(function(word, index) {
+                    newText += word + ' ';
+                    if ((index + 1) % 5 === 0) {  
+                        newText += '<br>';  
+                    }
+                });
+    
+                description.innerHTML = newText.trim();  
+            });
+        });
+    </script> -->

@@ -1,0 +1,451 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - TalentHunt Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Progress bar styles */
+    .progress-bar-container {
+        height: 6px;
+    }
+    .progress-bar-success {
+        background-color: var(--bs-success) !important;
+    }
+    .progress-bar-warning {
+        background-color: var(--bs-warning) !important;
+    }
+    .progress-bar-danger {
+        background-color: var(--bs-danger) !important;
+    }
+    .progress-bar-info {
+        background-color: var(--bs-info) !important;
+    }
+    .progress-bar-secondary {
+        background-color: var(--bs-secondary) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+<div class="content content-two">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ customer.name }}'s TalentHunt Progress Report</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard-user-detail' pk=customer.id %}">{{ customer.name }}</a></li>
+                        <li class="breadcrumb-item active">TalentHunt Progress Report</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Filter Results</h5>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="talentHuntFilter" class="form-label">TalentHunt Test</label>
+                            <select id="talentHuntFilter" name="talenthunt_id" class="form-select">
+                                <option value="" {% if not selected_talenthunt %}selected{% endif %}>All Tests</option>
+                                {% for talenthunt in talenthunts %}
+                                    <option value="{{ talenthunt.id }}" {% if selected_talenthunt == talenthunt.id %}selected{% endif %}>{{ talenthunt.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateFrom" class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="dateFrom" name="date_from" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateTo" class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="dateTo" name="date_to" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Total TalentHunt Tests</p>
+                            <h4 class="mb-0">{{ total_talenthunts }}</h4>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-primary align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-primary">
+                                <i class="bi bi-journal-check font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Average Score</p>
+                            <h4 class="mb-0">{{ avg_score_percentage|floatformat:1 }}%</h4>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-info align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-info">
+                                <i class="bi bi-graph-up font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card mini-stats-wid">
+                <div class="card-body">
+                    <div class="d-flex">
+                        <div class="flex-grow-1">
+                            <p class="text-muted fw-medium">Export Report</p>
+                            <div class="btn-group">
+                                <a href="{% url 'dashboard-export-talenthunt-results' pk=customer.id %}?format=excel{% if selected_talenthunt %}&talenthunt_id={{ selected_talenthunt }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-file-earmark-excel me-1"></i> CSV
+                                </a>
+                                <a href="{% url 'dashboard-export-talenthunt-results' pk=customer.id %}?format=pdf{% if selected_talenthunt %}&talenthunt_id={{ selected_talenthunt }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                                </a>
+                            </div>
+                        </div>
+                        <div class="avatar-sm rounded-circle bg-warning align-self-center mini-stat-icon">
+                            <span class="avatar-title rounded-circle bg-warning">
+                                <i class="bi bi-download font-size-24"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance by Exam Type -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Performance by TalentHunt Subject</h4>
+                    {% if performance_by_test %}
+                        <div class="table-responsive">
+                            <table class="table table-centered table-nowrap mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Count</th>
+                                        <th>Avg. Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for perf in performance_by_test %}
+                                    <tr>
+                                        <td>{{ perf.test }}</td>
+                                        <td>{{ perf.count }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 progress-bar-container">
+                                                    <div class="progress-bar progress-bar-info" role="progressbar" style="width: {{ perf.avg_score }}%"></div>
+                                                </div>
+                                                <span class="ms-2">{{ perf.avg_score|floatformat:1 }}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No TalentHunt subject performance data available.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Trend -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Performance Trend (Last 10 TalentHunt Tests)</h4>
+                    {% if trend_data %}
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="performanceTrendChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No trend data available.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Exam Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Detailed TalentHunt Results</h4>
+                    {% if detailed_talenthunt_data %}
+                        <div class="table-responsive">
+                            <table class="table table-centered table-nowrap mb-0 datatable2">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>TalentHunt Test</th>
+                                        <th>Date</th>
+                                        <th>Subject</th>
+                                        <th>Score</th>
+                                        <th>Questions</th>
+                                        <th>Correct</th>
+                                        <th>Wrong</th>
+                                        <th>Unanswered</th>
+                                        <th>Accuracy</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in detailed_talenthunt_data %}
+                                    <tr>
+                                        <td>{{ data.test }}</td>
+                                        <td>{{ data.date|date:"M d, Y" }}</td>
+                                        <td>{{ data.subject }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 progress-bar-container">
+                                                    <div class="progress-bar {% if data.percentage >= 60 %}progress-bar-success{% elif data.percentage >= 40 %}progress-bar-warning{% else %}progress-bar-danger{% endif %}" role="progressbar" style="width: {{ data.percentage }}%"></div>
+                                                </div>
+                                                <span class="ms-2">{{ data.percentage|floatformat:1 }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>{{ data.total_questions }}</td>
+                                        <td class="text-success">{{ data.correct_answers }}</td>
+                                        <td class="text-danger">{{ data.wrong_answers }}</td>
+                                        <td class="text-warning">{{ data.unanswered }}</td>
+                                        <td>{{ data.accuracy|floatformat:1 }}%</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary view-details" 
+                                                    data-bs-toggle="modal" data-bs-target="#talentHuntDetailModal" 
+                                                    data-talenthunt-name="{{ data.talenthunt.name }}"
+                                                    data-talenthunt-date="{{ data.date|date:"M d, Y" }}"
+                                                    data-talenthunt-subject="{{ data.subject_name }}"
+                                                    data-talenthunt-score="{{ data.percentage|floatformat:1 }}"
+                                                    data-talenthunt-correct="{{ data.correct_answers }}"
+                                                    data-talenthunt-wrong="{{ data.wrong_answers }}"
+                                                    data-talenthunt-unanswered="{{ data.unanswered }}"
+                                                    data-talenthunt-accuracy="{{ data.accuracy|floatformat:1 }}">
+                                                <i class="bi bi-eye"></i> View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">No TalentHunt data available.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- TalentHunt Detail Modal -->
+<div class="modal fade" id="talentHuntDetailModal" tabindex="-1" aria-labelledby="talentHuntDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="talentHuntDetailModalLabel">TalentHunt Test Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>TalentHunt Test:</strong> <span id="modal-talenthunt-name"></span></p>
+                        <p><strong>Date:</strong> <span id="modal-talenthunt-date"></span></p>
+                        <p><strong>Subject:</strong> <span id="modal-talenthunt-subject"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Score:</strong> <span id="modal-talenthunt-score"></span>%</p>
+                        <p><strong>Accuracy:</strong> <span id="modal-talenthunt-accuracy"></span>%</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h6>Question Analysis</h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-success" id="modal-talenthunt-correct-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-talenthunt-correct-text">Correct: 0</span>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-danger" id="modal-talenthunt-wrong-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-talenthunt-wrong-text">Wrong: 0</span>
+                            </div>
+                        </div>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-secondary" id="modal-talenthunt-unanswered-bar" role="progressbar" style="width: 0%">
+                                <span id="modal-talenthunt-unanswered-text">Unanswered: 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+               
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable only if not already initialized
+ 
+            $('.datatable2').DataTable({
+                "ordering": false,
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "responsive": true,
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": -1 }
+                ],
+                "order": [[0, 'desc']]
+            });
+        
+        
+        // Handle modal data
+        $('.view-details').on('click', function() {
+            var talentHuntName = $(this).data('talenthunt-name');
+            var talentHuntDate = $(this).data('talenthunt-date');
+            var talentHuntSubject = $(this).data('talenthunt-subject');
+            var talentHuntScore = $(this).data('talenthunt-score');
+            var talentHuntCorrect = parseInt($(this).data('talenthunt-correct'));
+            var talentHuntWrong = parseInt($(this).data('talenthunt-wrong'));
+            var talentHuntUnanswered = parseInt($(this).data('talenthunt-unanswered'));
+            var talentHuntAccuracy = $(this).data('talenthunt-accuracy');
+            
+            $('#modal-talenthunt-name').text(talentHuntName);
+            $('#modal-talenthunt-date').text(talentHuntDate);
+            $('#modal-talenthunt-subject').text(talentHuntSubject);
+            $('#modal-talenthunt-score').text(talentHuntScore);
+            $('#modal-talenthunt-accuracy').text(talentHuntAccuracy);
+            
+            // Calculate percentages for progress bars
+            var total = talentHuntCorrect + talentHuntWrong + talentHuntUnanswered;
+            var correctPct = (talentHuntCorrect / total) * 100;
+            var wrongPct = (talentHuntWrong / total) * 100;
+            var unansweredPct = (talentHuntUnanswered / total) * 100;
+            
+            // Update progress bars
+            $('#modal-talenthunt-correct-bar').css('width', correctPct + '%');
+            $('#modal-talenthunt-wrong-bar').css('width', wrongPct + '%');
+            $('#modal-talenthunt-unanswered-bar').css('width', unansweredPct + '%');
+            
+            $('#modal-talenthunt-correct-text').text('Correct: ' + talentHuntCorrect);
+            $('#modal-talenthunt-wrong-text').text('Wrong: ' + talentHuntWrong);
+            $('#modal-talenthunt-unanswered-text').text('Unanswered: ' + talentHuntUnanswered);
+            
+            // Update view full details link
+            var studentId = "{{ customer.id }}";
+            var talentHuntId = $(this).data('talenthunt-id');
+            if (talentHuntId) {
+                $('#view-full-details-link').attr('href', '/dashboard/customer/talenthunt-result/' + studentId + '/' + talentHuntId + '/');
+            }
+        });
+        
+        {% if trend_data %}
+        // Performance Trend Chart
+        var ctx = document.getElementById('performanceTrendChart').getContext('2d');
+        
+        // Prepare data from Django template
+        var chartLabels = [];
+        var chartData = [];
+        var pointColors = [];
+        var talentHuntNames = [];
+        
+        {% for item in trend_data reversed %}
+            chartLabels.push("{{ item.date|date:'M d, Y' }}");
+            chartData.push({{ item.score|floatformat:1 }});
+            pointColors.push({% if item.passed %}"rgba(40, 167, 69, 1)"{% else %}"rgba(220, 53, 69, 1)"{% endif %});
+            talentHuntNames.push("{{ item.test }}");
+        {% endfor %}
+ 
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'TalentHunt Score %',
+                    data: chartData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointBackgroundColor: pointColors,
+                    pointBorderColor: pointColors,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Score Percentage'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'TalentHunt Test Date'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                var idx = tooltipItems[0].dataIndex;
+                                return talentHuntNames[idx];
+                            },
+                            label: function(context) {
+                                return 'Score: ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock content %}

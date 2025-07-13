@@ -1,0 +1,228 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Generate Payment Link{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
+                    <div class="my-auto mb-2">
+                        <h3 class="mb-1">Generate Payment Link</h3>
+                        <nav aria-label="breadcrumbs">
+                            <ol class="custom-breadcrumb">
+                                <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                                <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-payment' %}">Fee Collection</a></li>
+                                <li class="custom-breadcrumb-item active">Generate Link</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-10 col-md-10 mx-auto">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Installment Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Student Name</p>
+                                <h5>{{ installment.subscription.user.name }}</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Phone Number</p>
+                                <h5>{{ installment.subscription.user.phone_number }}</h5>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Due Date</p>
+                                <h5>{{ installment.due_date|date:"d M Y" }}</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Amount Due</p>
+                                <h5 class="text-primary">₹{{ installment.amount_due|floatformat:2 }}</h5>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Status</p>
+                                <h5>
+                                    {% if installment.status == 'PENDING' %}
+                                    <span class="badge bg-info">Pending</span>
+                                    {% elif installment.status == 'OVERDUE' %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% elif installment.status == 'PAID' %}
+                                    <span class="badge bg-success">Paid</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ installment.status }}</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="text-muted mb-1">Payment Link</p>
+                                {% if installment.payment_link %}
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="payment-link" value="{{ installment.payment_link }}" readonly>
+                                    <button class="btn btn-primary" type="button" id="copy-link" data-bs-toggle="tooltip" title="Copy to clipboard">
+                                        <i class="bi bi-clipboard copy-icon"></i>
+                                        <i class="bi bi-check-lg check-icon d-none text-white"></i>
+                                    </button>
+                                    <a href="{{ installment.payment_link }}" target="_blank" class="btn btn-info" data-bs-toggle="tooltip" title="Open link">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                    <button class="btn btn-secondary" type="button" id="share-link" data-bs-toggle="tooltip" title="Share link">
+                                        <i class="bi bi-share"></i>
+                                    </button>
+                                </div>
+                                <div class="copy-success-message alert alert-success py-1 px-2 mt-1 d-none">
+                                    <small><i class="bi bi-check-circle-fill me-1"></i> Link copied to clipboard!</small>
+                                </div>
+                                <small class="text-muted">Link expires: {{ installment.payment_link_expires|date:"d M Y H:i" }}</small>
+                                {% else %}
+                                <p class="text-muted">No payment link generated yet</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if not installment.is_paid %}
+                        <form method="post" class="mt-4">
+                            {% csrf_token %}
+                            
+                            
+                            <!-- <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="send_notification" name="send_notification" checked>
+                                <label class="form-check-label" for="send_notification">
+                                    Send notification to student with payment link
+                                </label>
+                                <div class="form-text">
+                                    <i class="bi bi-bell me-1"></i> A push notification will be sent to the student's device with the payment link
+                                </div>
+                            </div> -->
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'dashboard-installment-detail' pk=installment.id %}" class="btn btn-light">
+                                    <i class="bi bi-arrow-left me-1"></i> Back to Details
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-link me-1"></i> {% if installment.payment_link %}Regenerate{% else %}Generate{% endif %} Payment Link
+                                </button>
+                            </div>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-success mt-3">
+                            <i class="bi bi-check-circle-fill me-2"></i> This installment has already been paid.
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'dashboard-installment-detail' pk=installment.id %}" class="btn btn-light">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Details
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Link Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Payment Link</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Payment Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="modal-payment-link" value="{{ installment.payment_link }}" readonly>
+                        <button class="btn btn-primary" type="button" id="modal-copy-link">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    {% if installment.subscription.user.phone_number %}
+                    <a href="https://wa.me/91{{ installment.subscription.user.phone_number }}?text=Please%20pay%20your%20installment%20of%20₹{{ installment.amount_due|floatformat:2 }}%20using%20this%20link:%20{{ installment.payment_link|urlencode }}" 
+                       target="_blank" class="btn btn-success">
+                        <i class="bi bi-whatsapp"></i> Share via WhatsApp
+                    </a>
+                    {% endif %}
+                    {% if installment.subscription.user.email %}
+                    <a href="mailto:{{ installment.subscription.user.email }}?subject=Payment%20Reminder&body=Please%20pay%20your%20installment%20of%20₹{{ installment.amount_due|floatformat:2 }}%20using%20this%20link:%20{{ installment.payment_link|urlencode }}" 
+                       class="btn btn-info">
+                        <i class="bi bi-envelope"></i> Share via Email
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Copy link functionality
+        const copyBtn = document.getElementById('copy-link');
+        const modalCopyBtn = document.getElementById('modal-copy-link');
+        const paymentLinkInput = document.getElementById('payment-link');
+        const modalPaymentLinkInput = document.getElementById('modal-payment-link');
+        
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                paymentLinkInput.select();
+                document.execCommand('copy');
+                
+                // Show tooltip
+                const tooltip = new bootstrap.Tooltip(copyBtn, {
+                    title: 'Copied!',
+                    trigger: 'manual'
+                });
+                tooltip.show();
+                
+                // Hide tooltip after 2 seconds
+                setTimeout(function() {
+                    tooltip.hide();
+                }, 2000);
+                
+                // Show share modal
+                const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+                shareModal.show();
+            });
+        }
+        
+        if (modalCopyBtn) {
+            modalCopyBtn.addEventListener('click', function() {
+                modalPaymentLinkInput.select();
+                document.execCommand('copy');
+                
+                // Change button text temporarily
+                const originalText = modalCopyBtn.innerHTML;
+                modalCopyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                
+                setTimeout(function() {
+                    modalCopyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

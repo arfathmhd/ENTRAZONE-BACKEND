@@ -1,0 +1,4 @@
+# requirements.in
+django-storages
+boto3
+reportlab

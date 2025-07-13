@@ -1,0 +1,2041 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% load dashboard_filters %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    .folder-section {
+        margin-bottom: 20px;
+    }
+
+    .folder-section .list-group-item {
+        background-color: #f8f9fa; /* Light background for folders */
+    }
+
+    .folder-section .list-group-item strong {
+        color: #343a40; /* Darker text color */
+    }
+
+    /* Dropdown styles */
+    .dropdown {
+        position: static;
+    }
+
+    .dropdown:hover {
+        background-color: transparent;
+        border: none;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        z-index: 1021;
+    }
+
+    .btn-dots {
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .btn-dots:hover, .btn-dots:focus, .btn-dots[aria-expanded="true"] {
+        background-color: #e9ecef;
+    }
+
+    .table td {
+        position: relative;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Lesson</h3>
+                <!-- <nav>
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'dashboard-home' %}">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Course</li>
+                        <li class="breadcrumb-item active" aria-current="page">Subject</li>
+                        <li class="breadcrumb-item active" aria-current="page">Chapter</li>
+                        <li class="breadcrumb-item active" aria-current="page">Lesson</li>
+                    </ol>
+                </nav> -->
+
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-course' %}">Course</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-course-subjects-list' pk=obj_chapter.subject.course.id %}">Subject</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'subject-chapters-list' subject_id=obj_chapter.subject.id %}">Chapter</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Lesson </a></li>
+                    </ol>
+                </nav>
+            </div>
+        
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-2 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                       data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                       onclick="window.location.reload();">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </a>
+                </div>
+                <div class="pe-2 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                            data-bs-toggle="tooltip" data-bs-placement="top" 
+                            aria-label="Print" data-bs-original-title="Print"
+                            onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                <div class="mb-2 pe-2">
+                    <a href="{% url 'dashboad-chapter-lesson-add' obj_chapter.id %}"
+                       class="btn btn-primary d-flex align-items-center">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add Lesson
+                    </a>
+                </div>
+                <div class="mb-2 pe-2">
+                    <button type="button" class="btn btn-primary d-flex align-items-center" 
+                          id="add-new-exam">
+                        <i class="bi bi-plus-circle me-2"></i>Add Exam
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <a href="#" 
+                       class="btn btn-primary d-flex align-items-center" 
+                       data-bs-toggle="modal" 
+                       data-bs-target="#add-folder-modal"
+                       data-chapter-id="{{ obj_chapter.id }}">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add Module
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+        
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Folders and Lessons List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3 alphabet-sort">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a href="javascript:void(0);" data-sort="price_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_ascending' %}active{% endif %}">
+                                    Price Low to High
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="price_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_descending' %}active{% endif %}">
+                                    Price High to Low
+                                </a>
+                            </li> -->
+                        </ul>
+                        
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                
+                {% if folders %}
+                <!-- Folders Table -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Modules</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Image</th>
+                                        <th>Module Name</th>
+                                        <th>Visible In Days</th>
+                                        <th>Created</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for folder in folders %}
+                                    <tr class="table-info"> <!-- Style for folders -->
+                                        <td>{{ folder.id }}</td>
+                                        <td>
+                                            <i class="bi bi-folder-fill" style="color: #FFD700; font-size: 24px;"></i>
+                                        </td>
+                                        <td>
+                                            <a class="link-primary" href="{% url 'dashboard-folder' folder_id=folder.id %}">
+                                                <strong>{{ folder.title }}</strong>
+                                            </a> 
+                                        </td>
+                                        <td>{{ folder.visible_in_days }}</td>
+                                        <td>{{ folder.created|date:"d-m-Y" }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <a href="javascript:void(0);" 
+                                                class="text-primary me-3" 
+                                                title="Edit Folder" 
+                                                onclick="showUpdateFolderModal('{{ folder.id }}', '{{ folder.title }}', '{{ folder.visible_in_days }}')">
+                                                 <i class="bi bi-pencil-square me-2"></i>
+                                             </a>
+                                             
+                                                <a href="#" 
+                                                   class="text-primary me-3" 
+                                                   title="Delete Folder"
+                                                   data-bs-toggle="modal" 
+                                                   data-bs-target="#delete-folder-modal"
+                                                   data-folder-id="{{ folder.id }}" 
+                                                   data-folder-name="{{ folder.title }}">
+                                                    <i class="bi bi-trash me-2"></i>
+                                                </a>
+
+                                            <!-- copy move dropdown -->
+                                                <div class="dropdown">
+                                                    <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ folder.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ folder.id }}">
+                                                        <li>
+                                                            <a class="dropdown-item copy-folder-btn" href="javascript:void(0);" onclick="showCopyFolderModal('{{ folder.id }}', '{{ folder.title }}')">
+                                                                <i class="bi bi-files me-2"></i>Copy
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item move-folder-btn" href="javascript:void(0);" onclick="showMoveFolderModal('{{ folder.id }}', '{{ folder.title }}')">
+                                                                <i class="bi bi-arrows-move me-2"></i>Move
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <!-- end copy move dropdown-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Lessons Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Lessons</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Created</th>
+                                        <th>Video</th>
+                                        <th>M3U8</th>
+                                        <th>ThirdParty</th>
+                                        <th>PDF</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lesson in lessons %}
+                                    <tr>
+                                        <td>{{ lesson.id }}</td>
+                                        <td>{{ lesson.lesson_name }}</td>
+                                        <td>{{ lesson.description|truncatewords:10 }}</td>
+                                        <td>{{ lesson.created|date:"d-m-Y"}}</td>
+                                        <td>
+                                            {% for video in lesson.videos.all %}
+                                                <strong>{{ video.title|default:"N/A" }}</strong><br>
+                                                
+                                                {% if video.url %}
+                                                    {% if 'youtube' in video.url %}
+                                                        <a href="{{ video.url }}" class="link-primary" target="_blank">Watch Video</a>
+                                                    {% else %}
+                                                        <a href="https://www.youtube.com/watch?v={{ video.url }}" class="link-primary" target="_blank">Watch Video</a>
+                                                    {% endif %}
+                                                {% endif %}
+                                                <br>
+                                                <!-- Show if the video is free -->
+                                                {% if video.is_free %}
+                                                    <span class="badge bg-success">Free</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Paid</span>
+                                                {% endif %}
+                                                
+                                                {% if video.is_m3u8 %}
+                                                    <span class="badge bg-primary">M3U8</span>
+                                                {% elif video.url %}
+                                                    <span class="badge bg-info">Youtube</span>
+                                                {% endif %}
+                                                <br><br>
+                                            {% empty %}
+                                                N/A
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for video in lesson.videos.all %}
+                                                <strong>{{ video.title|default:"N/A" }}</strong><br>
+                                                
+                                                {% if video.m3u8 %}
+                                                    <a href="{{ video.url }}" class="link-primary" target="_blank">Watch Video</a>
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                                
+                                                <br>
+                                                <!-- Show if the video is free -->
+                                                {% if video.m3u8_is_free %}
+                                                    <span class="badge bg-success">Free</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Paid</span>
+                                                {% endif %}
+                                                {% if video.is_m3u8 %}
+                                                    <span class="badge bg-primary">M3U8</span>
+                                                {% endif %}
+                                                <br>
+                                                <!-- Show if the video is downloadable -->
+                                                {% if video.is_downloadable %}
+                                                    <span class="badge bg-info">Downloadable</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Not Downloadable</span>
+                                                {% endif %}
+                                                <br><br>
+                                            {% empty %}
+                                                N/A
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for video in lesson.videos.all %}
+                                                {% if video.tp_stream %}
+                                                    <p>{{video.tp_stream}}</p>
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            {% empty %}
+                                                N/A
+                                            {% endfor %}
+                                        </td>
+                                        
+
+                                        <td>
+                                            <!-- Display PDF notes similarly -->
+                                            {% for pdf in lesson.pdf_notes.all %}
+                                                <strong>{{ pdf.title|default:"N/A" }}</strong><br>
+                                                
+                                                {% if pdf.file %}
+                                                    <a href="{{ pdf.file.url }}" target="_blank">Download PDF</a>
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                                
+                                                <br>
+                                                <!-- Show if the PDF is free -->
+                                                {% if pdf.is_free %}
+                                                    <span class="badge bg-success">Free</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Paid</span>
+                                                {% endif %}
+                                                
+                                                <!-- Show if the PDF is downloadable -->
+                                                {% if pdf.is_downloadable %}
+                                                    <span class="badge bg-info">Downloadable</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Not Downloadable</span>
+                                                {% endif %}
+                                                <br><br>
+                                            {% empty %}
+                                                N/A
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <a href="{% url 'dashboard-chapter-lesson-update' chapter_id=obj_chapter.id lesson_id=lesson.id %}" class="text-primary me-3" title="Edit Course">
+                                                    <i class="bi bi-pencil-square me-2"></i>
+                                                </a>
+                                                <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#lesson-delete-modal"  data-lesson-id="{{ lesson.id }}" title="Delete Lesson">
+                                                    <i class="bi bi-trash me-2"></i>
+                                                </a>
+                                                <!-- copy move dropdown -->
+                                                <div class="dropdown">
+                                                    <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ lesson.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ lesson.id }}">
+                                                        <li>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="showCopyLessonModal('{{ lesson.id }}', '{{ lesson.lesson_name }}')">
+                                                                <i class="bi bi-files me-2"></i>Copy
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item" href="javascript:void(0);" onclick="showMoveLessonModal('{{ lesson.id }}', '{{ lesson.lesson_name }}')">
+                                                                <i class="bi bi-arrows-move me-2"></i>Move
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <!-- end copy move dropdown -->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="9" class="text-center">No lessons found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Exams</h5>
+                            </div>
+                            <div class="card-body p-0 py-3">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Exam Title</th>
+                                                <th>Exam Type</th>
+                                                <th>Duration</th>
+                                                <th>Number of Attempts</th>
+                                                <th>Created</th>
+                                                <th>Shuffle Questions</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for exam in exams %}
+                                            <tr>
+                                                <td>{{ exam.id }}</td>
+                                                <td>
+                                                    <div>
+                                                        <a class="link-primary" href="{% url 'dashboard-exam-question-manager' exam_id=exam.id %}">{{ exam.title }}</a>
+                                                        {% if exam.is_free %}
+                                                            <span class="badge bg-success ms-2">Free</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning ms-2">Paid</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {{ exam.exam_type|default:"N/A" }}
+                                                    <br>
+                                                    <small>
+                                                        {% if exam.start_date %}
+                                                            {{ exam.start_date|date:"d-m-Y" }} -- {{ exam.end_date|date:"d-m-Y" }}
+                                                        {% endif %}
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    {% with duration=exam.duration %}
+                                                    {% if duration %}
+                                                        {% with hours=duration.hour minutes=duration.minute seconds=duration.second %}
+                                                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}
+                                                            {% if minutes > 0 %} {{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
+                                                            {% if seconds > 0 %} {{ seconds }} second{% if seconds != 1 %}s{% endif %}{% endif %}
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        N/A
+                                                    {% endif %}
+                                                    {% endwith %}
+                                                </td>
+                                                <td>{{ exam.number_of_attempt }}</td>
+                                                <td>{{ exam.created|date:"d-m-Y"}}</td>
+                                                <td>
+                                                    {% if exam.is_shuffle %}
+                                                        <span class="badge bg-success">Yes</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">No</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">Active</span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <!-- Edit Exam -->
+                                                        <a href="#" class="text-primary me-3 edit-exam" 
+                                                           data-exam-id="{{ exam.id }}" 
+                                                           data-title="{{ exam.title }}" 
+                                                           data-duration="{{ exam.duration|time:'H:i:s' }}" 
+                                                           data-is-free="{{ exam.is_free|yesno:'1,0' }}" 
+                                                           data-attempts="{{ exam.number_of_attempt }}"
+                                                           data-is-shuffle="{{ exam.is_shuffle|yesno:'1,0' }}"
+                                                           data-exam-type="{{ exam.exam_type }}"
+                                                           data-start-date="{{ exam.start_date|date:'Y-m-d' }}"
+                                                           data-end-date="{{ exam.end_date|date:'Y-m-d' }}"
+                                                           title="Edit Exam">
+                                                            <i class="bi bi-pencil-square me-2"></i>
+                                                        </a>
+                                                        <!-- Delete Exam -->
+                                                        <a class="btn-delete-exam" href="#" data-bs-toggle="modal" data-bs-target="#delete-exam-modal" data-exam-id="{{ exam.id }}" title="Delete Exam">
+                                                            <i class="bi bi-trash me-2"></i>
+                                                        </a>
+                                                       <!-- copy move dropdown -->
+                                        <div class="dropdown me-3">
+                                            <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ exam.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ exam.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showCopyExamModal({{ exam.id }}, '{{ exam.title|default:"Exam" }}')">
+                                                        <i class="bi bi-files me-2"></i>Copy
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showMoveExamModal({{ exam.id }}, '{{ exam.title|default:"Exam" }}')">
+                                                        <i class="bi bi-arrows-move me-2"></i>Move
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- end copy move dropdown -->
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="6" class="text-center">No exams found for this chapter.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="pagination">
+                        {% if lessons.has_previous %}
+                            <a href="?page=1{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ lessons.previous_page_number }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ lessons.number }} of {{ lessons.paginator.num_pages }}</span>
+                        
+                        {% if lessons.has_next %}
+                            <a href="?page={{ lessons.next_page_number }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ lessons.paginator.num_pages }}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+            </div>
+            
+            
+            
+            
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="add-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-plus"></i>
+                </span>
+                <h4>Add New Folder</h4>
+                <p>Enter a name for the new folder you want to create.</p>
+                
+                <!-- Folder input field -->
+                <div class="mb-3">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+                    <input type="text" id="folder-name" class="form-control mb-2" placeholder="Enter folder name">
+                    <input type="number" id="folder-visible-in-days" class="form-control mb-2" placeholder="Enter folder visible in days">
+
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="add-folder-button" class="btn btn-primary">Create Folder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Folder Modal -->
+<div class="modal fade" id="update-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="update-modal-title">Update Folder</h4>
+                <p>Enter a new name for the folder.</p>
+                
+                <!-- Folder input field -->
+                <div class="mb-3">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <input type="text" id="update-folder-name" class="form-control mb-2" placeholder="Enter new folder name">
+                    <input type="number" id="update-visible-in-days" class="form-control mb-2" placeholder="Enter folder visible in days">
+                    <input type="hidden" id="update-folder-id" value="">
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="update-folder-button" class="btn btn-success">Update Folder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Copy Folder Modal -->
+<div class="modal fade" id="copy-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="copy-modal-title">Copy Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="copy-folder-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-folder-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-folder-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="copy-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="copy-folder-parent" disabled>
+                            <option value="">Select Folder </option>
+                        </select>
+                        <select class="form-select mb-3" id="copy-folder-sub" disabled>
+                            <option value="">Select Subfolder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="copy-folder-button" class="btn btn-success">Copy here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Folder Modal -->
+<div class="modal fade" id="move-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="move-modal-title">Move Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="move-folder-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-folder-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-folder-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="move-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="move-folder-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <select class="form-select mb-3" id="move-folder-sub" disabled>
+                            <option value="">Select Subfolder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="move-folder-button" class="btn btn-success">Move here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- copy lesson Modal -->
+<div class="modal fade" id="copy-lesson-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="copy-modal-title">Copy Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="copy-lesson-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-lesson-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-lesson-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="copy-lesson-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="copy-lesson-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <div id="copy-lesson-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="copy-lesson-sub" disabled>
+                                <option value="">Select Subfolder</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="copy-lesson-button" class="btn btn-success">Copy here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move lesson Modal -->
+<div class="modal fade" id="move-lesson-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="move-modal-title">Move Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="move-lesson-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-lesson-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-lesson-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="move-lesson-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="move-lesson-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <div id="move-lesson-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="move-lesson-sub" disabled>
+                                <option value="">Select Subfolder</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="move-lesson-button" class="btn btn-success">Move here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="delete-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4>Delete Module</h4>
+                <p>Are you sure you want to delete this folder?</p>
+                <!-- Folder input field -->
+                <div class="mb-3">
+                    <input type="hidden" id="delete-folder-id"> 
+                    <p id="delete-folder-name"></p> 
+                </div>
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-folder-button" class="btn btn-danger">Delete Folder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="lesson-delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="lesson-delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="add-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exam-modal-title">Add New Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="exam-form" action="{% url 'lesson-exam-add' chapter_id=obj_chapter.id %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="chapter_id" value="{{ obj_chapter.id }}">
+                   
+                    <div class="mb-3">
+                        <label for="exam-title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="exam-title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exam-type" class="form-label">Exam Type</label>
+                        <select class="form-select" id="exam-type" name="exam_type" required>
+                            <option value="">Select Exam Type</option>
+                            {% for value, label in None|exam_type_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row" id="date-range">
+                        <div class="mb-3 col-md-6">
+                            <label for="start-date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start-date" name="start_date" required>
+                        </div>
+                        <div class="mb-3 col-md-6">
+                            <label for="end-date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end-date" name="end_date" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exam-duration" class="form-label">Duration (HH:MM:SS)</label>
+                        <input type="text" class="form-control" id="exam-duration" name="duration" placeholder="01:00:00" required>
+                        <small class="text-muted">Format: Hours:Minutes:Seconds</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="number-of-attempt" class="form-label">Number of Attempts</label>
+                        <input type="number" class="form-control" id="number-of-attempt" name="number_of_attempt" value="1" min="1" required>
+                        <small class="text-muted">Number of times a student can attempt this exam</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-shuffle" name="is_shuffle">
+                        <label class="form-check-label" for="is-shuffle">Shuffle Questions</label>
+                        <small class="d-block text-muted">Randomize question order for each attempt</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-free" name="is_free">
+                        <label class="form-check-label" for="is-free">Free Exam</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="exam-submit-btn">Save Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Exam Modal -->
+<div class="modal fade" id="delete-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete this exam. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <form id="delete-exam-form" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="exam_id" id="exam-id">
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'dashboard/components/exam_copy_move.html' %}
+
+<!-- Dropdown and Modal initialization script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap components
+        var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
+        var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl)
+        });
+        
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $(document).on('click', '.btn-delete', function () {
+            var lessonId = $(this).data('lesson-id');
+            var chapterId = "{{ obj_chapter.id }}";  
+            $('#lesson-delete-record').data('lesson-id', lessonId); 
+            $('#lesson-delete-record').data('chapter-id', chapterId); 
+        });
+
+        // Exam functionality
+        $(document).on('click', '.btn-delete-exam', function () {
+            var examId = $(this).data('exam-id'); 
+            $('#delete-exam-form').attr('action', "{% url 'lesson-exam-delete' exam_id=0 %}".replace('0', examId));
+            $('#exam-id').val(examId);
+        });
+
+        // Set default date values for date inputs
+        function setDefaultDates() {
+            var today = new Date();
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 7); // Default end date is 7 days from today
+            
+            // Format dates as YYYY-MM-DD for the date input
+            var todayFormatted = today.toISOString().split('T')[0];
+            var tomorrowFormatted = tomorrow.toISOString().split('T')[0];
+            
+            // Set default values
+            $('#start-date').val(todayFormatted);
+            $('#end-date').val(tomorrowFormatted);
+            
+            if($('#exam-type').val() == "") {
+            $('#date-range').hide();
+        }
+        }
+        
+        // Initialize default dates
+        setDefaultDates();
+
+        $('#exam-type').on('change', function(e) {
+        var examType = $(this).val();
+            if (examType !== 'Daily' || examType == '') {
+                $('#date-range').show();
+            } else {
+                $('#date-range').hide();
+            }
+        });
+
+        $(document).on('click', '.edit-exam', function(e) {
+            e.preventDefault();
+            var examId = $(this).data('exam-id');
+            var examTitle = $(this).data('title');
+            var examDuration = $(this).data('duration');
+            var attempts = $(this).data('attempts');
+            var isShuffle = $(this).attr('data-is-shuffle') === '1';
+            var isFree = $(this).attr('data-is-free') === '1';
+            var examType = $(this).data('exam-type');
+            var examStartDate = $(this).data('start-date');
+            var examEndDate = $(this).data('end-date');
+
+            // If start date and end date are not provided, set defaults
+            if (!examStartDate) {
+                examStartDate = new Date().toISOString().split('T')[0];
+            }
+            if (!examEndDate) {
+                var endDate = new Date();
+                endDate.setDate(endDate.getDate() + 7);
+                examEndDate = endDate.toISOString().split('T')[0];
+            }
+            
+            // Format duration to HH:MM:SS if needed
+            if (examDuration) {
+                // Check if duration is already in HH:MM:SS format
+                if (!examDuration.includes(':')) {
+                    // If not, format it
+                    var durationParts = examDuration.split(' ');
+                    var hours = 0;
+                    var minutes = 0;
+                    var seconds = 0;
+                    
+                    for (var i = 0; i < durationParts.length; i++) {
+                        if (durationParts[i].includes('hour')) {
+                            hours = parseInt(durationParts[i-1]) || 0;
+                        } else if (durationParts[i].includes('minute')) {
+                            minutes = parseInt(durationParts[i-1]) || 0;
+                        } else if (durationParts[i].includes('second')) {
+                            seconds = parseInt(durationParts[i-1]) || 0;
+                        }
+                    }
+                    
+                    // Format as HH:MM:SS
+                    examDuration = 
+                        (hours < 10 ? '0' + hours : hours) + ':' + 
+                        (minutes < 10 ? '0' + minutes : minutes) + ':' + 
+                        (seconds < 10 ? '0' + seconds : seconds);
+                }
+            } else {
+                examDuration = '01:00:00'; // Default duration
+            }
+            
+            // Set modal title
+            $('#exam-modal-title').text('Update Exam');
+            
+            // Fill form fields
+            $('#exam-title').val(examTitle);
+            $('#exam-duration').val(examDuration);
+            $('#is-free').prop('checked', isFree === true || isFree === 'true');
+            $('#number-of-attempt').val(attempts);
+            $('#is-shuffle').prop('checked', isShuffle);
+
+            // Set exam type and show/hide date fields based on type
+        if (examType) {
+            $('#exam-type').val(examType);
+            if (examType !== 'Daily') {
+                $('#date-range').show();
+            } else {
+                $('#date-range').hide();
+            }
+        }
+        
+        // Set date values
+        if (examStartDate) {
+            $('#start-date').val(examStartDate);
+        }
+        if (examEndDate) {
+            $('#end-date').val(examEndDate);
+        }
+
+        // Ensure date fields have values
+        if (!$('#start-date').val()) {
+            $('#start-date').val(new Date().toISOString().split('T')[0]);
+        }
+        if (!$('#end-date').val()) {
+            var endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            $('#end-date').val(endDate.toISOString().split('T')[0]);
+        }
+            
+            // Change form action
+            $('#exam-form').attr('action', "{% url 'lesson-exam-update' exam_id=0 %}".replace('0', examId));
+            
+            // Change button text
+            $('#exam-submit-btn').text('Update Exam');
+            
+            // Show modal
+            $('#add-exam-modal').modal('show');
+        });
+        
+        $("#add-new-exam").on('click', function() {
+            $('#add-exam-modal').modal('show');
+            // Reset modal title
+            $('#exam-modal-title').text('Add New Exam');
+            
+            // Clear form fields
+            $('#exam-form')[0].reset();
+            
+            // Reset form action
+            $('#exam-form').attr('action', "{% url 'lesson-exam-add' chapter_id=obj_chapter.id %}");
+            
+            // Reset button text
+            $('#exam-submit-btn').text('Save Exam');
+            setDefaultDates();
+        });
+
+        $('#lesson-delete-record').click(function () {
+            var lessonId = $(this).data('lesson-id'); 
+            var chapterId = $(this).data('chapter-id'); 
+            console.log("Deleting Lesson ID: " + lessonId + ", Chapter ID: " + chapterId); 
+    
+            $.ajax({
+                url: '/chapter/lesson/delete/' + chapterId + '/' + lessonId + '/', 
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}', 
+                },
+                success: function (data) {
+                    console.log("Deleted successfully");
+                    window.location.reload(); 
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error deleting lesson:", error);
+                    alert("Error deleting lesson: " + xhr.responseText); 
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var deleteFolderModal = document.getElementById('delete-folder-modal');
+
+        deleteFolderModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var folderId = button.getAttribute('data-folder-id');
+            var folderName = button.getAttribute('data-folder-name');
+            
+            var modalFolderId = deleteFolderModal.querySelector('#delete-folder-id');
+            var modalFolderName = deleteFolderModal.querySelector('#delete-folder-name');
+            
+            modalFolderId.value = folderId; 
+            modalFolderName.textContent = folderName; 
+        });
+
+        document.getElementById('delete-folder-button').addEventListener('click', function(event) {
+            event.preventDefault();
+
+            var button = this;
+            button.disabled = true; 
+
+            var folderId = document.getElementById('delete-folder-id').value;
+
+            fetch("{% url 'dashboard-folder-delete' %}", {
+                method: "POST", 
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({
+                    folder_id: folderId
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                button.disabled = false; 
+
+                if (data.success) {
+                    var modalElement = document.getElementById('delete-folder-modal');
+                    var modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    location.reload(); 
+                } else {
+                    alert("Error deleting folder: " + data.error);
+                }
+            })
+            .catch((error) => {
+                button.disabled = false;
+                console.error('Error:', error);
+                alert("There was an error deleting the folder.");
+            });
+        });
+    });
+</script>
+
+<script>
+    // Update folder button event handler
+    document.getElementById('update-folder-button').addEventListener('click', function(event) {
+        event.preventDefault();
+        var button = this;
+        button.disabled = true;
+
+        var folderId = document.getElementById('update-folder-id').value;
+        var folderName = document.getElementById('update-folder-name').value;
+        var visibleInDays = document.getElementById('update-visible-in-days').value;
+
+        console.log(folderId, folderName, visibleInDays);
+
+        if (!folderName.trim()) {
+            alert('Please enter a folder name');
+            button.disabled = false;
+            return;
+        }
+
+        fetch("{% url 'dashboard-folder-update' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                folder_id: folderId,
+                new_folder_name: folderName,
+                new_visible_in_days: visibleInDays
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            button.disabled = false;
+            if (data.success) {
+                var modalElement = document.getElementById('update-folder-modal');
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                location.reload();
+            } else {
+                alert("Error updating folder: " + data.error);
+            }
+        })
+        .catch((error) => {
+            button.disabled = false;
+            console.error('Error:', error);
+            alert("There was an error updating the folder.");
+        });
+    });
+
+    document.getElementById('add-folder-button').addEventListener('click', function(event) {
+        event.preventDefault();
+        var button = this; 
+        button.disabled = true; 
+
+        var folderName = document.getElementById('folder-name').value;
+        var chapterId = "{{ obj_chapter.id }}";
+        var visibleInDays = document.getElementById('folder-visible-in-days').value;
+
+
+        fetch("{% url 'dashboard-folder-add' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                folder_name: folderName,
+                chapter_id: chapterId,
+                visible_in_days: visibleInDays
+            })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            button.disabled = false; 
+            if (data.success) {
+                var modalElement = document.getElementById('add-folder-modal'); 
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                location.reload();
+            } else {
+                alert("Error adding folder: " + data.error);
+            }
+        }).catch((error) => {
+            button.disabled = false;
+            console.error('Error:', error);
+            alert("There was an error adding the folder.");
+        });
+    });
+</script>
+
+<script>
+
+    function loadDropdownData(courseSelect, subjectSelect, chapterSelect) {
+            $.ajax({
+                url: "{% url 'get-courses-subject-chapters' %}",
+                type: 'GET',
+                success: function(data) {
+                    console.log(data);
+                    // Clear and populate course dropdown
+                    $(courseSelect).html('<option value="">Select Course</option>');
+                    $.each(data.courses, function(i, course) {
+                        $(courseSelect).append(`<option value="${course.id}">${course.course_name}</option>`);
+                    });
+                    
+                    courseSelect.disabled = false;
+                    subjectSelect.disabled = true;
+                    chapterSelect.disabled = true;
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading data:', error);
+                }
+            });
+        }
+
+    function loadSubjects(courseId, subjectSelect, chapterSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId
+            },
+            success: function(data) {
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $.each(data.subjects, function(i, subject) {
+                    $(subjectSelect).append(`<option value="${subject.id}">${subject.subject_name}</option>`);
+                });
+                
+                subjectSelect.disabled = false;
+                chapterSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading subjects:', error);
+            }
+        });
+    }
+
+    function loadChapters(courseId, subjectId, chapterSelect, folderSelect, subfolderSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId,
+                'subject_id': subjectId
+            },
+            success: function(data) {
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $.each(data.chapters, function(i, chapter) {
+                    $(chapterSelect).append(`<option value="${chapter.id}">${chapter.chapter_name}</option>`);
+                });
+                
+                chapterSelect.disabled = false;
+                if (folderSelect) {
+                    folderSelect.disabled = true;
+                    $(folderSelect).html('<option value="">Select Folder</option>');
+                }
+                if (subfolderSelect) {
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading chapters:', error);
+            }
+        });
+    }
+
+    function loadFolders(chapterId, folderSelect, subfolderSelect, folderContainer) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'chapter_id': chapterId
+            },
+            success: function(data) {
+                // Hide folder selects by default
+                if (folderContainer) {
+                    $(folderContainer).hide();
+                }
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+
+                if (data.has_folders && data.folders && data.folders.length > 0) {
+                    // Show folder container if folders exist
+                    if (folderContainer) {
+                        $(folderContainer).show();
+                    }
+
+                    $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                    $.each(data.folders, function(i, folder) {
+                        $(folderSelect).append(`<option value="${folder.id}" data-has-subfolders="${folder.has_subfolders}">${folder.title}</option>`);
+                    });
+                    folderSelect.disabled = false;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading folders:', error);
+            }
+        });
+    }
+
+    function loadSubfolders(folderId, folderSelect, subfolderSelect) {
+        const selectedOption = $(folderSelect).find('option:selected');
+        const hasSubfolders = selectedOption.data('has-subfolders');
+
+        if (hasSubfolders) {
+            $.ajax({
+                url: "{% url 'get-courses-subject-chapters' %}",
+                type: 'GET',
+                data: {
+                    'folder_id': folderId
+                },
+                success: function(data) {
+                    if (data.folders) {
+                        const folder = data.folders.find(f => f.id === parseInt(folderId));
+                        if (folder && folder.subfolders.length > 0) {
+                            $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                            $.each(folder.subfolders, function(i, subfolder) {
+                                $(subfolderSelect).append(`<option value="${subfolder.id}">${subfolder.title}</option>`);
+                            });
+                            subfolderSelect.disabled = false;
+                            return;
+                        }
+                    }
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading subfolders:', error);
+                }
+            });
+        } else {
+            subfolderSelect.disabled = true;
+            $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+        }
+    }
+
+    function checkSelections(courseSelect, subjectSelect, chapterSelect, actionButton) {
+        const allSelected = courseSelect.value && subjectSelect.value && chapterSelect.value;
+        actionButton.disabled = !allSelected;
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showCopyFolderModal(folderId, folderName) {
+        // Store the folder ID and name for later use
+        document.getElementById('copy-folder-modal').setAttribute('data-folder-id', folderId);
+        document.getElementById('copy-modal-title').textContent = 'Copy Module: ' + folderName;
+        
+        const courseSelect = document.getElementById('copy-folder-course');
+        const subjectSelect = document.getElementById('copy-folder-subject');
+        const chapterSelect = document.getElementById('copy-folder-chapter');
+        const folderSelect = document.getElementById('copy-folder-parent');
+        const subfolderSelect = document.getElementById('copy-folder-sub');
+        const copyButton = document.getElementById('copy-folder-button');
+
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        copyButton.disabled = true;
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect, folderSelect, subfolderSelect);
+            } else {
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('copy-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#copy-folder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+            } else {
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('copy-folder-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle copy button click
+        document.getElementById('copy-folder-button').onclick = function() {
+            const folderId = modalElement.getAttribute('data-folder-id');
+            const chapterId = document.getElementById('copy-folder-chapter').value;
+            const parentFolderId = document.getElementById('copy-folder-parent').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (parentFolderId) {
+                formData.append('target_folder_id', parentFolderId);
+            }
+
+            // Submit the copy request
+            $.ajax({
+                url: `/folder/${folderId}/copy/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error copying folder');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error copying folder');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showMoveFolderModal(folderId, folderName) {
+        // Store the folder ID and name for later use
+        document.getElementById('move-folder-modal').setAttribute('data-folder-id', folderId);
+        document.getElementById('move-modal-title').textContent = 'Move Module: ' + folderName;
+        
+        const courseSelect = document.getElementById('move-folder-course');
+        const subjectSelect = document.getElementById('move-folder-subject');
+        const chapterSelect = document.getElementById('move-folder-chapter');
+        const folderSelect = document.getElementById('move-folder-parent');
+        const subfolderSelect = document.getElementById('move-folder-sub');
+        const moveButton = document.getElementById('move-folder-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        moveButton.disabled = true;
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect, folderSelect, subfolderSelect);
+            } else {
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('move-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#move-folder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+            } else {
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('move-folder-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle move button click
+        document.getElementById('move-folder-button').onclick = function() {
+            const folderId = modalElement.getAttribute('data-folder-id');
+            const chapterId = document.getElementById('move-folder-chapter').value;
+            const parentFolderId = document.getElementById('move-folder-parent').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (parentFolderId) {
+                formData.append('target_folder_id', parentFolderId);
+            }
+
+            // Submit the move request
+            $.ajax({
+                url: `/folder/${folderId}/move/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error moving folder');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error moving folder');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showCopyLessonModal(lessonId, lessonName) {
+        // Store the lesson ID and name for later use
+        document.getElementById('copy-lesson-modal').setAttribute('data-lesson-id', lessonId);
+        document.getElementById('copy-modal-title').textContent = 'Copy Lesson: ' + lessonName;
+        
+        const courseSelect = document.getElementById('copy-lesson-course');
+        const subjectSelect = document.getElementById('copy-lesson-subject');
+        const chapterSelect = document.getElementById('copy-lesson-chapter');
+        const folderSelect = document.getElementById('copy-lesson-parent');
+        const subfolderSelect = document.getElementById('copy-lesson-sub');
+        const copyButton = document.getElementById('copy-lesson-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        copyButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#copy-lesson-folder-container').hide();
+        $('#copy-lesson-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('copy-lesson-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#copy-lesson-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#copy-lesson-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            } else {
+                $('#copy-lesson-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('copy-lesson-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle copy button click
+        document.getElementById('copy-lesson-button').onclick = function() {
+            const lessonId = modalElement.getAttribute('data-lesson-id');
+            const chapterId = document.getElementById('copy-lesson-chapter').value;
+            const folderId = document.getElementById('copy-lesson-parent').value;
+            const subfolderId = document.getElementById('copy-lesson-sub').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the copy request
+            $.ajax({
+                url: `/lesson/${lessonId}/copy/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error copying lesson');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error copying lesson');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showUpdateFolderModal(folderId, folderName, visibleInDays) {
+    // Set the folder ID and name in the update modal
+    document.getElementById('update-folder-id').value = folderId;
+    document.getElementById('update-folder-name').value = folderName;
+    document.getElementById('update-visible-in-days').value = visibleInDays;
+    
+    // Show the modal
+    const modalElement = document.getElementById('update-folder-modal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+function showMoveLessonModal(lessonId, lessonName) {
+        // Store the lesson ID and name for later use
+        document.getElementById('move-lesson-modal').setAttribute('data-lesson-id', lessonId);
+        document.getElementById('move-modal-title').textContent = 'Move Lesson: ' + lessonName;
+        
+        const courseSelect = document.getElementById('move-lesson-course');
+        const subjectSelect = document.getElementById('move-lesson-subject');
+        const chapterSelect = document.getElementById('move-lesson-chapter');
+        const folderSelect = document.getElementById('move-lesson-parent');
+        const subfolderSelect = document.getElementById('move-lesson-sub');
+        const moveButton = document.getElementById('move-lesson-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        moveButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#move-lesson-folder-container').hide();
+        $('#move-lesson-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('move-lesson-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#move-lesson-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#move-lesson-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            } else {
+                $('#move-lesson-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('move-lesson-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle move button click
+        document.getElementById('move-lesson-button').onclick = function() {
+            const lessonId = modalElement.getAttribute('data-lesson-id');
+            const chapterId = document.getElementById('move-lesson-chapter').value;
+            const folderId = document.getElementById('move-lesson-parent').value;
+            const subfolderId = document.getElementById('move-lesson-sub').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the move request
+            $.ajax({
+                url: `/lesson/${lessonId}/move/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error moving lesson');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error moving lesson');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+{% endblock %}
+
+</body>
+
+</html>

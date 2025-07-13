@@ -1,0 +1,287 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content%}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Current Affair</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-currentaffair' %}">Current Affair</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Add Current Affair</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% load crispy_forms_tags %}
+                    <div class="card-body pb-1">
+                        <!-- Custom Image Upload Field with Preview -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
+                                    <div id="image-preview-container" class="d-flex align-items-center justify-content-center avatar avatar-xxl border border-dashed me-2 flex-shrink-0 text-dark frames">
+                                        {% if form.image.value %}
+                                            <img id="image-preview" src="{{ form.image.value.url }}" alt="Preview Image" style="width: 100px; height: 100px; object-fit: cover;">
+                                        {% else %}
+                                            <i class="bi bi-image fs-16"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="profile-upload">
+                                        <div class="profile-uploader d-flex align-items-center">
+                                            <div class="drag-upload-btn mb-3">
+                                                Upload
+                                                {{ form.image }}
+                                            </div>
+                                        </div>
+                                        <p class="fs-12">Upload image size 4MB, Format JPG, PNG, SVG</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- Form Fields Rendering -->
+                        <!-- Video Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.currentaffair_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.video_url|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.m3u8|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.tp_stream|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                        <!-- More Video Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.m3u8_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.m3u8_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- PDF Note Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_file|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        
+                        <!-- Description Field -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form.description|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Optional Exam Creation Section -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header d-flex align-items-center justify-content-between">
+                                        <h5 class="mb-0">Add Exam (Optional)</h5>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="toggle-exam-section">
+                                            <label class="form-check-label" for="toggle-exam-section">Include Exam</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" id="exam-section" style="display: none;">
+                                        <div class="row mb-3">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="exam_title" class="form-label">Exam Title</label>
+                                                    <input type="text" class="form-control" id="exam_title" name="exam_title">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="exam_duration" class="form-label">Duration (HH:MM:SS)</label>
+                                                    <input type="text" class="form-control" id="exam_duration" name="exam_duration" placeholder="01:00:00">
+                                                    <small class="text-muted">Format: Hours:Minutes:Seconds</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="exam_number_of_attempt" class="form-label">Number of Attempts</label>
+                                                    <input type="number" class="form-control" id="exam_number_of_attempt" name="exam_number_of_attempt" value="1" min="1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-check mb-3">
+                                                    <input type="checkbox" class="form-check-input" id="exam_is_shuffle" name="exam_is_shuffle">
+                                                    <label class="form-check-label" for="exam_is_shuffle">Shuffle Questions</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check mb-3">
+                                                    <input type="checkbox" class="form-check-input" id="exam_is_free" name="exam_is_free" checked>
+                                                    <label class="form-check-label" for="exam_is_free">Free Exam</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Submit Buttons -->
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+                
+                
+                
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+</body>
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/add-student by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 18 Sep 2024 09:29:11 GMT -->
+
+</html>
+
+{% block script %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Image preview functionality
+        var imageInput = document.querySelector('input[type="file"].image-sign');
+        var imagePreview = document.getElementById('image-preview');
+        var imagePlaceholder = document.getElementById('image-placeholder-icon');
+
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                var file = imageInput.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (imagePreview) {
+                            imagePreview.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                            if (imagePlaceholder) {
+                                imagePlaceholder.style.display = 'none';
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // Clear the preview if no file is selected
+                    if (imagePreview) {
+                        imagePreview.src = '';
+                        imagePreview.style.display = 'none';
+                        if (imagePlaceholder) {
+                            imagePlaceholder.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Handle the case where an image might already be present
+        if (imagePreview && imagePreview.src) {
+            imagePreview.style.display = 'block';
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'none';
+            }
+        }
+        
+        // Toggle exam section functionality
+        var toggleExamSection = document.getElementById('toggle-exam-section');
+        var examSection = document.getElementById('exam-section');
+        
+        if (toggleExamSection && examSection) {
+            toggleExamSection.addEventListener('change', function() {
+                if (this.checked) {
+                    examSection.style.display = 'block';
+                    // Make exam title required when section is visible
+                    document.getElementById('exam_title').setAttribute('required', 'required');
+                    document.getElementById('exam_duration').setAttribute('required', 'required');
+                } else {
+                    examSection.style.display = 'none';
+                    // Remove required attribute when section is hidden
+                    document.getElementById('exam_title').removeAttribute('required');
+                    document.getElementById('exam_duration').removeAttribute('required');
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock script %}

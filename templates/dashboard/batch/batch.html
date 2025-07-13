@@ -1,0 +1,487 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+
+<style>
+
+
+</style>
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Batch </h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch' %}">Batch</a></li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-batch-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Batch</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Batch List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                            <!-- <li>
+                                <a href="javascript:void(0);" data-sort="price_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_ascending' %}active{% endif %}">
+                                    Price Low to High
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="price_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'price_descending' %}active{% endif %}">
+                                    Price High to Low
+                                </a>
+                            </li> -->
+                        </ul>
+                        
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                               
+                                <th>ID</th>
+                                <th>Batch Name</th>
+                                <th>Course</th>
+                                <th>Price</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Batch Mentor</th>
+                                <th>Status</th>
+                                <th>Exam Progress Report</th>
+                                {% if request.user.user_type == 1 %}
+                                    <th>Action</th>
+                                {% endif %}
+                                </tr>
+                        </thead>
+                        <tbody>
+                            {% for batch in batches %}
+                            <tr>
+
+                                <td><a href="javascript:void(0);" class="link-primary">{{ batch.id }}</a></td>
+                                <td> <a href="{% url 'dashboard-batch-schedule-manager' batch.id %}" class="link-primary"> {{ batch.batch_name|default:"N/A" }}         </a></td>
+
+                                <td>
+                                    <a >
+                                        {{ batch.course.course_name }}
+                                    </a>
+                                    </td>
+                                <td>{{ batch.batch_price }}</td>
+                                <td>{{ batch.start_date}}</td>
+                                <td>{{ batch.batch_expiry }}</td>
+                                <td>
+                                    {% if batch.active_mentors %}
+                                    <ul class="list-unstyled highlight">
+                                        {% for mentor_assignment in batch.active_mentors %}
+                                            <li>{{ forloop.counter }}. {{ mentor_assignment.mentor.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                        <small class="text-muted">Not Assigned</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if batch_sync_info|get_item:batch.id|get_item:'batch_not_ended' %}
+                                        {% if batch_sync_info|get_item:batch.id|get_item:'has_new_content' %}
+                                        <span class="badge" style="background-color: #198754;">Active</span>
+                                            <a href="{% url 'dashboard-batch-schedule-manager' batch.id %}?sync_lessons=true" class="btn btn-sm" style="background-color: #e5eff7;">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Sync
+                                                <span class="badge bg-light text-dark ms-1">{{ batch_sync_info|get_item:batch.id|get_item:'new_content_count' }}</span>
+                                            </a>
+                                        {% else %}
+                                            <span class="badge" style="background-color: #198754;">Active</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge" style="background-color: #198754;">Ended</span>
+                                        {% if batch_sync_info|get_item:batch.id|get_item:'has_new_content' %}
+                                            <a href="{% url 'dashboard-batch-schedule-manager' batch.id %}?sync_lessons=true" class="btn btn-sm" style="background-color: #e5eff7;">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Sync
+                                                <span class="badge bg-light text-dark ms-1">{{ batch_sync_info|get_item:batch.id|get_item:'new_content_count' }}</span>
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <a href="{% url 'dashboard-batch-students' batch.id %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-people me-1"></i> Students
+                                        </a>
+                                        <a href="{% url 'dashboard-batch-exam-progress' batch.id %}" class="btn btn-sm btn-outline-info d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-bar-chart-line me-1"></i> Exam Progress
+                                        </a>
+                                    </div>
+                                </td>
+                                {% if request.user.user_type == 1 %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                       
+                                        <!-- Edit Batch -->
+                                        <a href="{% url 'dashboard-batch-update' pk=batch.id %}" class="text-primary me-3" title="Edit Batch">
+                                            <i class="bi bi-pencil-square me-2"></i> 
+                                        </a>
+                                        <!-- Delete Batch (Delete confirmation via modal) -->
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-user-id="{{ batch.id }}" title="Delete Course">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                                {% elif request.user.user_type == 3 or request.user.user_type == 4 %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                       N/A
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No batches found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                      <!-- Pagination Controls -->
+                <div class="pagination">
+                    {% if batches.has_previous %}
+                        <a href="?page=1" class="btn btn-primary" title="First Page">
+                            <i class="fas fa-angle-double-left"></i> First
+                        </a>
+                        <a href="?page={{ batches.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                            <i class="fas fa-angle-left"></i> Previous
+                        </a>
+                    {% endif %}
+                    
+                    <span class="pagination-info">Page {{ batches.number }} of {{ batches.paginator.num_pages }}</span>
+                    
+                    {% if batches.has_next %}
+                        <a href="?page={{ batches.next_page_number }}" class="btn btn-primary" title="Next Page">
+                            Next <i class="fas fa-angle-right"></i>
+                        </a>
+                        <a href="?page={{ batches.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                            <i class="fas fa-angle-double-right"></i> Last
+                        </a>
+                    {% endif %}
+                </div>
+                    
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Merging modal -->
+<!-- Example Modal Structure -->
+<div class="modal" id="merge-days-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Merge Days</h5>
+                <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button> -->
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="batch-id" value="">
+                <div class="form-group">
+                    <label for="merge-days">Number of Merging Days:</label>
+                    <input type="number" class="form-control" id="merge-days" placeholder="Enter merging days" min="1">
+                </div>
+                <p id="merge-info-message" style="color:red;"></p> <!-- To display merging days and lessons info -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="submit-merge-days">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+    
+
+</body>
+
+
+</html>
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Load JavaScript libraries in the correct order -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+$(document).ready(function () {
+    $(document).on('click', '.btn-delete', function () {
+    var userId = $(this).data('user-id');
+    $('#delete-record').data('user-id', userId);
+    $('#delete-modal').modal('show');
+    });
+
+    $('#delete-record').on('click', function () {
+        var userId = $(this).data('user-id');
+
+        console.log("Deleting User ID: " + userId);
+
+        $.ajax({
+            url: '/batch/delete/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Deleted successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error deleting user:", error);
+            }
+        });
+    });
+});
+</script>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('.sidebar-contact .fa-cog').each(function() {
+            $(this).closest('div').remove(); 
+        });
+    });
+</script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize datepicker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        // Function to update URL with filter parameters
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            window.location.href = url;
+        }
+    
+        // Handle sort dropdown changes
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add click event listeners to dropdown items
+        document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        // Clear filters on page refresh
+        function clearFiltersOnRefresh() {
+            try {
+                const url = new URL(window.location.href);
+                
+                // Remove search parameters
+                url.searchParams.delete('start_date');
+                url.searchParams.delete('end_date');
+                url.searchParams.delete('sort');
+                
+                // Update URL without reloading page
+                window.history.replaceState(null, '', url);
+            } catch (error) {
+                console.error('Error in clearFiltersOnRefresh:', error);
+            }
+        }
+    
+        // Add load event listener to clear filters
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+</script>
+    
+<!-- jQuery and Bootstrap are already loaded above -->
+
+<script type="text/javascript">
+    // Using jQuery for modal functionality
+    jQuery(document).ready(function() {
+        {% if request.GET.showMergeDaysModal %}
+            const missedDays = "{{ request.GET.missed_days }}";
+            const lessonsPerDay = "{{ request.GET.lessons_per_day }}";
+            const batchId = "{{ request.GET.batch }}";
+
+            $('#merge-info-message').text(`Batch is late by ${missedDays} day(s). You need to merge ${lessonsPerDay} lessons per day.`);
+            $('#batch-id').val(batchId);
+
+            // Show the modal
+            $('#merge-days-modal').modal('show');
+        {% endif %}
+    });
+
+    $('#submit-merge-days').on('click', function() {
+        const mergeDays = parseInt($('#merge-days').val(), 10);  
+        const batchId = $('#batch-id').val();  
+
+        if (mergeDays && batchId) {
+            if (mergeDays > 0) {  
+                $.ajax({
+                    type: "GET", 
+                    url: "{% url 'dashboard-lesson-merge-manager' %}",
+                    data: {
+                        'merge_days': mergeDays,
+                        'batch_id': batchId,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Close the modal on success
+                            $('#merge-days-modal').modal('hide');
+                            
+                            // Remove query parameters from the URL
+                            history.replaceState(null, null, window.location.pathname);
+
+                            // Optional: Reload the page or handle the success message
+                            window.location.reload();
+                        } else {
+                            alert("An error occurred: " + response.message);
+                        }
+                    },
+                    error: function(error) {
+                        console.error("Error: ", error);
+                        alert("An error occurred while processing the merge request.");
+                    }
+                });
+            } else {
+                alert("Please enter a valid positive number for merge days.");
+            }
+        } else {
+            if (!mergeDays) {
+                alert("Please enter the number of merging days.");
+            }
+            if (!batchId) {
+                alert("Batch ID is not set. Please try again.");
+            }
+        }
+    });
+</script>
+{% endblock %}

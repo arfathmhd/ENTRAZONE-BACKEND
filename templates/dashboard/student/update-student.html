@@ -1,0 +1,204 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content%}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Update Student</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-customer' %}">Student</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-customer' %}">Update Student</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="card">
+        <!-- Header Section -->
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center">
+                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                    <i class="bi bi-info-circle"></i>
+                </span>
+                <h4 class="text-dark">Personal Information</h4>
+            </div>
+        </div>
+
+        <!-- Card Body -->
+        {% load crispy_forms_tags %}
+
+        <div class="card-body pb-1">
+            <!-- Form Fields Rendering - Only Name, Email, and District -->
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    {{ form.name|as_crispy_field }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.email|as_crispy_field }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form.district|as_crispy_field }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <!-- Image Preview Container -->
+                     <div class="row">
+                         <div class="col-md-6 mb-3 text-center">
+                             <div class="image-preview-container" style="width: 150px; height: 150px; margin: 0 auto; position: relative; overflow: hidden; border-radius: 8px; border: 1px solid #ddd;">
+                                 {% if form.instance.image %}
+                                 <img id="image-preview" src="{{ form.instance.image.url }}" alt="Profile Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                 <i id="image-placeholder-icon" class="bi bi-person-circle" style="font-size: 5rem; color: #ccc; display: none;"></i>
+                                 {% else %}
+                                 <img id="image-preview" src="" alt="Profile Image" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                                 <i id="image-placeholder-icon" class="bi bi-person-circle" style="font-size: 5rem; color: #ccc; display: block;"></i>
+                                 {% endif %}
+                             </div>
+                             {% if form.instance.image %}
+                             <button type="button" id="remove-image" class="btn btn-sm btn-danger mt-2">
+                                 <i class="bi bi-trash"></i> Remove Image
+                             </button>
+                             {% else %}
+                             <button type="button" id="remove-image" class="btn btn-sm btn-danger mt-2" style="display: none;">
+                                 <i class="bi bi-trash"></i> Remove Image
+                             </button>
+                             {% endif %}
+                         </div>
+                         <div class="col-md-6 mb-3 align-items-bottom">
+                             {{ form.image|as_crispy_field }}
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    var imageInput = document.getElementById('id_image_input');
+    var imagePreview = document.getElementById('image-preview');
+    var imagePlaceholder = document.getElementById('image-placeholder-icon');
+    var removeButton = document.getElementById('remove-image');
+    
+    if (imageInput) {
+        // Add the image-sign class if it's not already there
+        if (!imageInput.classList.contains('image-sign')) {
+            imageInput.classList.add('image-sign');
+        }
+
+        imageInput.addEventListener('change', function() {
+            var file = imageInput.files[0];
+            console.log("File selected:", file);
+
+            if (file) {
+                // Remove any existing hidden inputs for remove_image when a new file is selected
+                var existingHiddenInputs = document.querySelectorAll('input[name="remove_image"]');
+                existingHiddenInputs.forEach(function(input) {
+                    input.parentNode.removeChild(input);
+                    console.log("Removed hidden remove_image input");
+                });
+                
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log("File read successfully.");
+                    if (imagePreview) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        console.log("Image preview updated.");
+                        if (imagePlaceholder) {
+                            imagePlaceholder.style.display = 'none';
+                        }
+                        // Show remove button when image is selected
+                        if (removeButton) {
+                            removeButton.style.display = 'inline-block';
+                        }
+                    }
+                }
+                reader.readAsDataURL(file);
+            } else {
+                console.log("No file selected.");
+                if (imagePreview) {
+                    imagePreview.src = '';
+                    imagePreview.style.display = 'none';
+                    if (imagePlaceholder) {
+                        imagePlaceholder.style.display = 'block';
+                    }
+                    // Hide remove button when no image is selected
+                    if (removeButton && !imagePreview.getAttribute('data-has-initial-image')) {
+                        removeButton.style.display = 'none';
+                    }
+                }
+            }
+        });
+
+        removeButton.addEventListener('click', function() {
+            console.log("Remove button clicked.");
+            if (imageInput) {
+                imageInput.value = '';  // Clear the file input
+                console.log("Image input cleared.");
+            }
+            if (imagePreview) {
+                imagePreview.src = '';
+                imagePreview.style.display = 'none';
+                console.log("Image preview cleared.");
+            }
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'block';
+                console.log("Image placeholder displayed.");
+            }
+            
+            // Hide the remove button
+            removeButton.style.display = 'none';
+            
+            // Remove any existing hidden inputs for remove_image
+            var existingHiddenInputs = document.querySelectorAll('input[name="remove_image"]');
+            existingHiddenInputs.forEach(function(input) {
+                input.parentNode.removeChild(input);
+            });
+            
+            // Add a hidden input to indicate image should be removed on the server
+            var hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'remove_image';
+            hiddenInput.value = 'true';
+            imageInput.parentNode.appendChild(hiddenInput);
+        });
+    } else {
+        console.log("Image input not found.");
+    }
+
+    // Handle the case where an image might already be present
+    if (imagePreview && imagePreview.src && imagePreview.src !== window.location.href) {
+        console.log("Existing image found:", imagePreview.src);
+        imagePreview.style.display = 'block';
+        if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'none';
+        }
+        // Mark the preview as having an initial image
+        imagePreview.setAttribute('data-has-initial-image', 'true');
+    }
+});
+</script>
+{% endblock content %}

@@ -1,0 +1,258 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Update Lesson</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-lesson' %}">Lesson</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Update Lesson</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% load crispy_forms_tags %}
+                    <div class="card-body pb-1">
+                        <!-- Custom Image Upload Field with Preview -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
+                                    <div id="image-preview-container" class="d-flex align-items-center justify-content-center avatar avatar-xxl border border-dashed me-2 flex-shrink-0 text-dark frames">
+                                        {% if form.image.value %}
+                                            <img id="image-preview" src="{{ form.image.value.url }}" alt="Preview Image" style="width: 100px; height: 100px; object-fit: cover;">
+                                        {% else %}
+                                            <i class="bi bi-image fs-16"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="profile-upload">
+                                        <div class="profile-uploader d-flex align-items-center">
+                                            <div class="drag-upload-btn mb-3">
+                                                Upload
+                                                {{ form.image }}
+                                            </div>
+                                        </div>
+                                        <p class="fs-12">Upload image size 4MB, Format JPG, PNG, SVG</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- Form Fields Rendering -->
+                        <!-- Video Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.currentaffair_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.video_url|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.m3u8|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.tp_stream|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+                        <!-- More Video Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.m3u8_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.video_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.m3u8_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- PDF Note Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_title|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_file|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_downloadable|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.pdf_is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        
+                        <!-- Description Field -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    {{ form.description|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Submit Buttons -->
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+                
+                
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+{% endblock %}
+</body>
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/add-student by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 18 Sep 2024 09:29:11 GMT -->
+
+</html>
+
+{% block script %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var imageInput = document.querySelector('input[type="file"].image-sign');
+        var imagePreview = document.getElementById('image-preview');
+        var imagePlaceholder = document.getElementById('image-placeholder-icon');
+
+        if (imageInput) {
+            imageInput.addEventListener('change', function() {
+                var file = imageInput.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (imagePreview) {
+                            imagePreview.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                            if (imagePlaceholder) {
+                                imagePlaceholder.style.display = 'none';
+                            }
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // Clear the preview if no file is selected
+                    if (imagePreview) {
+                        imagePreview.src = '';
+                        imagePreview.style.display = 'none';
+                        if (imagePlaceholder) {
+                            imagePlaceholder.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Handle the case where an image might already be present
+        if (imagePreview && imagePreview.src) {
+            imagePreview.style.display = 'block';
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'none';
+            }
+        }
+    });
+</script>
+
+
+
+<!-- <script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery-3.7.1.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/bootstrap.bundle.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/moment.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script
+    src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/daterangepicker/daterangepicker.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/bootstrap-datetimepicker.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/moment/moment.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/feather.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery.slimscroll.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/apexchart/apexcharts.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/apexchart/chart-data.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/owlcarousel/owl.carousel.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/plugins/select2/js/select2.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/jquery.dataTables.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/dataTables.bootstrap5.min.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+
+
+<script src="https://preskool.dreamstechnologies.com/ci/template/public/assets/js/script.js"
+    type="258cb1a13ffa524f61e4e219-text/javascript"></script>
+<script src="https://preskool.dreamstechnologies.com/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js"
+    data-cf-settings="258cb1a13ffa524f61e4e219-|49" defer></script> -->
+
+
+
+{% endblock script %}

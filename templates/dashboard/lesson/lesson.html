@@ -1,0 +1,1447 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+
+
+<div class="page-wrapper">
+    <div class="content">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Lesson</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-lesson' %}">Lesson</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                
+               
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-lesson-add' %}"
+                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                        Add Lesson</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Lesson List</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Date Range Picker -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-calendar"></i>
+
+                        </span>
+                        <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
+                    </div>
+                
+                    <!-- Sort by Dropdown -->
+                    <div class="dropdown mb-3">
+                        <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
+                           data-bs-toggle="dropdown">
+                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                        </a>
+                    
+                        <ul class="dropdown-menu alphabet-sort p-3">
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_ascending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    Name A-Z
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0);" data-sort="name_descending"
+                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    Name Z-A
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    
+                    
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Created</th>
+                                <th>Video</th>
+                                <th>M3U8</th>
+                                <th>ThirdParty</th>
+                                <th>PDF</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if folders %}
+                                {% for folder in folders %}
+                                    <tr class="table-info"> <!-- Style for folders -->
+                                        <td>{{ folder.id }}</td>
+                                        <td>
+                                            <i class="bi bi-folder-fill" style="color: #FFD700; font-size: 24px;"></i>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'dashboard-folder' folder_id=folder.id %}">
+                                                <strong>{{ folder.title }}</strong>
+                                            </a> 
+                                        </td>
+                                        <td>N/A</td>
+                                        <td>{{ folder.created|date:"d-m-Y" }}</td> <!-- Show created date -->
+                                        <td>N/A</td>
+                                        <td>N/A</td>
+                                        <td>N/A</td>
+                                        <td>N/A</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <a href="javascript:void(0);" 
+                                                class="text-primary me-3" 
+                                                title="Edit Folder" 
+                                                onclick="showUpdateFolderModal('{{ folder.id }}', '{{ folder.title }}')">
+                                                 <i class="bi bi-pencil-square me-2"></i>
+                                             </a>
+                                             
+                                                <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal"  data-folder-id="{{ folder.id }}" title="Delete Folder">
+                                                    <i class="bi bi-trash me-2"></i>
+                                                </a>
+                                                 <!-- copy move dropdown -->
+                                                 <div class="dropdown">
+                                                    <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ folder.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="bi bi-three-dots-vertical"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ folder.id }}">
+                                                        <li>
+                                                            <a class="dropdown-item copy-folder-btn" href="javascript:void(0);" onclick="showCopyFolderModal('{{ folder.id }}', '{{ folder.title }}')">
+                                                                <i class="bi bi-files me-2"></i>Copy
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item move-folder-btn" href="javascript:void(0);" onclick="showMoveFolderModal('{{ folder.id }}', '{{ folder.title }}')">
+                                                                <i class="bi bi-arrows-move me-2"></i>Move
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <!-- end copy move dropdown-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}  
+                                
+                            {% endif %}
+                            
+                            {% for lesson in lessons %}
+                            <tr>
+                                <td>{{ lesson.id }}</td>
+                                <td>
+                                    {% if lesson.image %}
+                                        <img src="{{ lesson.image.url }}" alt="{{ lesson.lesson_name }}" style="width: 50px;">
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>{{ lesson.lesson_name }}</td>
+                                <td>{{ lesson.description|truncatewords:10 }}</td>
+                                <td>{{ lesson.created|date:"d-m-Y"}}</td>
+                                <td>
+                                    {% for video in lesson.videos.all %}
+                                        <strong>{{ video.title|default:"N/A" }}</strong><br>
+                                        
+                                        {% if video.url %}
+                                            <a href="{{ video.url }}" class="link-primary" target="_blank">Watch Video</a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                        
+                                        <br>
+                                        <!-- Show if the video is free -->
+                                        {% if video.is_free %}
+                                            <span class="badge bg-success">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Paid</span>
+                                        {% endif %}
+                                        {% if video.is_m3u8 %}
+                                        <span class="badge bg-primary">M3U8</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Youtube</span>
+
+                                    {% endif %}
+                                    <br><br>
+                                        <!-- Show if the video is downloadable -->
+                                        {% if video.is_downloadable %}
+                                            <span class="badge bg-info">Downloadable</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Downloadable</span>
+                                        {% endif %}
+                                        <br><br>
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for video in lesson.videos.all %}
+                                        <strong>{{ video.title|default:"N/A" }}</strong><br>
+                                        
+                                        {% if video.m3u8 %}
+                                            <a href="{{ video.url }}" class="link-primary" target="_blank">Watch Video</a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                        
+                                        <br>
+                                        <!-- Show if the video is free -->
+                                        {% if video.m3u8_is_free %}
+                                            <span class="badge bg-success">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Paid</span>
+                                        {% endif %}
+                                        {% if video.is_m3u8 %}
+                                        <span class="badge bg-primary">M3U8</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Youtube</span>
+                                        <br><br>
+                                    {% endif %}
+                                        
+                                        <!-- Show if the video is downloadable -->
+                                        {% if video.is_downloadable %}
+                                            <span class="badge bg-info">Downloadable</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Downloadable</span>
+                                        {% endif %}
+                                        <br><br>
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for video in lesson.videos.all %}
+                                        {% if video.tp_stream %}
+                                            <a href="{{ video.tp_stream }}" class="link-primary" target="_blank">Watch Video</a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </td>
+                                
+
+                                <td>
+                                    <!-- Display PDF notes similarly -->
+                                    {% for pdf in lesson.pdf_notes.all %}
+                                        <strong>{{ pdf.title|default:"N/A" }}</strong><br>
+                                        
+                                        {% if pdf.file %}
+                                            <a href="{{ pdf.file.url }}" target="_blank">Download PDF</a>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                        
+                                        <br>
+                                        <!-- Show if the PDF is free -->
+                                        {% if pdf.is_free %}
+                                            <span class="badge bg-success">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Paid</span>
+                                        {% endif %}
+                                        
+                                        <!-- Show if the PDF is downloadable -->
+                                        {% if pdf.is_downloadable %}
+                                            <span class="badge bg-info">Downloadable</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Downloadable</span>
+                                        {% endif %}
+                                        <br><br>
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a href="{% url 'dashboard-lesson-update' pk=lesson.id %}" class="text-primary me-3" title="Edit Course">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-user-id="{{ lesson.id }}" title="Delete Course">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+
+                                        <!-- copy move dropdown -->
+                                        <div class="dropdown">
+                                            <button class="btn btn-link text-primary btn-dots" type="button" id="dropdownMenu{{ lesson.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenu{{ lesson.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showCopyLessonModal('{{ lesson.id }}', '{{ lesson.lesson_name }}')">
+                                                        <i class="bi bi-files me-2"></i>Copy
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="javascript:void(0);" onclick="showMoveLessonModal('{{ lesson.id }}', '{{ lesson.lesson_name }}')">
+                                                        <i class="bi bi-arrows-move me-2"></i>Move
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <!-- end copy move dropdown -->
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No lessons or folders found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        {% if lessons.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ lessons.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ lessons.number }} of {{ lessons.paginator.num_pages }}</span>
+                        
+                        {% if lessons.has_next %}
+                            <a href="?page={{ lessons.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ lessons.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="delete-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete the selected item. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="delete-record" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Copy Folder Modal -->
+<div class="modal fade" id="copy-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="copy-modal-title">Copy Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="copy-folder-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-folder-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-folder-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="copy-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="copy-folder-parent" disabled>
+                            <option value="">Select Folder </option>
+                        </select>
+                        <select class="form-select mb-3" id="copy-folder-sub" disabled>
+                            <option value="">Select Subfolder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="copy-folder-button" class="btn btn-success">Copy here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move Folder Modal -->
+<div class="modal fade" id="move-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="move-modal-title">Move Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="move-folder-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-folder-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-folder-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="move-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="move-folder-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <select class="form-select mb-3" id="move-folder-sub" disabled>
+                            <option value="">Select Subfolder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="move-folder-button" class="btn btn-success">Move here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- copy lesson Modal -->
+<div class="modal fade" id="copy-lesson-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="copy-modal-title">Copy Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="copy-lesson-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-lesson-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="copy-lesson-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="copy-lesson-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="copy-lesson-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <div id="copy-lesson-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="copy-lesson-sub" disabled>
+                                <option value="">Select Subfolder</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="copy-lesson-button" class="btn btn-success">Copy here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move lesson Modal -->
+<div class="modal fade" id="move-lesson-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="move-modal-title">Move Module</h4>
+                <p>Please select the destination:</p>
+                
+                <div class="mb-3">
+                    <select class="form-select mb-3" id="move-lesson-course">
+                        <option value="">Select Course</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-lesson-subject" disabled>
+                        <option value="">Select Subject</option>
+                    </select>
+                    <select class="form-select mb-3" id="move-lesson-chapter" disabled>
+                        <option value="">Select Chapter</option>
+                    </select>
+                    <div id="move-lesson-folder-container" class="folder-select-container" style="display: none;">
+                        <select class="form-select mb-3" id="move-lesson-parent" disabled>
+                            <option value="">Select Folder</option>
+                        </select>
+                        <div id="move-lesson-subfolder-container" style="display: none;">
+                            <select class="form-select mb-3" id="move-lesson-sub" disabled>
+                                <option value="">Select Subfolder</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="move-lesson-button" class="btn btn-success">Move here</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Update Folder Modal -->
+<div class="modal fade" id="update-folder-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="folder-icon">
+                    <i class="bi bi-folder-fill"></i>
+                </span>
+                <h4 id="update-modal-title">Update Folder</h4>
+                <p>Enter a new name for the folder.</p>
+                
+                <!-- Folder input field -->
+                <div class="mb-3">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <input type="text" id="update-folder-name" class="form-control" placeholder="Enter new folder name">
+                    <input type="hidden" id="update-folder-id" value="">
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <button id="update-folder-button" class="btn btn-success">Update Folder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    $(document).on('click', '.btn-delete', function () {
+    var userId = $(this).data('user-id');
+    $('#delete-record').data('user-id', userId);
+});
+
+
+    $('#delete-record').click(function () {
+        var userId = $(this).data('user-id');
+
+        console.log("Deleting User ID: " + userId);
+
+        $.ajax({
+            url: '/lesson/delete/' + userId + '/',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function (data) {
+                console.log("Deleted successfully");
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error deleting user:", error);
+            }
+        });
+    });
+});
+</script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize flatpickr date picker
+        const datepicker = flatpickr(".custom-date-picker", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            onClose: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    let startDate = selectedDates[0].toISOString().split('T')[0];
+                    let endDate = selectedDates[1].toISOString().split('T')[0];
+    
+                    // Get the current sort parameter
+                    const sort = new URL(window.location.href).searchParams.get('sort');
+    
+                    // Update URL with date range and sort parameter
+                    updateURL(startDate, endDate, sort);
+                }
+            }
+        });
+    
+        function updateURL(startDate, endDate, sort) {
+            const url = new URL(window.location.href);
+    
+            // Set date range parameters
+            url.searchParams.set('start_date', startDate);
+            url.searchParams.set('end_date', endDate);
+    
+            // Set or preserve sorting parameter
+            if (sort) {
+                url.searchParams.set('sort', sort);
+            }
+    
+            // Redirect to updated URL
+            window.location.href = url;
+        }
+    
+        function handleSortChange(event) {
+            const sort = event.target.getAttribute('data-sort');
+            const url = new URL(window.location.href);
+    
+            // Get existing date range parameters
+            const startDate = url.searchParams.get('start_date');
+            const endDate = url.searchParams.get('end_date');
+    
+            // Update URL with sorting parameter
+            updateURL(startDate, endDate, sort);
+        }
+    
+        // Add event listener to sorting links
+        document.querySelectorAll('.alphabet-sort .dropdown-item').forEach(item => {
+            item.addEventListener('click', handleSortChange);
+        });
+    
+        function clearFiltersOnRefresh() {
+            const url = new URL(window.location.href);
+    
+            // Optionally: Remove date range and sorting parameters on refresh
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('end_date');
+            url.searchParams.delete('sort');
+    
+            // Redirect to URL without filters
+            window.history.replaceState(null, '', url);
+        }
+    
+        // Trigger function to clear filters on page load
+        window.addEventListener('load', function() {
+            clearFiltersOnRefresh();
+        });
+    });
+    </script>
+
+<!-- copy move script -->
+<script>
+
+    function loadDropdownData(courseSelect, subjectSelect, chapterSelect) {
+            $.ajax({
+                url: "{% url 'get-courses-subject-chapters' %}",
+                type: 'GET',
+                success: function(data) {
+                    console.log(data);
+                    // Clear and populate course dropdown
+                    $(courseSelect).html('<option value="">Select Course</option>');
+                    $.each(data.courses, function(i, course) {
+                        $(courseSelect).append(`<option value="${course.id}">${course.course_name}</option>`);
+                    });
+                    
+                    courseSelect.disabled = false;
+                    subjectSelect.disabled = true;
+                    chapterSelect.disabled = true;
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading data:', error);
+                }
+            });
+        }
+
+    function loadSubjects(courseId, subjectSelect, chapterSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId
+            },
+            success: function(data) {
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $.each(data.subjects, function(i, subject) {
+                    $(subjectSelect).append(`<option value="${subject.id}">${subject.subject_name}</option>`);
+                });
+                
+                subjectSelect.disabled = false;
+                chapterSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading subjects:', error);
+            }
+        });
+    }
+
+    function loadChapters(courseId, subjectId, chapterSelect, folderSelect, subfolderSelect) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'course_id': courseId,
+                'subject_id': subjectId
+            },
+            success: function(data) {
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $.each(data.chapters, function(i, chapter) {
+                    $(chapterSelect).append(`<option value="${chapter.id}">${chapter.chapter_name}</option>`);
+                });
+                
+                chapterSelect.disabled = false;
+                if (folderSelect) {
+                    folderSelect.disabled = true;
+                    $(folderSelect).html('<option value="">Select Folder</option>');
+                }
+                if (subfolderSelect) {
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading chapters:', error);
+            }
+        });
+    }
+
+    function loadFolders(chapterId, folderSelect, subfolderSelect, folderContainer) {
+        $.ajax({
+            url: "{% url 'get-courses-subject-chapters' %}",
+            type: 'GET',
+            data: {
+                'chapter_id': chapterId
+            },
+            success: function(data) {
+                // Hide folder selects by default
+                if (folderContainer) {
+                    $(folderContainer).hide();
+                }
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+
+                if (data.has_folders && data.folders && data.folders.length > 0) {
+                    // Show folder container if folders exist
+                    if (folderContainer) {
+                        $(folderContainer).show();
+                    }
+
+                    $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                    $.each(data.folders, function(i, folder) {
+                        $(folderSelect).append(`<option value="${folder.id}" data-has-subfolders="${folder.has_subfolders}">${folder.title}</option>`);
+                    });
+                    folderSelect.disabled = false;
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading folders:', error);
+            }
+        });
+    }
+
+    function loadSubfolders(folderId, folderSelect, subfolderSelect) {
+        const selectedOption = $(folderSelect).find('option:selected');
+        const hasSubfolders = selectedOption.data('has-subfolders');
+
+        if (hasSubfolders) {
+            $.ajax({
+                url: "{% url 'get-courses-subject-chapters' %}",
+                type: 'GET',
+                data: {
+                    'folder_id': folderId
+                },
+                success: function(data) {
+                    if (data.folders) {
+                        const folder = data.folders.find(f => f.id === parseInt(folderId));
+                        if (folder && folder.subfolders.length > 0) {
+                            $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                            $.each(folder.subfolders, function(i, subfolder) {
+                                $(subfolderSelect).append(`<option value="${subfolder.id}">${subfolder.title}</option>`);
+                            });
+                            subfolderSelect.disabled = false;
+                            return;
+                        }
+                    }
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading subfolders:', error);
+                }
+            });
+        } else {
+            subfolderSelect.disabled = true;
+            $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+        }
+    }
+
+    function checkSelections(courseSelect, subjectSelect, chapterSelect, actionButton) {
+        const allSelected = courseSelect.value && subjectSelect.value && chapterSelect.value;
+        actionButton.disabled = !allSelected;
+    }
+
+    function showCopyFolderModal(folderId, folderName) {
+        // Store the folder ID and name for later use
+        document.getElementById('copy-folder-modal').setAttribute('data-folder-id', folderId);
+        document.getElementById('copy-modal-title').textContent = 'Copy Module: ' + folderName;
+        
+        const courseSelect = document.getElementById('copy-folder-course');
+        const subjectSelect = document.getElementById('copy-folder-subject');
+        const chapterSelect = document.getElementById('copy-folder-chapter');
+        const folderSelect = document.getElementById('copy-folder-parent');
+        const subfolderSelect = document.getElementById('copy-folder-sub');
+        const copyButton = document.getElementById('copy-folder-button');
+
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        copyButton.disabled = true;
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect, folderSelect, subfolderSelect);
+            } else {
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('copy-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#copy-folder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+            } else {
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('copy-folder-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle copy button click
+        document.getElementById('copy-folder-button').onclick = function() {
+            const folderId = modalElement.getAttribute('data-folder-id');
+            const chapterId = document.getElementById('copy-folder-chapter').value;
+            const parentFolderId = document.getElementById('copy-folder-parent').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (parentFolderId) {
+                formData.append('target_folder_id', parentFolderId);
+            }
+
+            // Submit the copy request
+            $.ajax({
+                url: `/folder/${folderId}/copy/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error copying folder');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error copying folder');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showMoveFolderModal(folderId, folderName) {
+        // Store the folder ID and name for later use
+        document.getElementById('move-folder-modal').setAttribute('data-folder-id', folderId);
+        document.getElementById('move-modal-title').textContent = 'Move Module: ' + folderName;
+        
+        const courseSelect = document.getElementById('move-folder-course');
+        const subjectSelect = document.getElementById('move-folder-subject');
+        const chapterSelect = document.getElementById('move-folder-chapter');
+        const folderSelect = document.getElementById('move-folder-parent');
+        const subfolderSelect = document.getElementById('move-folder-sub');
+        const moveButton = document.getElementById('move-folder-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        moveButton.disabled = true;
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect, folderSelect, subfolderSelect);
+            } else {
+                chapterSelect.disabled = true;
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('move-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#move-folder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder (Optional)</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+            } else {
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder (Optional)</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('move-folder-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle move button click
+        document.getElementById('move-folder-button').onclick = function() {
+            const folderId = modalElement.getAttribute('data-folder-id');
+            const chapterId = document.getElementById('move-folder-chapter').value;
+            const parentFolderId = document.getElementById('move-folder-parent').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (parentFolderId) {
+                formData.append('target_folder_id', parentFolderId);
+            }
+
+            // Submit the move request
+            $.ajax({
+                url: `/folder/${folderId}/move/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error moving folder');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error moving folder');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showCopyLessonModal(lessonId, lessonName) {
+        // Store the lesson ID and name for later use
+        document.getElementById('copy-lesson-modal').setAttribute('data-lesson-id', lessonId);
+        document.getElementById('copy-modal-title').textContent = 'Copy Lesson: ' + lessonName;
+        
+        const courseSelect = document.getElementById('copy-lesson-course');
+        const subjectSelect = document.getElementById('copy-lesson-subject');
+        const chapterSelect = document.getElementById('copy-lesson-chapter');
+        const folderSelect = document.getElementById('copy-lesson-parent');
+        const subfolderSelect = document.getElementById('copy-lesson-sub');
+        const copyButton = document.getElementById('copy-lesson-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        copyButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#copy-lesson-folder-container').hide();
+        $('#copy-lesson-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('copy-lesson-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#copy-lesson-folder-container').hide();
+                $('#copy-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, copyButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#copy-lesson-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#copy-lesson-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            } else {
+                $('#copy-lesson-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('copy-lesson-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle copy button click
+        document.getElementById('copy-lesson-button').onclick = function() {
+            const lessonId = modalElement.getAttribute('data-lesson-id');
+            const chapterId = document.getElementById('copy-lesson-chapter').value;
+            const folderId = document.getElementById('copy-lesson-parent').value;
+            const subfolderId = document.getElementById('copy-lesson-sub').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the copy request
+            $.ajax({
+                url: `/lesson/${lessonId}/copy/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error copying lesson');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error copying lesson');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showMoveLessonModal(lessonId, lessonName) {
+        // Store the lesson ID and name for later use
+        document.getElementById('move-lesson-modal').setAttribute('data-lesson-id', lessonId);
+        document.getElementById('move-modal-title').textContent = 'Move Lesson: ' + lessonName;
+        
+        const courseSelect = document.getElementById('move-lesson-course');
+        const subjectSelect = document.getElementById('move-lesson-subject');
+        const chapterSelect = document.getElementById('move-lesson-chapter');
+        const folderSelect = document.getElementById('move-lesson-parent');
+        const subfolderSelect = document.getElementById('move-lesson-sub');
+        const moveButton = document.getElementById('move-lesson-button');
+        
+        // Reset and load initial data
+        subjectSelect.disabled = true;
+        chapterSelect.disabled = true;
+        folderSelect.disabled = true;
+        subfolderSelect.disabled = true;
+        moveButton.disabled = true;
+
+        // Hide folder containers initially
+        $('#move-lesson-folder-container').hide();
+        $('#move-lesson-subfolder-container').hide();
+
+        loadDropdownData(courseSelect, subjectSelect, chapterSelect);
+        
+        // Set up event listeners
+        courseSelect.onchange = () => {
+            if (courseSelect.value) {
+                loadSubjects(courseSelect.value, subjectSelect, chapterSelect);
+            } else {
+                subjectSelect.disabled = true;
+                chapterSelect.disabled = true;
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(subjectSelect).html('<option value="">Select Subject</option>');
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        subjectSelect.onchange = () => {
+            if (subjectSelect.value) {
+                loadChapters(courseSelect.value, subjectSelect.value, chapterSelect);
+            } else {
+                chapterSelect.disabled = true;
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(chapterSelect).html('<option value="">Select Chapter</option>');
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+        
+        chapterSelect.onchange = () => {
+            if (chapterSelect.value) {
+                const folderContainer = document.getElementById('move-lesson-folder-container');
+                loadFolders(chapterSelect.value, folderSelect, subfolderSelect, folderContainer);
+            } else {
+                $('#move-lesson-folder-container').hide();
+                $('#move-lesson-subfolder-container').hide();
+                folderSelect.disabled = true;
+                subfolderSelect.disabled = true;
+                $(folderSelect).html('<option value="">Select Folder</option>');
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+            checkSelections(courseSelect, subjectSelect, chapterSelect, moveButton);
+        };
+
+        folderSelect.onchange = () => {
+            if (folderSelect.value) {
+                const selectedOption = $(folderSelect).find('option:selected');
+                const hasSubfolders = selectedOption.data('has-subfolders');
+                if (hasSubfolders) {
+                    $('#move-lesson-subfolder-container').show();
+                    loadSubfolders(folderSelect.value, folderSelect, subfolderSelect);
+                } else {
+                    $('#move-lesson-subfolder-container').hide();
+                    subfolderSelect.disabled = true;
+                    $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+                }
+            } else {
+                $('#move-lesson-subfolder-container').hide();
+                subfolderSelect.disabled = true;
+                $(subfolderSelect).html('<option value="">Select Subfolder</option>');
+            }
+        };
+        
+        // Show the modal
+        const modalElement = document.getElementById('move-lesson-modal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Handle move button click
+        document.getElementById('move-lesson-button').onclick = function() {
+            const lessonId = modalElement.getAttribute('data-lesson-id');
+            const chapterId = document.getElementById('move-lesson-chapter').value;
+            const folderId = document.getElementById('move-lesson-parent').value;
+            const subfolderId = document.getElementById('move-lesson-sub').value;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('target_chapter_id', chapterId);
+            if (folderId) {
+                formData.append('target_folder_id', subfolderId || folderId);
+            }
+
+            // Submit the move request
+            $.ajax({
+                url: `/lesson/${lessonId}/move/`,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.reload();
+                    } else {
+                        alert(response.message || 'Error moving lesson');
+                    }
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON?.message || 'Error moving lesson');
+                },
+                complete: function() {
+                    modal.hide();
+                }
+            });
+        };
+    }
+
+    function showUpdateFolderModal(folderId, folderName) {
+    // Set the folder ID and name in the update modal
+    document.getElementById('update-folder-id').value = folderId;
+    document.getElementById('update-folder-name').value = folderName;
+    
+    // Show the modal
+    const modalElement = document.getElementById('update-folder-modal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+}
+
+ // Update folder button event handler
+ document.getElementById('update-folder-button').addEventListener('click', function(event) {
+        event.preventDefault();
+        var button = this;
+        button.disabled = true;
+
+        var folderId = document.getElementById('update-folder-id').value;
+        var folderName = document.getElementById('update-folder-name').value;
+
+        if (!folderName.trim()) {
+            alert('Please enter a folder name');
+            button.disabled = false;
+            return;
+        }
+
+        fetch("{% url 'dashboard-folder-update' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                folder_id: folderId,
+                new_folder_name: folderName
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            button.disabled = false;
+            if (data.success) {
+                var modalElement = document.getElementById('update-folder-modal');
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                location.reload();
+            } else {
+                alert("Error updating folder: " + data.error);
+            }
+        })
+        .catch((error) => {
+            button.disabled = false;
+            console.error('Error:', error);
+            alert("There was an error updating the folder.");
+        });
+    });
+
+</script>
+
+
+{% endblock %}
+
+
+</body>
+
+
+</html>

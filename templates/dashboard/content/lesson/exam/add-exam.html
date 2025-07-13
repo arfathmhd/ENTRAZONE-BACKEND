@@ -1,0 +1,147 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Exam</h3>
+              
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="#">Lesson</a></li>
+                        <li class="custom-breadcrumb-item"><a href="#">Add Exam</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card">
+                        <!-- Header Section -->
+                        <div class="card-header bg-light">
+                            <div class="d-flex align-items-center">
+                                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                                <h4 class="text-dark">Exam Information</h4>
+                            </div>
+                        </div>
+                    
+                        <!-- Card Body -->
+                        {% load crispy_forms_tags %}
+                        <div class="card-body pb-1">
+                            <!-- Image Upload Field with Preview -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
+                                        <div id="image-preview-container" class="d-flex align-items-center justify-content-center avatar avatar-xxl border border-dashed me-2 flex-shrink-0 text-dark frames">
+                                            {% if form.image.value %}
+                                                <img id="image-preview" src="{{ form.image.value.url }}" alt="Exam Image" style="width: 100%; height: 100%; object-fit: cover;">
+                                            {% else %}
+                                                <i class="bi bi-image fs-16"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="profile-upload">
+                                            <div class="profile-uploader d-flex align-items-center">
+                                                <div class="drag-upload-btn mb-3">
+                                                    Upload
+                                                    {{ form.image }}
+                                                </div>
+                                            </div>
+                                            <p class="fs-12">Upload image size 4MB, Format JPG, PNG, SVG</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <!-- Form Fields Rendering -->
+                            <div class="row">
+                                <!-- Title Field -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    {{ form.title|as_crispy_field }}
+                                </div>
+                        
+                                <!-- Duration Field -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    {{ form.duration|as_crispy_field }}
+                                </div>
+                                
+                                <!-- Number of Attempts Field -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    {{ form.number_of_attempt|as_crispy_field }}
+                                </div>
+                                
+                                <!-- Shuffle Questions Field -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    {{ form.is_shuffle|as_crispy_field }}
+                                </div>
+                                
+                                <!-- Is Free Field -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    {{ form.is_free|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-light me-3" onclick="window.history.back();">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.querySelector('input[type="file"]');
+        const previewContainer = document.getElementById('image-preview-container');
+            
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    // Remove any existing preview
+                    const existingPreview = previewContainer.querySelector('img');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+                    
+                    // Remove the icon if it exists
+                    const existingIcon = previewContainer.querySelector('.bi-image');
+                    if (existingIcon) {
+                        existingIcon.remove();
+                    }
+                    
+                    // Create and add the new preview image
+                    const img = document.createElement('img');
+                    img.id = 'image-preview';
+                    img.src = e.target.result;
+                    img.alt = 'Exam Image';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    
+                    previewContainer.appendChild(img);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock script %}

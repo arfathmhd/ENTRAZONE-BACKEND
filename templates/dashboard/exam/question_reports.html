@@ -1,0 +1,129 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+<style>
+    .action-btns {
+        white-space: nowrap;
+    }
+    .report-content {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Question Reports</h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item active">Question Reports</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- Reports List Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Question Reports</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="reportsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Student</th>
+                                <th>Question</th>
+                                <th>Report Content</th>
+                                <th>Date Reported</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr>
+                                <td>{{ report.id }}</td>
+                                <td>{{ report.student.username }}</td>
+                                <td>
+                                    {% if report.question %}
+                                        {{ report.question.question_description|safe }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="report-content">{{ report.content }}</td>
+                                <td>{{ report.created|date:"M d, Y H:i" }}</td>
+                                <td class="action-btns">
+                                    <a href="{% url 'dashboard-question-report-detail' report.id %}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if report.question and report.question.exam %}
+                                    <a href="{% url 'dashboard-exam-question-update' report.question.exam.id report.question.id %}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Edit Question">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No reports found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Check if there are any rows in the table (excluding the empty message row)
+        var hasRecords = $('#reportsTable tbody tr').length > 0 && 
+                        !$('#reportsTable tbody tr td[colspan]').length;
+        
+        if (hasRecords) {
+            $('#reportsTable').DataTable({
+                "order": [[0, "desc"]],
+                "pageLength": 25
+            });
+        } else {
+            // Apply basic styling for empty table
+            $('#reportsTable').addClass('display');
+        }
+    });
+
+    function printPage() {
+        window.print();
+    }
+</script>
+
+{% endblock %}

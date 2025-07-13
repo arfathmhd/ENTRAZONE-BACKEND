@@ -1,0 +1,422 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">Current Affair Details</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-currentaffair' %}">Current Affairs</a></li>
+                        <li class="custom-breadcrumb-item"><a href="#">{{ current_affair.title }}</a></li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-currentaffair-update' pk=current_affair.id %}"
+                        class="btn btn-primary d-flex align-items-center">
+                        <i class="bi bi-pencil-square me-2"></i>Edit Current Affair
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Affair Details Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Current Affair Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        {% if current_affair.image %}
+                            <img src="{{ current_affair.image.url }}" alt="{{ current_affair.title }}" class="img-fluid rounded">
+                        {% else %}
+                            <div class="bg-light rounded text-center py-5">
+                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-2 text-muted">No image available</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <h4>{{ current_affair.title }}</h4>
+                        <p class="text-muted">Created: {{ current_affair.created|date:"d-m-Y" }}</p>
+                        {% if current_affair.is_free %}
+                            <span class="badge bg-success">Free</span>
+                        {% else %}
+                            <span class="badge bg-warning">Paid</span>
+                        {% endif %}
+                        <div class="mt-3">
+                            <h5>Description</h5>
+                            <p style="white-space: pre-line;">{{ current_affair.description|default:"No description available" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Videos Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Videos</h4>
+            </div>
+            <div class="card-body">
+                {% if videos %}
+                    <div class="row">
+                        {% for video in videos %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">{{ video.title|default:"Untitled Video" }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if video.url %}
+                                            {% if video.url|lower|slice:":18" == "https://www.youtube" %}
+                                                <div class="embed-responsive embed-responsive-16by9 mb-3">
+                                                    <iframe class="embed-responsive-item" width="100%" height="200" src="https://www.youtube.com/embed/{{ video.url|slice:32 }}" 
+                                                            frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                            allowfullscreen></iframe>
+                                                </div>
+                                            {% else %}
+                                                <a href="{{ video.url }}" target="_blank" class="btn btn-outline-primary mb-3">Watch Video (YouTube)</a>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                        {% if video.m3u8 %}
+                                            <a href="{{ video.m3u8 }}" target="_blank" class="btn btn-outline-primary mb-3">Watch Video (m3u8)</a>
+                                        {% endif %}
+                                        
+                                        {% if video.tp_stream %}
+                                            <p class="mb-2">TP Stream ID: {{ video.tp_stream }}</p>
+                                        {% endif %}
+                                        
+                                        <div class="mt-3">
+                                            {% if video.is_free %}
+                                                <span class="badge bg-success">Free</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Paid</span>
+                                            {% endif %}
+                                            
+                                            {% if video.is_downloadable %}
+                                                <span class="badge bg-info">Downloadable</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Not Downloadable</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No videos available for this current affair.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PDFs Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">PDF Notes</h4>
+            </div>
+            <div class="card-body">
+                {% if pdfs %}
+                    <div class="row">
+                        {% for pdf in pdfs %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">{{ pdf.title|default:"Untitled PDF" }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if pdf.file %}
+                                            <a href="{{ pdf.file.url }}" target="_blank" class="btn btn-outline-danger mb-3">
+                                                <i class="bi bi-file-pdf me-2"></i>Download PDF
+                                            </a>
+                                        {% else %}
+                                            <p class="text-danger">File not available</p>
+                                        {% endif %}
+                                        
+                                        <div class="mt-3">
+                                            {% if pdf.is_free %}
+                                                <span class="badge bg-success">Free</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Paid</span>
+                                            {% endif %}
+                                            
+                                            {% if pdf.is_downloadable %}
+                                                <span class="badge bg-info">Downloadable</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Not Downloadable</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">No PDF notes available for this current affair.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Exams Section -->
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Exams</h4>
+                <div class="mb-2">
+                    <button type="button" class="btn btn-primary d-flex align-items-center"
+                        data-bs-toggle="modal" data-bs-target="#add-exam-modal" class="add-new-exam">
+                        <i class="bi bi-plus-circle me-2"></i>Add Exam
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Exam Title</th>
+                                <th>Duration</th>
+                                <th>Number of Attempts</th>
+                                <th>Created</th>
+                                <th>Shuffle Questions</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exam in exams %}
+                            <tr>
+                                <td>{{ exam.id }}</td>
+                                <td>
+                                    <div>
+                                        <a class="link-primary" href="{% url 'dashboard-exam-question-manager' exam_id=exam.id %}">{{ exam.title }}</a>
+                                        {% if exam.is_free %}
+                                            <span class="badge bg-success ms-2">Free</span>
+                                        {% else %}
+                                            <span class="badge bg-warning ms-2">Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% with duration=exam.duration %}
+                                    {% if duration %}
+                                        {% with hours=duration.hour minutes=duration.minute seconds=duration.second %}
+                                            {% if hours > 0 %}{{ hours }} hour{% if hours != 1 %}s{% endif %}{% endif %}
+                                            {% if minutes > 0 %} {{ minutes }} minute{% if minutes != 1 %}s{% endif %}{% endif %}
+                                            {% if seconds > 0 %} {{ seconds }} second{% if seconds != 1 %}s{% endif %}{% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>{{ exam.number_of_attempt }}</td>
+                                <td>{{ exam.created|date:"d-m-Y"}}</td>
+                                <td>
+                                    {% if exam.is_shuffle %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Edit Exam -->
+                                        <a href="#" class="text-primary me-3 edit-exam" 
+                                           data-exam-id="{{ exam.id }}" 
+                                           data-title="{{ exam.title }}"
+                                           data-attempts="{{ exam.number_of_attempt }}"
+                                           data-is-shuffle="{{ exam.is_shuffle|yesno:'1,0' }}"
+                                           data-is-free="{{ exam.is_free|yesno:'1,0' }}"
+                                           title="Edit Exam">
+                                            <i class="bi bi-pencil-square me-2"></i>
+                                        </a>
+                                        <!-- Delete Exam -->
+                                        <a class="btn-delete-exam" href="#" data-bs-toggle="modal" data-bs-target="#delete-exam-modal" data-exam-id="{{ exam.id }}" title="Delete Exam">
+                                            <i class="bi bi-trash me-2"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center">No exams found for this current affair.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Exam Modal -->
+<div class="modal fade" id="add-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exam-modal-title">Add New Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="exam-form" action="{% url 'currentaffair-exam-add' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="current_affair_id" value="{{ current_affair.id }}">
+                    <div class="mb-3">
+                        <label for="exam-title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="exam-title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exam-duration" class="form-label">Duration (HH:MM:SS)</label>
+                        <input type="text" class="form-control" id="exam-duration" name="duration" placeholder="01:00:00" required>
+                        <small class="text-muted">Format: Hours:Minutes:Seconds</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="number-of-attempt" class="form-label">Number of Attempts</label>
+                        <input type="number" class="form-control" id="number-of-attempt" name="number_of_attempt" value="1" min="1" required>
+                        <small class="text-muted">Number of times a student can attempt this exam</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-shuffle" name="is_shuffle">
+                        <label class="form-check-label" for="is-shuffle">Shuffle Questions</label>
+                        <small class="d-block text-muted">Randomize question order for each attempt</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is-free" name="is_free">
+                        <label class="form-check-label" for="is-free">Free Exam</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="exam-submit-btn">Save Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Exam Modal -->
+<div class="modal fade" id="edit-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="edit-exam-form" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-exam-title" class="form-label">Exam Title</label>
+                        <input type="text" class="form-control" id="edit-exam-title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-number-of-attempt" class="form-label">Number of Attempts</label>
+                        <input type="number" class="form-control" id="edit-number-of-attempt" name="number_of_attempt" min="1" required>
+                        <small class="text-muted">Number of times a student can attempt this exam</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-is-shuffle" name="is_shuffle">
+                        <label class="form-check-label" for="edit-is-shuffle">Shuffle Questions</label>
+                        <small class="d-block text-muted">Randomize question order for each attempt</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="edit-is-free" name="is_free">
+                        <label class="form-check-label" for="edit-is-free">Free Exam</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Exam Modal -->
+<div class="modal fade" id="delete-exam-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <span class="delete-icon">
+                    <i class="bi bi-trash"></i>
+                </span>
+                <h4>Confirm Deletion</h4>
+                <p>You want to delete this exam. This action cannot be undone.</p>
+                <div class="d-flex justify-content-center">
+                    <button class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</button>
+                    <form id="delete-exam-form" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Edit exam
+    $(document).on('click', '.edit-exam', function() {
+        var examId = $(this).data('exam-id');
+        var examTitle = $(this).data('title');
+        
+        // Get values from data attributes using attr() to avoid jQuery type conversion
+        var attempts = $(this).data('attempts');
+        var isShuffle = $(this).attr('data-is-shuffle') === '1';
+        var isFree = $(this).attr('data-is-free') === '1';
+        
+        console.log('Shuffle value:', isShuffle);
+        console.log('Free value:', isFree);
+        
+        // Set form action and values
+        $('#edit-exam-form').attr('action', "{% url 'currentaffair-exam-update' exam_id=0 %}".replace('0', examId));
+        $('#edit-exam-title').val(examTitle);
+        $('#edit-number-of-attempt').val(attempts);
+        $('#edit-is-shuffle').prop('checked', isShuffle);
+        $('#edit-is-free').prop('checked', isFree);
+        
+        // Show modal
+        $('#edit-exam-modal').modal('show');
+    });
+    
+    // Delete exam
+    $(document).on('click', '.btn-delete-exam', function() {
+        var examId = $(this).data('exam-id'); 
+        $('#delete-exam-form').attr('action', "{% url 'currentaffair-exam-delete' exam_id=0 %}".replace('0', examId));
+    });
+});
+</script>
+{% endblock %}

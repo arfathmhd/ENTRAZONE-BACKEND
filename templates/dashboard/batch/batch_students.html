@@ -1,0 +1,194 @@
+{% extends 'dashboard/base.html' %}
+{% load dashboard_filters %}
+{% load static %}
+{% block content %}
+
+<div class="page-wrapper">
+    <div class="content">
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="page-title mb-1">{{ batch.batch_name }} - Students</h3>
+                
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-batch' %}">Batch</a></li>
+                        <li class="custom-breadcrumb-item">Students</li>
+                    </ol>
+                </nav>
+            </div>
+            
+            <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+                <div class="pe-1 mb-2">
+                    <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                    onclick="window.location.reload();">
+                    <i class="bi bi-arrow-repeat"></i>
+                </a>
+                </div>
+                <div class="pe-1 mb-2">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
+                        data-bs-toggle="tooltip" data-bs-placement="top" 
+                        aria-label="Print" data-bs-original-title="Print"
+                        onclick="printPage()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <a href="{% url 'dashboard-batch' %}" class="btn btn-outline-primary d-flex align-items-center">
+                        <i class="bi bi-arrow-left me-2"></i> Back to Batches
+                    </a>
+                </div>
+                <div class="mb-2 ms-2">
+                    <div class="dropdown">
+                        <button class="btn btn-success dropdown-toggle d-flex align-items-center" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i> Export Students
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li><a class="dropdown-item d-flex align-items-center" href="{% url 'dashboard-batch-students-export' batch.id %}?format=excel">
+                                <i class="bi bi-file-earmark-excel me-2"></i> CSV
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center" href="{% url 'dashboard-batch-students-export' batch.id %}?format=pdf">
+                                <i class="bi bi-file-earmark-pdf me-2"></i> PDF
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mb-2 ms-2">
+                    <a href="{% url 'dashboard-batch-exam-progress' batch.id %}" class="btn btn-info d-flex align-items-center">
+                        <i class="bi bi-bar-chart-line me-2"></i> Exam Progress Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
+                <h4 class="mb-3">Student List ({{ total_students }})</h4>
+                <div class="d-flex align-items-center flex-wrap">
+                    <!-- Search Box -->
+                    <div class="input-icon-start mb-3 me-2 position-relative">
+                        <span class="icon-addon">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search students...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0 py-3">
+                <div class="table-responsive">
+                    <table class="table" id="studentTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone Number</th>
+                                <th>District</th>
+                                <th>Subscription Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr class="clickable-row" data-href="{% url 'dashboard-user-detail' pk=student.id %}?from_batch={{ batch.id }}" style="cursor: pointer;">
+                                <td>{{ student.id }}</td>
+                                <td><a href="{% url 'dashboard-user-detail' pk=student.id %}?from_batch={{ batch.id }}" class="text-primary">{{ student.name|default:"N/A" }}</a></td>
+                                <td>{{ student.email|default:"N/A" }}</td>
+                                <td>{{ student.phone_number|default:"N/A" }}</td>
+                                <td>{{ student.get_district_display|default:"N/A" }}</td>
+                                <td>{{ student.created|date:"d M Y"|default:"--" }}</td>
+                                <td>
+                                    {% if student.is_suspended %}
+                                        <span class="badge bg-danger">Suspended</span>
+                                    {% elif student.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No students found in this batch.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination Controls -->
+                    <div class="pagination">
+                        {% if students.has_previous %}
+                            <a href="?page=1" class="btn btn-primary" title="First Page">
+                                <i class="fas fa-angle-double-left"></i> First
+                            </a>
+                            <a href="?page={{ students.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                                <i class="fas fa-angle-left"></i> Previous
+                            </a>
+                        {% endif %}
+                        
+                        <span class="pagination-info">Page {{ students.number }} of {{ students.paginator.num_pages }}</span>
+                        
+                        {% if students.has_next %}
+                            <a href="?page={{ students.next_page_number }}" class="btn btn-primary" title="Next Page">
+                                Next <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page={{ students.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i> Last
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple client-side search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('studentTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        
+        // Make rows clickable
+        const clickableRows = document.querySelectorAll('.clickable-row');
+        clickableRows.forEach(row => {
+            row.addEventListener('click', function() {
+                window.location.href = this.dataset.href;
+            });
+        });
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchText = searchInput.value.toLowerCase();
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName('td');
+                let found = false;
+                
+                // Skip the "No students found" row
+                if (cells.length === 1 && cells[0].colSpan > 1) {
+                    continue;
+                }
+                
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.indexOf(searchText) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                
+                row.style.display = found ? '' : 'none';
+            }
+        });
+    });
+    
+    // Function to print the page
+    function printPage() {
+        window.print();
+    }
+</script>
+
+{% endblock %}

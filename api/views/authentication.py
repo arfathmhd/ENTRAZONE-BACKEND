@@ -96,9 +96,9 @@ def register(request):
 
 
 
-def sendsms(otp, phone):
-    cynbus_url = f"https://2factor.in/API/R1/?module=TRANS_SMS&apikey=347d4ad8-60cd-11ec-b710-0200cd936042&to=91{phone}&from=OTPQIK&msg=Your%20OTP%20to%20login%20Sahakari%20Race%20Plus%20is%20{otp}%20Please%20do%20not%20share%20this%20OTP.%20Powered%20by%20Cynbus"
-    requests.get(url=cynbus_url)
+# def sendsms(otp, phone):
+#     cynbus_url = f"https://2factor.in/API/R1/?module=TRANS_SMS&apikey=347d4ad8-60cd-11ec-b710-0200cd936042&to=91{phone}&from=OTPQIK&msg=Your%20OTP%20to%20login%20Sahakari%20Race%20Plus%20is%20{otp}%20Please%20do%20not%20share%20this%20OTP.%20Powered%20by%20Cynbus"
+#     requests.get(url=cynbus_url)
 
 
 @api_view(["POST"])

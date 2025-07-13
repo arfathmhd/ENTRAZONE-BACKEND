@@ -5,7 +5,7 @@ from dashboard.views.imports import *
 def get_profile(request):
     user = request.user
 
-    valid_districts = dict(CustomUser.DISTRICT_CHOICES)
+    valid_districts = dict(CustomUser.STATE_CHOICES)
     district_name = valid_districts.get(user.district, "")  
 
     image_url = request.build_absolute_uri(user.image.url) if user.image else ""
@@ -53,7 +53,7 @@ def update_profile(request):
         if not name:
             return Response({"status": "error", "message": "Please provide a valid name"}, status=status.HTTP_400_BAD_REQUEST)
         
-        valid_districts = dict(CustomUser.DISTRICT_CHOICES)
+        valid_districts = dict(CustomUser.STATE_CHOICES)
         if district_number not in valid_districts:
             return Response({"status": "error", "message": "Invalid district number"}, status=status.HTTP_400_BAD_REQUEST)
         

@@ -14,22 +14,32 @@ from rest_framework import status
 
 
 
-DISTRICT_CHOICES = [
-    ('0', 'Thiruvananthapuram'),
-    ('1', 'Kollam'),
-    ('2', 'Pathanamthitta'),
-    ('3', 'Alapuzha'),
-    ('4', 'Kottayam'),
-    ('5', 'Idukki'),
-    ('6', 'Eranakulam'),
-    ('7', 'Thrissur'),
-    ('8', 'Palakkad'),
-    ('9', 'Malappuram'),
-    ('10', 'Kozhikode'),
-    ('11', 'Wayanad'),
-    ('12', 'Kannur'),
-    ('13', 'Kasargode'),
-]
+STATE_CHOICES = [
+    ('0', 'Andhra Pradesh'),
+    ('1', 'Arunachal Pradesh'),
+    ('2', 'Assam'),
+    ('3', 'Bihar'),
+    ('4', 'Chhattisgarh'),
+    ('5', 'Goa'),
+    ('6', 'Gujarat'),
+    ('7', 'Haryana'),
+    ('8', 'Himachal Pradesh'),
+    ('9', 'Jharkhand'),
+    ('10', 'Karnataka'),
+    ('11', 'Kerala'),
+    ('12', 'Madhya Pradesh'),
+    ('13', 'Maharashtra'),
+    ('14', 'Manipur'),
+    ('15', 'Meghalaya'),
+    ('16', 'Mizoram'),
+    ('17', 'Nagaland'),
+    ('18', 'Odisha'),
+    ('19', 'Punjab'),
+    ('20', 'Rajasthan'),
+    ('21', 'Sikkim'),
+    ('22', 'Tamil Nadu'),
+    ('23', 'Telangana'),
+    ]
 
 @api_view(["POST"])  
 @permission_classes([IsAuthenticated])  
@@ -56,7 +66,7 @@ def register(request):
         if CustomUser.objects.filter(email=email, is_deleted=False).exists():
             return Response({"status": "error", "message": "User with this email already exists"}, status=status.HTTP_400_BAD_REQUEST)
        
-        valid_districts = [choice[0] for choice in DISTRICT_CHOICES]
+        valid_districts = [choice[0] for choice in STATE_CHOICES]
         if district_number not in valid_districts:
             return Response({"status": "error", "message": "Invalid district number"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -71,7 +81,7 @@ def register(request):
             user.image = image
         user.save()  
 
-        district_name = dict(DISTRICT_CHOICES).get(district_number, "")
+        district_name = dict(STATE_CHOICES).get(district_number, "")
 
         user_details = {
             "id": user.id,
@@ -220,7 +230,7 @@ def otp_login_verify(request):
                 date_from = datetime.now() - timedelta(days=1)
                 otp.created__gte = date_from
                 otp.save()
-                district_name = dict(DISTRICT_CHOICES).get(user.district, "")
+                district_name = dict(STATE_CHOICES).get(user.district, "")
 
                 user_details = {
                     "id": user.id,

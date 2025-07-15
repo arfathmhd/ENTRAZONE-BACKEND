@@ -45,7 +45,7 @@ STATE_CHOICES = [
 @permission_classes([IsAuthenticated])  
 def register(request):
     user = request.user
-    district_number = request.data.get("district")
+    district_number = request.data.get("state")
     email = request.data.get("email")
     name = request.data.get("username")  
     image = request.data.get("image")  
@@ -90,7 +90,7 @@ def register(request):
             "username": user.username if user.username else "",
             "phone": user.phone_number if user.phone_number else "",
             "email": user.email if user.email else "",
-            "district": district_name,
+            "state": district_name,
         }
 
         return Response({
@@ -106,9 +106,9 @@ def register(request):
 
 
 
-# def sendsms(otp, phone):
-#     cynbus_url = f"https://2factor.in/API/R1/?module=TRANS_SMS&apikey=347d4ad8-60cd-11ec-b710-0200cd936042&to=91{phone}&from=OTPQIK&msg=Your%20OTP%20to%20login%20Sahakari%20Race%20Plus%20is%20{otp}%20Please%20do%20not%20share%20this%20OTP.%20Powered%20by%20Cynbus"
-#     requests.get(url=cynbus_url)
+def sendsms(otp, phone):
+    cynbus_url = f"https://2factor.in/API/R1/?module=TRANS_SMS&apikey=e9d24a95-606f-11f0-a562-0200cd936042&to=91{phone}&from=OTPQIK&msg=Your%20OTP%20to%20login%20EntraZone%20is%20{otp}%20Please%20do%20not%20share%20this%20OTP."
+    requests.get(url=cynbus_url)
 
 
 @api_view(["POST"])
@@ -238,7 +238,7 @@ def otp_login_verify(request):
                     "image":user.image.url if user.image else "",
                     "phone": user.phone_number if user.phone_number else "",
                     "email": user.email if user.email else "",
-                    "district": district_name ,  
+                    "state": district_name ,  
                 }
 
                 refresh = RefreshToken.for_user(user)

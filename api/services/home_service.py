@@ -39,14 +39,26 @@ class HomeService:
     
     @classmethod
     def get_course_data(cls, course, is_default=False):
-        """Get formatted course data including subscription count and completion status."""
+        """Get formatted course data including subscription count, completion status, and subjects."""
+        subjects = course.subjects.filter(is_deleted=False).order_by('order')
+        
+        subject_data = [{
+            'subject_id': subject.id,
+            'subject_name': subject.subject_name,
+            'description': subject.description,
+            'image': subject.image.url if subject.image else '',
+            'is_free': subject.is_free,
+            'order': subject.order
+        } for subject in subjects]
+        
         return {
             'course_id': course.id,
             'course_name': course.course_name,
             'is_default': is_default,
             'subscription_count': cls.get_course_subscription_count(course),
             'is_completed': cls.check_course_completion_status(course),
-            'mentors': []  # Will be populated for subscribed courses
+            'mentors': [], 
+            'subjects': subject_data,  
         }
     
     @classmethod

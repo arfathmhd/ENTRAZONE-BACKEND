@@ -45,7 +45,7 @@ STATE_CHOICES = [
 @permission_classes([IsAuthenticated])  
 def register(request):
     user = request.user
-    district_number = request.data.get("district")
+    district_number = request.data.get("state")
     email = request.data.get("email")
     name = request.data.get("username")  
     image = request.data.get("image")  
@@ -91,7 +91,7 @@ def register(request):
             "username": user.username if user.username else "",
             "phone": user.phone_number if user.phone_number else "",
             "email": user.email if user.email else "",
-            "district": district_name,
+            "state": district_name,
         }
 
         return Response({
@@ -118,6 +118,7 @@ def sendsms(otp, phone):
             print("Failed to send OTP SMS:", response.status_code, response.text)
     except Exception as e:
         print("Error while sending OTP SMS:", str(e))
+
 
 @api_view(["POST"])
 def otp_auth(request):
@@ -247,7 +248,7 @@ def otp_login_verify(request):
                     "image":user.image.url if user.image else "",
                     "phone": user.phone_number if user.phone_number else "",
                     "email": user.email if user.email else "",
-                    "district": district_name ,  
+                    "state": district_name ,  
                 }
 
                 refresh = RefreshToken.for_user(user)

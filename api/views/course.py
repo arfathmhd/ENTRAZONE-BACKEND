@@ -25,8 +25,8 @@ def course_list(request):
 @permission_classes([IsAuthenticated]) 
 def course_select(request):
     user = request.user
-    course_id = request.data.get("course_id")  
-
+    course_id = request.GET.get("course_id")  
+    print(course_id)
     course = Course.objects.filter(id=course_id).first()
     if not course:
         return Response({"status": "error", "message": "Course not found"}, status=status.HTTP_404_NOT_FOUND)

@@ -25,7 +25,7 @@ urlpatterns = [
     # ==================================== Authentication ====================================== #
     path("v1/register/", authentication.register, name="api-v1-login"),
     path("v1/logout/", auth_views.LogoutView.as_view(), name="api-v1-logout"),
-    path("v1/otp-auth/", authentication.otp_auth, name="api-v1-otp_auth"),
+    path("v1/otp-auth/", authentication.otp_auth, name="api-v1-otp_auth"),  
     path("v1/signup-otp-auth/", authentication.otp_signup_verify, name="api-v1-signup-otp_auth"),
 
     path("v1/otp-login-verify/", authentication.otp_login_verify, name="api-v1-otp_login_verify"),

@@ -50,6 +50,7 @@ def register(request):
     name = request.data.get("username")  
     image = request.data.get("image")  
 
+
     if not user.is_authenticated:
         return Response({"status": "error", "message": "User not authenticated."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -106,10 +107,17 @@ def register(request):
 
 
 
-# def sendsms(otp, phone):
-#     cynbus_url = f"https://2factor.in/API/R1/?module=TRANS_SMS&apikey=347d4ad8-60cd-11ec-b710-0200cd936042&to=91{phone}&from=OTPQIK&msg=Your%20OTP%20to%20login%20Sahakari%20Race%20Plus%20is%20{otp}%20Please%20do%20not%20share%20this%20OTP.%20Powered%20by%20Cynbus"
-#     requests.get(url=cynbus_url)
-
+def sendsms(otp, phone):
+    try:
+        url = f"https://2factor.in/API/V1/e9d24a95-606f-11f0-a562-0200cd936042/SMS/{phone}/{otp}/EntrazonOTP"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            print("OTP SMS sent successfully:", response.json())
+        else:
+            print("Failed to send OTP SMS:", response.status_code, response.text)
+    except Exception as e:
+        print("Error while sending OTP SMS:", str(e))
 
 @api_view(["POST"])
 def otp_auth(request):
@@ -216,6 +224,7 @@ def otp_login_verify(request):
     code = request.data.get("code")
     request_id = request.data.get("request_id")
 
+
     if phone and code and request_id:
         if CustomUser.objects.filter(phone_number=phone, is_deleted=False).exists():
             user = CustomUser.objects.filter(phone_number=phone, is_deleted=False).first()
@@ -280,6 +289,8 @@ def otp_signup_verify(request):
     phone = request.data.get("phone")
     code = request.data.get("code")
     request_id = request.data.get("request_id")
+
+
 
     if phone and code and request_id:
         try:

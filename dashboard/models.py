@@ -742,7 +742,7 @@ class Exam(models.Model):
     course = models.ForeignKey('Course', on_delete=models.SET_NULL, null=True, blank=True)
     chapter = models.ForeignKey('Chapter', on_delete=models.SET_NULL, null=True, blank=True)
     folder = models.ForeignKey('Folder', on_delete=models.SET_NULL, null=True, blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True,related_name='exams')
     lesson = models.ForeignKey(Lesson, on_delete=models.SET_NULL, null=True, blank=True)
     current_affair = models.ForeignKey(CurrentAffairs, on_delete=models.SET_NULL, null=True, blank=True)
     is_free = models.BooleanField(default=True)

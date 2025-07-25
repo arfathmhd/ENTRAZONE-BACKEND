@@ -49,6 +49,7 @@ def register(request):
     email = request.data.get("email")
     name = request.data.get("username")  
     image = request.data.get("image")  
+    address = request.data.get("address")  
 
 
     if not user.is_authenticated:
@@ -80,6 +81,8 @@ def register(request):
         user.district = district_number  
         if image:  
             user.image = image
+        if address:  
+            user.address = address
         user.save()  
 
         district_name = dict(STATE_CHOICES).get(district_number, "")
@@ -92,6 +95,7 @@ def register(request):
             "phone": user.phone_number if user.phone_number else "",
             "email": user.email if user.email else "",
             "state": district_name,
+            "address": user.address if user.address else "",
         }
 
         return Response({

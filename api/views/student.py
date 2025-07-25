@@ -49,6 +49,7 @@ def update_profile(request):
         email = request.data.get("email", user.email)
 
         image = request.FILES.get("image")
+        address = request.data.get("address", user.address)
 
         if not name:
             return Response({"status": "error", "message": "Please provide a valid name"}, status=status.HTTP_400_BAD_REQUEST)
@@ -67,6 +68,9 @@ def update_profile(request):
         if image:
             user.image = image
         
+        if address:
+            user.address = address
+        
         try:
             user.save()
 
@@ -79,6 +83,7 @@ def update_profile(request):
                 "image": request.build_absolute_uri(user.image.url) if user.image else "",
                 "email": user.email,
                 "district": district_name,  
+                "address": user.address if user.address else "",
             }
 
             return Response({"status": "success", "message": "Profile updated successfully", "user": user_details}, status=status.HTTP_200_OK)

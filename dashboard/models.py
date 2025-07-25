@@ -110,6 +110,7 @@ class CustomUser(AbstractBaseUser):
     user_type = models.IntegerField(default=0, choices=TYPE_CHOICES)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    address = models.TextField(blank=True, null=True)
     is_superuser = models.BooleanField(default=False)
     created = models.DateTimeField(default=timezone.now)
     is_deleted = models.BooleanField(default=False)

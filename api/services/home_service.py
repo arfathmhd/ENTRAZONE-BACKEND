@@ -43,7 +43,8 @@ class HomeService:
 
         # Prefetch subjects with annotated chapter counts
         subjects = course.subjects.filter(is_deleted=False).annotate(
-            chapter_count=Count('chapters', filter=Q(chapters__is_deleted=False))
+            chapter_count=Count('chapters', filter=Q(chapters__is_deleted=False)),
+            exam_count=Count('exams', filter=Q(exams__is_deleted=False))
         ).order_by('order')
 
         # Prepare subject data directly
@@ -55,6 +56,7 @@ class HomeService:
             'is_free': subject.is_free,
             'order': subject.order,
             'chapter_count': subject.chapter_count,
+            'exam_count': subject.exam_count,
         } for subject in subjects]
 
         # Sum all chapter counts from the annotated subjects (in memory)

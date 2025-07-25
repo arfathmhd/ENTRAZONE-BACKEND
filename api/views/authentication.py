@@ -45,7 +45,7 @@ STATE_CHOICES = [
 @permission_classes([IsAuthenticated])  
 def register(request):
     user = request.user
-    district_number = request.data.get("state")
+    district_number = request.data.get("district")
     email = request.data.get("email")
     name = request.data.get("username")  
     image = request.data.get("image")  

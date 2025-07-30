@@ -1020,3 +1020,33 @@ class BatchMentor(models.Model):
     created = models.DateTimeField(default=timezone.now)
     is_deleted = models.BooleanField(default=False)
     
+
+
+
+class Slot(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE,null=True, blank=True)
+    date = models.DateField()
+    total_slots = models.PositiveIntegerField(default=1)
+    available_sessions = models.PositiveIntegerField(default=1)
+    created = models.DateTimeField(default=timezone.now)
+    is_deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Slot for {self.subject.subject_name} "
+
+
+class Booking(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='bookings')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE,null=True, blank=True)
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE,null=True, blank=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE,null=True, blank=True)
+    slot = models.ForeignKey(Slot, on_delete=models.CASCADE)
+    description = models.TextField(blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Booking by {self.user.username} for {self.subject.subject_name} on {self.created} "
+
+

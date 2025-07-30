@@ -12,7 +12,8 @@ from dashboard.models import Folder, Lesson, Video, PDFNote, Exam, Question, Vid
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def folder_detail(request, folder_id):
+def folder_detail(request):
+    folder_id = request.GET.get("folder_id")
     # Get query parameters for sorting and filtering
     sort_option = request.query_params.get('sort')
     start_date = request.query_params.get('start_date', None)

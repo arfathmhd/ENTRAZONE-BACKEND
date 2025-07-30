@@ -27,7 +27,6 @@ def get_profile(request):
         "user": user_details
     }, status=status.HTTP_200_OK)
 
-
 @api_view(["PUT"])
 @csrf_exempt  
 @permission_classes([IsAuthenticated])
@@ -50,6 +49,7 @@ def update_profile(request):
 
         image = request.FILES.get("image")
         address = request.data.get("address", user.address)
+
 
         if not name:
             return Response({"status": "error", "message": "Please provide a valid name"}, status=status.HTTP_400_BAD_REQUEST)

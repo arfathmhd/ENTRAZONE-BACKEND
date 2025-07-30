@@ -3,16 +3,12 @@ from urllib.parse import urlparse, parse_qs
 from django.conf import settings
 from dashboard.models import Subject, Chapter, Folder, Lesson, Video, PDFNote, Exam, Question, VideoPause
 from django.db.models import Count
-
-
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated]) 
 def chapter_list(request):
     subject_id = request.data.get('subject_id')
-    
     if not subject_id:
         return Response({"status": "error", "message": "Subject ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
         subject = Subject.objects.get(id=subject_id, is_deleted=False)
         subject_name = subject.subject_name

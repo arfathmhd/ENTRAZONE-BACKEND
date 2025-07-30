@@ -17,7 +17,8 @@ from api.views import (
   schedule,
   folder,
   video,
-  live_class
+  live_class,
+  booking,
 
 )
 
@@ -110,7 +111,7 @@ urlpatterns = [
     # ==================================== Question Report ============================================= #
 
     path('v1/question-report/', exam.report, name='api-v1-question-report'),
-    path('v1/folder/<int:folder_id>/', folder.folder_detail, name='api-v1-folder'),
+    path('v1/folder/', folder.folder_detail, name='api-v1-folder'),
 
 
 
@@ -122,5 +123,7 @@ urlpatterns = [
     
     path('v1/live-class/', live_class.live_class, name='api-v1-live-class'),
 
+    # path('v1/booking-session/', booking.booking_session, name='api-v1-booking-session'),
+    # path('v1/current-slots/', booking.current_slots, name='api-v1-current-slots'),
 
 ]

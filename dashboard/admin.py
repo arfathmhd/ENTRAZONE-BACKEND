@@ -34,6 +34,8 @@ admin.site.register(CurrentAffairs)
 admin.site.register(StudentProgressDetail)
 admin.site.register(StudentProgress)
 
+admin.site.register(Slot)
+admin.site.register(Booking)
 
 @admin.register(WebhookLog)
 class WebhookLogAdmin(admin.ModelAdmin):

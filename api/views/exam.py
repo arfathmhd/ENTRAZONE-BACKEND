@@ -1,10 +1,13 @@
 from dashboard.views.imports import *   
 from decimal import Decimal
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Max
+from django.db.models import Max, Sum
 from django.core.exceptions import ObjectDoesNotExist
+from dashboard.models import Exam, Question, StudentProgress, StudentProgressDetail, Level, TalentHunt
+from datetime import timedelta
 
 
 @api_view(['GET'])
@@ -309,7 +312,7 @@ def extract_latex(raw_string):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def exam_question(request):
-    exam_id = request.data.get('exam_id')
+    exam_id = request.GET.get('exam_id')
     
     try:
         exam = Exam.objects.get(id=exam_id, is_deleted=False)
@@ -442,21 +445,21 @@ def exam_answer_submission(request):
     for question in questions:
         question_id = question.get('question_id')
         selected_answer = question.get('selected_answer')
-        # time_taken = question.get('time_taken')
+        time_taken = question.get('time_taken')
 
         if question_id is None or selected_answer is None:
             return Response({"status": "error", "message": f"Missing data for question {question_id}"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # try:
-        #     time_parts = total_time_taken.split(":")
-        #     if len(time_parts) != 2:
-        #         return Response({"status": "error", "message": "Invalid time format. Use MM:SS."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            time_parts = total_time_taken.split(":")
+            if len(time_parts) != 2:
+                return Response({"status": "error", "message": "Invalid time format. Use MM:SS."}, status=status.HTTP_400_BAD_REQUEST)
 
-        #     minutes, seconds = int(time_parts[0]), int(time_parts[1])
-        #     time_delta = timedelta(minutes=minutes, seconds=seconds)
-        #     total_time += time_delta
-        # except ValueError:
-        #     return Response({"status": "error", "message": "Invalid time format."}, status=status.HTTP_400_BAD_REQUEST)
+            minutes, seconds = int(time_parts[0]), int(time_parts[1])
+            time_delta = timedelta(minutes=minutes, seconds=seconds)
+            total_time += time_delta
+        except ValueError:
+            return Response({"status": "error", "message": "Invalid time format."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             question_obj = Question.objects.get(id=question_id)
@@ -500,7 +503,8 @@ def exam_answer_submission(request):
             is_correct=is_correct,
             answered=answered,  
             marks_obtained=marks if is_correct else 0,
-            negative_marks=negative_marks if not is_correct and answered else 0,  
+            negative_marks=negative_marks if not is_correct and answered else 0,
+            time_taken=time_taken  # Store time taken for each question
         )
         student_progress_detail.save() 
 
@@ -542,6 +546,18 @@ def exam_answer_submission(request):
     wrong_percentage = (wrong_answer / question_count) * 100 if question_count > 0 else 0.0
     unanswered_percentage = (unanswered / question_count) * 100 if question_count > 0 else 0.0
 
+    # Get question details with time taken for each question
+    question_details = []
+    for detail in StudentProgressDetail.objects.filter(student_progress=student_progress):
+        question_details.append({
+            'question_id': detail.question.id,
+            'is_correct': detail.is_correct,
+            'answered': detail.answered,
+            'time_taken': detail.time_taken,
+            'marks_obtained': float(detail.marks_obtained) if detail.marks_obtained else 0,
+            'negative_marks': float(detail.negative_marks) if detail.negative_marks else 0
+        })
+    
     return Response({
         "status": "success",
         "message": "Answers submitted successfully",
@@ -559,6 +575,7 @@ def exam_answer_submission(request):
         "total_marks": level_total_marks,
         "negative_marks": total_negative_marks,
         "net_score": total_marks,  # This is already the net score after negative marking
+        "question_details": question_details  # Include detailed information about each question
     }, status=status.HTTP_200_OK)
 
 

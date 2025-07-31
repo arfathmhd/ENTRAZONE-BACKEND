@@ -123,7 +123,7 @@ urlpatterns = [
     
     path('v1/live-class/', live_class.live_class, name='api-v1-live-class'),
 
-    # path('v1/booking-session/', booking.booking_session, name='api-v1-booking-session'),
-    # path('v1/current-slots/', booking.current_slots, name='api-v1-current-slots'),
+    path('v1/booking-session/', booking.booking_session, name='api-v1-booking-session'),
+    path('v1/current-slots/', booking.current_slots, name='api-v1-current-slots'),
 
 ]

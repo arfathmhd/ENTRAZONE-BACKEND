@@ -851,6 +851,7 @@ class StudentProgressDetail(models.Model):
     answered=models.BooleanField(default=True)
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2 ,null=True, blank=True)
     negative_marks = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    time_taken = models.CharField(max_length=10, null=True, blank=True)  # Store time in MM:SS format
     created = models.DateTimeField(default=timezone.now)
     is_deleted = models.BooleanField(default=False)
 

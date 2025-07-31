@@ -22,7 +22,7 @@ coverage.xml
 sshkey
 sshkey.pub
 # Django
-# media/
+media/
 course_images/
 uploads/
 pdf_notes/

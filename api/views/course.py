@@ -7,8 +7,13 @@ from django.db.models import Count
 @api_view(["GET"])
 @permission_classes([IsAuthenticated]) 
 def course_list(request):
-
-    courses = Course.objects.filter(is_deleted=False)
+    state = request.user.district 
+    if not state:
+        return Response({"status": "error", "message": "State not found"}, status=status.HTTP_404_NOT_FOUND)
+    if state == "11": 
+        courses = Course.objects.filter(is_deleted=False, language="Malayalam")
+    else:
+        courses = Course.objects.filter(is_deleted=False)
 
     serializer = CourseSerializer(courses, many=True)
 

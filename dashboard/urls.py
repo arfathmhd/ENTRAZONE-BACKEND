@@ -44,6 +44,7 @@ from dashboard.views import (
     smartgateway,
     rating,
     batch_reports,
+    slote,
 )
 
 urlpatterns = [
@@ -413,4 +414,14 @@ urlpatterns = [
     # ==================================== Video Ratings ============================================= #
     path("video-ratings/", rating.video_rating, name="dashboard-video-ratings"),
     path("video-ratings/<int:video_id>/", rating.video_rating_details, name="dashboard-video-rating-details"),
+
+
+    # # ==================================== Slote Management ============================================= #
+
+    path("slote/", slote.manager, name="dashboard-slote-manager"),
+    path("slote/add/", slote.add_slot, name="dashboard-slote-add"),
+    path("get-subjects/", slote.get_subjects, name="get_subjects"),
+    path("slote/update/<int:slot_id>/", slote.update_slot, name="dashboard-slote-update"),
+    path("slote/delete/<int:slot_id>/", slote.delete, name="dashboard-slote-delete"),
+
 ]

@@ -1,62 +1,25 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
-{% block content %}
-
+{% block content%}
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style >
-.custom-breadcrumb {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    padding: 0;
-    margin: 0;
-}
 
-.custom-breadcrumb-item {
-    margin-right: 10px;
-    font-weight: bold;
-}
-
-.custom-breadcrumb-item a {
-    text-decoration: none;
-    color: #0275d8;
-}
-
-.custom-breadcrumb-item a:hover {
-    text-decoration: underline;
-}
-
-.custom-breadcrumb-item:not(:last-child)::after {
-    content: ">";
-    margin-left: 10px;
-}
-
-.custom-breadcrumb-item.current-page {
-    color: #6c757d;
-    pointer-events: none;
-}
-
-.custom-breadcrumb-item.current-page::after {
-    content: "";
-}
-
-</style>
 
 
 <div class="page-wrapper">
+       
+
     <div class="content">
 
         <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
             <div class="my-auto mb-2">
-                <h3 class="page-title mb-1">Course</h3>
+                <h3 class="page-title mb-1">Slotes</h3>
                 <nav aria-label="breadcrumbs">
                     <ol class="custom-breadcrumb">
                         <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
-                        <li class="custom-breadcrumb-item"><a href="#">Course</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-slote-manager' %}">Slotes</a></li>
                     </ol>
                 </nav>
-              
             </div>
             <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
                 <div class="pe-1 mb-2">
@@ -78,16 +41,16 @@
                 
                
                 <div class="mb-2">
-                    <a href="{% url 'dashboard-course-add' %}"
+                    <a href="{% url 'dashboard-slote-add' %}"
                         class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
-                        Add Course</a>
+                        Add Slotes</a>
                 </div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap pb-0">
-                <h4 class="mb-3">Course List</h4>
+                <h4 class="mb-3">Slotes List</h4>
                 <div class="d-flex align-items-center flex-wrap">
                     <!-- Date Range Picker -->
                     <div class="input-icon-start mb-3 me-2 position-relative">
@@ -118,20 +81,7 @@
                                     Name Z-A
                                 </a>
                             </li>
-                            <!-- <li>
-                                <a href="javascript:void(0);" data-sort="price_ascending"
-                                   class="dropdown-item rounded-1 {% if current_sort == 'price_ascending' %}active{% endif %}">
-                                    Price Low to High
-                                </a>
-                            </li>
-                            <li>
-                                <a href="javascript:void(0);" data-sort="price_descending"
-                                   class="dropdown-item rounded-1 {% if current_sort == 'price_descending' %}active{% endif %}">
-                                    Price High to Low
-                                </a>
-                            </li> -->
                         </ul>
-                        
                     </div>
                     
                     
@@ -139,56 +89,43 @@
                 </div>
             </div>
             <div class="card-body p-0 py-3">
+
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="thead-light">
                             <tr>
-                                <!-- <th class="no-sort">
+                                <th class="no-sort">
                                     <div class="form-check form-check-md">
                                         <input class="form-check-input" type="checkbox" id="select-all">
                                     </div>
-                                </th> -->
+                                </th>
                                 <th>ID</th>
-
-                                <th>Course Name</th>
-                                <th>Language</th>
-                                <th>Duration</th>
-                                <th>Number of Lesson</th>
-                                <th>Description</th>
-                                <th>Created</th>
+                                <th>Course</th>
+                                <th>Subject</th>
+                                <th>Slote</th>
+                                <th>created</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for course in courses %}
+                            {% for slot in slots %}
                             <tr>
-                                <!-- <td>
+                                <td>
                                     <div class="form-check form-check-md">
                                         <input class="form-check-input" type="checkbox">
                                     </div>
-                                </td> -->
-                                <td><a href="{% url 'dashboard-course-subjects-list' course.id %}" class="link-primary">{{ course.id }}</a></td>
-                                
-                                <td>
-                                    <a href="{% url 'dashboard-course-subjects-list' course.id %}" class="link-primary">
-                                        {{ course.course_name }}
-                                    </a>
                                 </td>
-                                
-                                <td>{{ course.language }}</td>
-                                <td>{{ course.duration|default:"0" }}</td>
-
-                                <td>{{ course.number_of_lessons  }}</td>
-                                <td>{{ course.description|truncatewords:10 }}</td>
-                                <td>{{ course.created|date:"d-m-Y"}}</td>
+                                <td><a href="" class="link-primary">{{ slot.id }}</a></td>
+                                <td>{{ slot.course.name }}</td>  <!-- Assuming course has a name attribute -->
+                                <td>{{ slot.subject.subject_name }}</td>  <!-- Assuming subject has a subject_name attribute -->
+                                <td>{{ slot.available_sessions }}</td>
+                                <td>{{ slot.created|date:"d-m-Y" }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <!-- Edit Course -->
-                                        <a href="{% url 'dashboard-course-update' pk=course.id %}" class="text-primary me-3" title="Edit Course">
-                                            <i class="bi bi-pencil-square me-2"></i>
+                                        <a href="{% url 'dashboard-slote-update' slot_id=slot.id %}" class="text-primary me-3" title="Edit Slot">
+                                            <i class="bi bi-pencil-square me-2"></i> 
                                         </a>
-                                        <!-- Delete Course (Delete confirmation via modal) -->
-                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-bs-target="#delete-modal" data-batch-id="{{ course.id }}" title="Delete Course">
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-slot-id="{{ slot.id }}" data-bs-target="#delete-modal">
                                             <i class="bi bi-trash me-2"></i>
                                         </a>
                                     </div>
@@ -196,39 +133,39 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">No courses found.</td>
+                                <td colspan="7" class="text-center">No slots found.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                     <div class="pagination">
-                        {% if courses.has_previous %}
+                        {% if slots.has_previous %}
                             <a href="?page=1" class="btn btn-primary" title="First Page">
                                 <i class="fas fa-angle-double-left"></i> First
                             </a>
-                            <a href="?page={{ courses.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                            <a href="?page={{ slots.previous_page_number }}" class="btn btn-primary" title="Previous Page">
                                 <i class="fas fa-angle-left"></i> Previous
                             </a>
                         {% endif %}
                         
-                        <span class="pagination-info">Page {{ courses.number }} of {{ courses.paginator.num_pages }}</span>
+                        <span class="pagination-info">Page {{ slots.number }} of {{ slots.paginator.num_pages }}</span>
                         
-                        {% if courses.has_next %}
-                            <a href="?page={{ courses.next_page_number }}" class="btn btn-primary" title="Next Page">
+                        {% if slots.has_next %}
+                            <a href="?page={{ slots.next_page_number }}" class="btn btn-primary" title="Next Page">
                                 Next <i class="fas fa-angle-right"></i>
                             </a>
-                            <a href="?page={{ courses.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                            <a href="?page={{ slots.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
                                 <i class="fas fa-angle-double-right"></i> Last
                             </a>
                         {% endif %}
                     </div>
+                    
                 </div>
+
             </div>
-            
         </div>
     </div>
 </div>
-
 
 
 <div class="modal fade" id="delete-modal">
@@ -237,7 +174,6 @@
             <div class="modal-body text-center">
                 <span class="delete-icon">
                     <i class="bi bi-trash"></i>
-
                 </span>
                 <h4>Confirm Deletion</h4>
                 <p>You want to delete the selected item. This action cannot be undone.</p>
@@ -250,49 +186,45 @@
     </div>
 </div>
 
+
 </div>
 
-    
-
-    
-
-</body>
-
-
-</html>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function () {
-    $(document).on('click', '.btn-delete', function () {
-        var batchId = $(this).data('batch-id'); // Use batch-id instead of user-id
-        $('#delete-record').data('batch-id', batchId); // Store the batch ID in the modal button
+    // Capture slot ID when delete button is clicked
+    $(document).on("click", ".btn-delete", function () {
+        var slotId = $(this).data("slot-id");
+        $("#delete-record").data("slot-id", slotId);
     });
-    // $('#global-loader').show();
 
-    $('#delete-record').click(function () {
-        var userId = $(this).data('batch-id');
+    // Handle delete confirmation button click
+    $("#delete-record").click(function () {
+        var slotId = $(this).data("slot-id");
 
-        console.log("Deleting User ID: " + userId);
+        console.log("Deleting Slot ID: " + slotId);
 
         $.ajax({
-            url: '/course/delete/' + userId + '/',
-            type: 'POST',
+            url: "/slote/delete/" + slotId + "/",  // Correct URL pattern
+            type: "POST",
             data: {
-                csrfmiddlewaretoken: '{{ csrf_token }}',
+                csrfmiddlewaretoken: "{{ csrf_token }}",
             },
             success: function (data) {
                 console.log("Deleted successfully");
-                window.location.reload();
+                window.location.reload();  // Reload page after deletion
             },
             error: function(xhr, status, error) {
-                console.error("Error deleting user:", error);
+                console.error("Error deleting slot:", error);
             }
         });
     });
 });
 </script>
+
 
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -371,4 +303,23 @@ $(document).ready(function () {
         });
     });
     </script>
-    {% endblock%}
+
+    <script src="{% static 'dashboard/sweetalert2/sweetalert2.min.js' %}"></script>
+
+
+
+
+<script>
+        $(document).ready(function () {
+            $('.noty-tost').click();
+        });
+</script>   
+{% endblock %}
+
+
+
+
+</body>
+
+
+</html>

@@ -143,6 +143,64 @@
     border: 1px solid #ff0000;
 }
 
+/* Custom sidebar and navbar styling to match Entrazone brand colors */
+/* .sidebar {
+    background: linear-gradient(to right, rgba(0, 70, 184, 0.75), rgba(107, 44, 145, 0.95), rgba(140, 40, 170, 0.9)); /* More violet emphasis */
+}
+
+.sidebar-menu ul li a {
+    color: #ffffff; /* Text color for menu items */
+}
+
+.sidebar-menu ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white for hover */
+} */
+
+/* .sidebar-menu ul li.active > a {
+    background-color: rgba(255, 255, 255, 0.15); /* Slightly more opaque for active items */
+    color: #ffffff; /* Active item text color */
+    border-left: 3px solid #ffffff; /* White border for active items */
+} */
+/* 
+.submenu-hdr {
+    color: rgba(255, 255, 255, 0.7); /* Semi-transparent white for headers */
+    font-weight: bold;
+} */
+
+/* Navbar styling */
+/* .header {
+    background: linear-gradient(to right, rgba(0, 70, 184, 0.75), rgba(107, 44, 145, 0.95), rgba(140, 40, 170, 0.9)); /* More violet emphasis */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+} */
+
+/* .header .header-left {
+    background: transparent; /* Keep gradient visible */
+} */
+/* 
+.header-user .nav.user-menu .dropdown-menu {
+    border-color: #6B2C91;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+} */
+
+/* Change text colors in header */
+/* .header .nav-item a,
+.header .dropdown-toggle {
+    color: #ffffff !important;
+} */
+
+/* Style the buttons in header */
+/* .header .btn-outline-light.bg-white {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(5px);
+}
+
+.header .btn-outline-light.bg-white:hover {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+} */
 
 </style>
 <body>
@@ -219,18 +277,18 @@
         </div>
     
             <div class="header-left active">
-                <a href="{% url 'dashboard-home' %}" class="logo logo-normal">
-                    <img src="" alt="Logo" style="width: 50px; height: 50px; margin-left: 60px;">
+                <!-- <a href="{% url 'dashboard-home' %}" class="logo logo-normal">
+                    <img src="{% static 'WhatsApp Image 2025-07-14 at 8.07.11 PM.jpeg' %}" alt="Logo" style="width: 50px; height: 50px; margin-left: 60px;">
 
-                </a>
+                </a> -->
                 
-                <!-- <a href="" class="logo-         ">
-                    <img src="" alt="Logo" style="margin-right: 60px;">
+                <!-- <a href="" class="logo-">
+                    <img src="{% static 'WhatsApp Image 2025-07-14 at 8.07.11 PM.jpeg' %}" alt="Logo" style="width: 100px; height: 100px; margin-top: 60px; margin-left: 60px;">
                 </a>
                 <a href="" class="dark-logo">
-                    <img src="" alt="Logo">
+                    <img src="{% static 'WhatsApp Image 2025-07-14 at 8.07.11 PM.jpeg' %}" alt="Logo" style="width: 100px; height: 100px; margin-top: 60px; margin-left: 60px;">
                 </a> -->
-                <a id="toggle_btn" href="javascript:void(0);">
+                <!-- <a id="toggle_btn" href="javascript:void(0);">
                     <i class="bi bi-person-workspace"></i>
 
 
@@ -238,7 +296,7 @@
 
 
 
-                </a>
+                </a> -->
             </div>
 
             <!-- <a id="mobile_btn" class="mobile_btn" href="#">
@@ -656,6 +714,15 @@
                             </li>
                             
                         </ul>
+                        <h6 class="submenu-hdr"><span>Slot</span></h6>
+                        <ul>
+                            <li>
+                                <a href="{% url 'dashboard-slote-manager' %}">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <span>Slot</span>
+                                </a>
+                            </li>
+                        </ul>
                         {% endif %}
                         {% if request.user.user_type == 1 or request.user.user_type == 3 or request.user.user_type == 4 %}
                         <h6 class="submenu-hdr"><span>Students</span></h6>
@@ -773,7 +840,7 @@
                             </li>
                         </ul>
                        
-                        <h6 class="submenu-hdr"><span>Payment</span></h6>
+                        <!-- <h6 class="submenu-hdr"><span>Payment</span></h6>
                         <ul>
                             <li class="">
                                 <a href="{% url 'dashboard-payment' %}">
@@ -781,7 +848,7 @@
                                     <span>Payment</span>
                                 </a>
                             </li>
-                        </ul>
+                        </ul> -->
                         <h6 class="submenu-hdr"><span>Reports</span></h6>
                         <ul>
                             <li class="">

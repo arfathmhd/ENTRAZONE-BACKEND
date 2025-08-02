@@ -1,0 +1,120 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Update Slot</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-slote-manager' %}">Slots</a></li>
+                        <li class="custom-breadcrumb-item active">Update Slot</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="card">
+                        <!-- Header Section -->
+                        <div class="card-header bg-light">
+                            <div class="d-flex align-items-center">
+                                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                                <h4 class="text-dark">Slot Information</h4>
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body pb-1">
+                            <!-- Course Selection -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="course-select" class="form-label">Course:</label>
+                                    <select id="course-select" name="course" class="form-control">
+                                        <option value="">Select Course</option>
+                                        {% for course in courses %}
+                                            <option value="{{ course.id }}" {% if course.id == slot.course.id %}selected{% endif %}>
+                                                {{ course.course_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Subject Selection (Dynamically Updated) -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="subject-select" class="form-label">Subject:</label>
+                                    <select id="subject-select" name="subject" class="form-control">
+                                        <option value="">Select Subject</option>
+                                        {% for subject in subjects %}
+                                            <option value="{{ subject.id }}" {% if subject.id == slot.subject.id %}selected{% endif %}>
+                                                {{ subject.subject_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Date Selection -->
+                            <div class="row">
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    <label for="date" class="form-label">Date:</label>
+                                    <input type="date" id="date" name="date" class="form-control" value="{{ slot.date|date:'Y-m-d' }}" required>
+                                </div>
+
+                                <!-- Available Sessions -->
+                                <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                                    <label for="available_sessions" class="form-label">Available Sessions:</label>
+                                    <input type="number" id="available_sessions" name="available_sessions" class="form-control" value="{{ slot.available_sessions }}" min="1" required>
+                                </div>
+                            </div>
+
+                            <div class="text-end mt-4">
+                                <a href="{% url 'dashboard-slote-manager' %}" class="btn btn-light me-3">Cancel</a>
+                                <button type="submit" class="btn btn-primary">Update Slot</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    document.getElementById("course-select").addEventListener("change", function () {
+        let courseId = this.value;
+        let subjectDropdown = document.getElementById("subject-select");
+
+        // Clear existing subjects
+        subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+
+        if (courseId) {
+            fetch(`/get-subjects/?course_id=${courseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subject => {
+                        let option = document.createElement("option");
+                        option.value = subject.id;
+                        option.textContent = subject.subject_name;
+                        subjectDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching subjects:", error));
+        }
+    });
+</script>
+{% endblock %}

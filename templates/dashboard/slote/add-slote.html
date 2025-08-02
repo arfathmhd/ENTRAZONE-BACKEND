@@ -1,0 +1,130 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-wrapper">
+    <div class="content content-two">
+
+        <div class="d-md-flex d-block align-items-center justify-content-between mb-3">
+            <div class="my-auto mb-2">
+                <h3 class="mb-1">Add Slote</h3>
+                <nav aria-label="breadcrumbs">
+                    <ol class="custom-breadcrumb">
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-home' %}">Dashboard</a></li>
+                        <li class="custom-breadcrumb-item"><a href="{% url 'dashboard-slote-manager' %}">Slote</a></li>
+                        <li class="custom-breadcrumb-item"><a href="">Add Slote</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Django form handling -->
+                <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="card">
+        <!-- Header Section -->
+        <div class="card-header bg-light">
+            <div class="d-flex align-items-center">
+                <span class="bg-white avatar avatar-sm me-2 text-gray-7 flex-shrink-0">
+                    <i class="bi bi-info-circle"></i>
+                </span>
+                <h4 class="text-dark">Slote Information</h4>
+            </div>
+        </div>
+    
+        <!-- Card Body -->
+        <div class="card-body pb-1">
+            <form method="post">
+                {% csrf_token %}
+        
+                <!-- Course Selection -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="course-select" class="form-label">Course:</label>
+                        <select id="course-select" name="course" class="form-control">
+                            <option value="">Select Course</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.course_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+        
+                <!-- Subject Selection (Dynamically Updated) -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="subject-select" class="form-label">Subject:</label>
+                        <select id="subject-select" name="subject" class="form-control">
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+                </div>
+        
+                <!-- Date Selection -->
+                <div class="row">
+                    <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                        <label for="date" class="form-label">Date:</label>
+                        <input type="date" id="date" name="date" class="form-control" required>
+                    </div>
+        
+                    <!-- Available Sessions -->
+                    <div class="col-xxl-4 col-xl-4 col-md-6 mb-3">
+                        <label for="available_sessions" class="form-label">Available Sessions:</label>
+                        <input type="number" id="available_sessions" name="available_sessions" class="form-control" min="1" required>
+                    </div>
+                </div>
+        
+        </div>
+        
+    </div>
+    
+
+    <div class="text-end mt-4">
+        <button type="button" class="btn btn-light me-3">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+</body>
+
+<!-- Mirrored from preskool.dreamstechnologies.com/ci/template/public/add-student by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 18 Sep 2024 09:29:11 GMT -->
+
+</html>
+{% block script %}
+
+
+<script>
+    document.getElementById("course-select").addEventListener("change", function () {
+        let courseId = this.value;
+        let subjectDropdown = document.getElementById("subject-select");
+
+        // Clear existing subjects
+        subjectDropdown.innerHTML = '<option value="">Select Subject</option>';
+
+        if (courseId) {
+            fetch(`/get-subjects/?course_id=${courseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subject => {
+                        let option = document.createElement("option");
+                        option.value = subject.id;
+                        option.textContent = subject.subject_name;
+                        subjectDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching subjects:", error));
+        }
+    });
+</script>
+
+
+{% endblock script %}

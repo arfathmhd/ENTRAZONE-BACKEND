@@ -1,19 +1,13 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from dashboard.models import Course
-from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
-
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field
 
 class AddForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['course_name',  'description', 'number_of_lessons', 'duration']
+        fields = ['course_name', 'language', 'description', 'number_of_lessons', 'duration']
         widgets = {
             'course_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'language': forms.Select(attrs={'class': 'form-control'}),
             # 'image': forms.FileInput(attrs={'class': 'form-control', 'type': 'file'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'cols': 40}),
             'number_of_lessons': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -22,6 +16,9 @@ class AddForm(forms.ModelForm):
         error_messages = {
             'course_name': {
                 'required': "Course name is required.",
+            },
+            'language': {
+                'required': "Language is required.",
             },
             # 'image': {
             #     'required': "An image is required.",
@@ -42,7 +39,7 @@ class AddForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AddForm, self).__init__(*args, **kwargs)
         self.fields['course_name'].required = True
-    
+        self.fields['language'].required = True
         self.fields['description'].required = False
         self.fields['number_of_lessons'].required = True
         self.fields['duration'].required = True
@@ -54,6 +51,10 @@ class AddForm(forms.ModelForm):
         course_name = cleaned_data.get('course_name')
         if not course_name:
             self.add_error('course_name', "Course name is required.")
+            
+        language = cleaned_data.get('language')
+        if not language:
+            self.add_error('language', "Language is required.")
 
         number_of_lessons = cleaned_data.get('number_of_lessons')
         if number_of_lessons is not None and number_of_lessons <= 0:
@@ -70,8 +71,6 @@ class AddForm(forms.ModelForm):
                     self.add_error('duration', "Duration must be greater than 0.")
         cleaned_data['duration'] = duration
 
-        image = cleaned_data.get('image')
-        
         return cleaned_data
 
     def save(self, commit=True):

@@ -427,7 +427,18 @@ class WebhookLog(models.Model):
 
 
 class Course(models.Model):
-    
+    LANGUAGE_CHOICES = (
+        ('English', 'English'),
+        # ('Hindi', 'Hindi'),
+        # ('Telugu', 'Telugu'),
+        # ('Tamil', 'Tamil'),
+        # ('Kannada', 'Kannada'),
+        ('Malayalam', 'Malayalam'),
+        # ('Marathi', 'Marathi'),
+        # ('Gujarati', 'Gujarati'),
+        # ('Punjabi', 'Punjabi'),
+        # ('Bengali', 'Bengali'),
+    )
     def get_file_path(instance, filename):
         ext = filename.split(".")[-1]
         tmp = get_random_string()
@@ -435,6 +446,7 @@ class Course(models.Model):
         return os.path.join("course_images", filename)
     
     course_name = models.CharField(max_length=200)
+    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='Malayalam')
     description = models.TextField()
     image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     duration = models.CharField(max_length=100,default=0)

@@ -101,6 +101,7 @@ urlpatterns = [
     path('v1/exam/question-list/', exam.exam_question, name='api-v1-exam-question-list'),
     path('v1/exam/answer-submission/', exam.exam_answer_submission, name='api-v1-exam-answer-submission'),
     path('v1/exam/report-chart/', exam.exam_report_chart, name='api-v1-exam-report-chart'),
+    path('v1/exam/report-details/', exam.student_exam_details, name='api-v1-exam-report-details'),
 
 
     # ==================================== Schedule ============================================= #

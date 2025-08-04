@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Max, Sum
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from dashboard.models import Exam, Question, StudentProgress, StudentProgressDetail, Level, TalentHunt
 from datetime import timedelta
 
@@ -969,3 +970,207 @@ def exam_report_chart(request):
         "message": "Exam report generated successfully",
         "data": response_data
     }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def student_exam_details(request, exam_id):
+    try:
+        # Get the student's progress for this exam
+        progress = get_object_or_404(
+            StudentProgress,
+            exam_id=exam_id,
+            student=request.user,
+            is_deleted=False
+        )
+        
+        # Get all details for this progress record with related question data
+        details = StudentProgressDetail.objects.filter(
+            student_progress=progress,
+            is_deleted=False
+        ).select_related('question', 'student_progress', 'student_progress__exam')
+        
+        # Separate questions by their status
+        correct_questions = details.filter(is_correct=True, answered=True)
+        wrong_questions = details.filter(is_correct=False, answered=True)
+        missed_questions = details.filter(answered=False)
+        
+        # Calculate summary statistics
+        total_questions = details.count()
+        correct_answers = correct_questions.count()
+        wrong_answers = wrong_questions.count()
+        missed_answers = missed_questions.count()
+        accuracy = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+        # Get exam information
+        exam = progress.exam
+        exam_data = {
+            'id': exam.id,
+            'title': exam.title,
+            'duration': str(exam.duration) if exam.duration else None,
+            'exam_type': exam.exam_type,
+            'total_questions': total_questions
+        }
+        
+        # Direct data preparation without serializers
+        correct_questions_data = []
+        for detail in correct_questions:
+            try:
+                question = detail.question
+                question_data = {
+                    'id': detail.id,
+                    'question_id': question.id,
+                    'question_type': question.get_question_type_display(),
+                    'question_description': question.question_description,
+                    'options': question.options,
+                    'right_answers': question.right_answers,
+                    'mark': question.mark,
+                    'negative_mark': question.negative_mark,
+                    'explanation': {
+                        'description': question.explanation_description,
+                        'image': question.explanation_image.url if question.explanation_image and question.explanation_image.name else None
+                    },
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered,
+                    'marks_obtained': float(detail.marks_obtained) if detail.marks_obtained else 0,
+                    'negative_marks': float(detail.negative_marks) if detail.negative_marks else 0,
+                    'time_taken': detail.time_taken
+                }
+            except Exception as e:
+                # Fallback with minimal data if there's an error
+                question_data = {
+                    'id': detail.id,
+                    'error': f"Error processing question data: {str(e)}",
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered
+                }
+            correct_questions_data.append(question_data)
+            
+        wrong_questions_data = []
+        for detail in wrong_questions:
+            try:
+                question = detail.question
+                question_data = {
+                    'id': detail.id,
+                    'question_id': question.id,
+                    'question_type': question.get_question_type_display(),
+                    'question_description': question.question_description,
+                    'options': question.options,
+                    'right_answers': question.right_answers,
+                    'mark': question.mark,
+                    'negative_mark': question.negative_mark,
+                    'explanation': {
+                        'description': question.explanation_description,
+                        'image': question.explanation_image.url if question.explanation_image and question.explanation_image.name else None
+                    },
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered,
+                    'marks_obtained': float(detail.marks_obtained) if detail.marks_obtained else 0,
+                    'negative_marks': float(detail.negative_marks) if detail.negative_marks else 0,
+                    'time_taken': detail.time_taken
+                }
+            except Exception as e:
+                # Fallback with minimal data if there's an error
+                question_data = {
+                    'id': detail.id,
+                    'error': f"Error processing question data: {str(e)}",
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered
+                }
+            wrong_questions_data.append(question_data)
+            
+        missed_questions_data = []
+        for detail in missed_questions:
+            try:
+                question = detail.question
+                question_data = {
+                    'id': detail.id,
+                    'question_id': question.id,
+                    'question_type': question.get_question_type_display(),
+                    'question_description': question.question_description,
+                    'options': question.options,
+                    'right_answers': question.right_answers,
+                    'mark': question.mark,
+                    'negative_mark': question.negative_mark,
+                    'explanation': {
+                        'description': question.explanation_description,
+                        'image': question.explanation_image.url if question.explanation_image and question.explanation_image.name else None
+                    },
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered,
+                    'marks_obtained': float(detail.marks_obtained) if detail.marks_obtained else 0,
+                    'negative_marks': float(detail.negative_marks) if detail.negative_marks else 0,
+                    'time_taken': detail.time_taken
+                }
+            except Exception as e:
+                # Fallback with minimal data if there's an error
+                question_data = {
+                    'id': detail.id,
+                    'error': f"Error processing question data: {str(e)}",
+                    'selected_option': detail.selected_option,
+                    'is_correct': detail.is_correct,
+                    'answered': detail.answered
+                }
+            missed_questions_data.append(question_data)
+        
+        # Calculate time spent on exam
+        try:
+            time_spent_seconds = sum(
+                int(detail.time_taken.split(':')[0]) * 60 + int(detail.time_taken.split(':')[1])
+                for detail in details
+                if detail.time_taken and ':' in detail.time_taken
+            )
+            minutes, seconds = divmod(time_spent_seconds, 60)
+            time_spent = f"{minutes:02d}:{seconds:02d}"
+        except (ValueError, AttributeError, IndexError):
+            time_spent = "00:00"
+            
+        response_data = {
+            'status': 'success',
+            'message': 'Exam details retrieved successfully',
+            'data': {
+                'exam': exam_data,
+                'summary': {
+                    'total_questions': total_questions,
+                    'correct_answers': correct_answers,
+                    'wrong_answers': wrong_answers,
+                    'missed_answers': missed_answers,
+                    'accuracy': round(accuracy, 2),
+                    'marks_obtained': float(progress.marks_obtained) if progress.marks_obtained else 0,
+                    'total_marks': float(progress.total_marks),
+                    'percentage': float(progress.marks_obtained) / float(progress.total_marks) * 100 if progress.marks_obtained and progress.total_marks else 0,
+                    'passed': progress.passed,
+                    'exam_date': progress.created.strftime('%Y-%m-%d %H:%M:%S'),
+                    'time_spent': time_spent
+                },
+                'questions': {
+                    'correct': correct_questions_data,
+                    'wrong': wrong_questions_data,
+                    'missed': missed_questions_data
+                }
+            }
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except StudentProgress.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'No exam progress found for this student and exam'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        import traceback
+        return Response({
+            'status': 'error',
+            'message': str(e),
+            'details': traceback.format_exc() if settings.DEBUG else None
+        }, status=status.HTTP_400_BAD_REQUEST)

@@ -978,7 +978,8 @@ def exam_report_chart(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def student_exam_details(request, exam_id):
+def student_exam_details(request):
+    exam_id = request.GET.get('exam_id')
     try:
         # Get the student's progress for this exam
         progress = get_object_or_404(

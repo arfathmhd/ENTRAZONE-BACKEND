@@ -911,6 +911,7 @@ def exam_report_chart(request):
         percentage = round((marks_obtained / total_marks) * 100, 2) if total_marks > 0 else 0.0
         # Create simplified exam data structure
         exam_data = {
+            'exam_id': progress.exam.id,
             'exam_name': progress.exam.title or f"Exam #{progress.exam.id}",
             'exam_type': progress.exam.exam_type,
             'marks_obtained': marks_obtained,

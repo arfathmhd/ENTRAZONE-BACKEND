@@ -61,8 +61,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django.contrib.humanize', 
     'crispy_bootstrap4',
-        'corsheaders',
-
+    'corsheaders',
     # 'multiselectfield'
     'ckeditor',
     'ckeditor_uploader',

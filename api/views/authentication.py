@@ -96,6 +96,7 @@ def register(request):
             "email": user.email if user.email else "",
             "state": district_name,
             "address": user.address if user.address else "",
+            "created":user.created if user.created else ""
         }
 
         return Response({
@@ -253,6 +254,7 @@ def otp_login_verify(request):
                     "phone": user.phone_number if user.phone_number else "",
                     "email": user.email if user.email else "",
                     "state": district_name ,  
+                     "created":user.created if user.created else ""
                 }
 
                 refresh = RefreshToken.for_user(user)
@@ -329,6 +331,7 @@ def otp_signup_verify(request):
                     # "username": new_user.username,
                     "phone": new_user.phone_number if new_user.phone_number else "",
                     "email": new_user.email if new_user.email else "",
+                     "created":new_user.created if new_user.created else ""
                 }
 
                 refresh = RefreshToken.for_user(new_user)

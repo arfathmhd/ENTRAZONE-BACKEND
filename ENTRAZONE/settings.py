@@ -256,5 +256,12 @@ if USE_S3_MEDIA:
 
 
 CORS_ALLOWED_ORIGINS = [
-  "http://localhost:5173"
+  "http://localhost:5173",
+  "89.116.134.90",
+  "entrazone.ibnsu.com",
+  "https://entrazone.ibnsu.com",
+  "http://entrazone.ibnsu.com",
+  "https://entrazone.ibnsu.com",
+  "https://entrazone-frontend.vercel.app",
+  "http://entrazone-frontend.vercel.app"
 ]

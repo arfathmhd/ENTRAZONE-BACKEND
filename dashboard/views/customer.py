@@ -154,7 +154,7 @@ def list(request):
             "id": user.id,
             "username": user.name if user.name else "N/A",
             "email": user.email if user.email else "N/A",
-            "district": user.get_district_display() if user.district else "N/A",
+            "district": user.get_state_display() if user.state else "N/A",
             "phone_number": user.phone_number if user.phone_number else "N/A",
             "batch_names_display": subscriptions_display,
            "created": timezone.localtime(user.created).strftime('%Y-%m-%d %H:%M:%S')

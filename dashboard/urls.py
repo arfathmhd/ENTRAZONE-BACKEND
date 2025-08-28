@@ -418,10 +418,10 @@ urlpatterns = [
 
     # # ==================================== Slote Management ============================================= #
 
-    path("slote/", slote.manager, name="dashboard-slote-manager"),
-    path("slote/add/", slote.add_slot, name="dashboard-slote-add"),
+    path("slot/", slote.manager, name="dashboard-slote-manager"),
+    path("slot/add/", slote.add_slot, name="dashboard-slote-add"),
     path("get-subjects/", slote.get_subjects, name="get_subjects"),
-    path("slote/update/<int:slot_id>/", slote.update_slot, name="dashboard-slote-update"),
-    path("slote/delete/<int:slot_id>/", slote.delete, name="dashboard-slote-delete"),
+    path("slot/update/<int:slot_id>/", slote.update_slot, name="dashboard-slote-update"),
+    path("slot/delete/<int:slot_id>/", slote.delete, name="dashboard-slote-delete"),
 
 ]

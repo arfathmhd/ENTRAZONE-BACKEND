@@ -1,5 +1,4 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from dashboard.views.imports import *  # Import necessary models
 from datetime import datetime
 # from django.core.files.images import get_image_dimensions
@@ -204,11 +203,7 @@ class CustomerForm(forms.ModelForm):
 
     def clean_batches(self):
         batch = self.cleaned_data.get('batches')
-
-        # Ensure a batch is selected if it's required
-        if not batch:
-            raise ValidationError("A batch must be selected.")
-
+        # Batch is now optional
         return batch
 
     def save(self, commit=True, payment_plan_data=None):
@@ -222,14 +217,15 @@ class CustomerForm(forms.ModelForm):
 
         selected_batch = self.cleaned_data.get('batches')
 
-        # Handle batch subscription and payment plan
+        # Create a student without requiring batch or payment plan
+        # Only create subscription if batch is selected
         if selected_batch:
             # Create subscription first, then add the batch to the many-to-many relationship
             subscription = Subscription.objects.create(user=instance)
             subscription.batch.add(selected_batch)
             
-            # Handle payment plan if provided
-            if payment_plan_data:
+            # Handle payment plan if provided and payment plan type is selected
+            if payment_plan_data and payment_plan_data.get('payment_plan_type'):
                 payment_plan_type = payment_plan_data.get('payment_plan_type')
                 
                 if payment_plan_type == 'existing':

@@ -178,10 +178,10 @@ def add(request):
             form = CustomerForm(request.POST, request.FILES)
             payment_plan_form = PaymentPlanForm(request.POST)
             
+            # Only validate the main form - payment plan is now completely optional
             forms_valid = form.is_valid()
-            payment_plan_valid = payment_plan_form.is_valid()
             
-            if forms_valid and payment_plan_valid:
+            if forms_valid:
                 # Don't save the form yet, just get the data
                 phone = form.cleaned_data['phone_number']
                 name = form.cleaned_data['name']
@@ -208,12 +208,20 @@ def add(request):
                 customer = form.instance
                 customer.username = username
                 customer.is_active = True
+                # Now save the form with the payment plan data if it exists
+                payment_plan_data = None
+                if 'payment_plan_type' in request.POST and request.POST.get('payment_plan_type'):
+                    # Only validate payment plan form if payment plan type is selected
+                    if payment_plan_form.is_valid():
+                        payment_plan_data = payment_plan_form.cleaned_data
                 
-                # Save with payment plan data - only call save once
-                payment_plan_data = payment_plan_form.cleaned_data
-                customer = form.save(payment_plan_data=payment_plan_data)
+                customer = form.save(commit=True, payment_plan_data=payment_plan_data)
                 
-                messages.success(request, "Customer added successfully with payment plan!")
+                # Show appropriate success message based on whether payment plan was used
+                if payment_plan_data:
+                    messages.success(request, "Student added successfully with payment plan!")
+                else:
+                    messages.success(request, "Student added successfully!")
                 return redirect('dashboard-customer')
             else:
                 errors = form.errors

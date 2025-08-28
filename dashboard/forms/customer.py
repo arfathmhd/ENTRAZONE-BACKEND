@@ -10,7 +10,7 @@ class PaymentPlanForm(forms.Form):
         choices=[('existing', 'Use Existing Plan'), ('new', 'Create New Plan')],
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
         initial='existing',
-        required=True
+        required=False
     )
     
     existing_plan = forms.ModelChoiceField(
@@ -154,7 +154,7 @@ class CustomerForm(forms.ModelForm):
         self.fields['district'].required = True
         
         # Set district choices
-        self.fields['district'].widget.choices = CustomUser.DISTRICT_CHOICES
+        self.fields['district'].widget.choices = CustomUser.STATE_CHOICES
 
         # Handle existing batches for the user
         if self.instance and self.instance.pk:

@@ -19,7 +19,6 @@ def video_rating(request):
     paginator = Paginator(videos, 25)  # Show 25 videos per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    print(videos.first().id)
     context = {
         'page_obj': page_obj,
     }

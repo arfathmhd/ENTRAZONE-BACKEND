@@ -874,6 +874,7 @@ def exam_report_chart(request):
     - 1 consolidated chart with all exams ordered by date
     
     Charts show exam performance with marks obtained and total marks.
+    Also includes statistics on correct, wrong, and unanswered questions.
     """
     student = request.user
  
@@ -881,6 +882,7 @@ def exam_report_chart(request):
     student_progress = (StudentProgress.objects
         .filter(student=student, exam__isnull=False, is_deleted=False)
         .select_related('exam')
+        .prefetch_related('details')
         .order_by('created'))
     
     if not student_progress.exists():
@@ -909,6 +911,14 @@ def exam_report_chart(request):
         marks_obtained = float(progress.marks_obtained) if progress.marks_obtained else 0.0
         total_marks = float(progress.total_marks) if progress.total_marks else 1.0
         percentage = round((marks_obtained / total_marks) * 100, 2) if total_marks > 0 else 0.0
+        
+        # Get question statistics from StudentProgressDetail - match the logic in exam_answer_submission
+        details = progress.details.filter(is_deleted=False)
+        total_questions = details.count()
+        correct_answers = details.filter(is_correct=True).count()
+        wrong_answers = details.filter(is_correct=False, answered=True).count()
+        unanswered = details.filter(answered=False).count()
+        
         # Create simplified exam data structure
         exam_data = {
             'exam_id': progress.exam.id,
@@ -918,7 +928,13 @@ def exam_report_chart(request):
             'total_marks': total_marks,
             'percentage': percentage,
             'date': progress.created,
-            'passed': progress.passed
+            'passed': progress.passed,
+            'question_stats': {
+                'total_questions': total_questions,
+                'correct_answers': correct_answers,
+                'wrong_answers': wrong_answers,
+                'unanswered': unanswered
+            }
         }
         
         # Add to appropriate collections
@@ -935,11 +951,22 @@ def exam_report_chart(request):
     # Sort consolidated data by date
     consolidated_data.sort(key=lambda x: x['date'])
     
-     # Calculate performance metrics
+    # Calculate performance metrics
     total_exams = len(consolidated_data)
     average_score = round(sum(exam['percentage'] for exam in consolidated_data) / total_exams, 2) if total_exams > 0 else 0
     exams_passed = sum(1 for exam in consolidated_data if exam['passed'])
     pass_rate = round((exams_passed / total_exams) * 100, 2) if total_exams > 0 else 0
+    
+    # Calculate aggregate question statistics - using the same logic as in exam_answer_submission
+    total_questions = sum(exam['question_stats']['total_questions'] for exam in consolidated_data)
+    total_correct = sum(exam['question_stats']['correct_answers'] for exam in consolidated_data)
+    total_wrong = sum(exam['question_stats']['wrong_answers'] for exam in consolidated_data)
+    total_unanswered = sum(exam['question_stats']['unanswered'] for exam in consolidated_data)
+    
+    # Calculate percentages for question statistics - match the logic in exam_answer_submission
+    correct_percentage = round((total_correct / total_questions) * 100, 2) if total_questions > 0 else 0
+    wrong_percentage = round((total_wrong / total_questions) * 100, 2) if total_questions > 0 else 0
+    unanswered_percentage = round((total_unanswered / total_questions) * 100, 2) if total_questions > 0 else 0
     
     # Get performance trend (improving, declining, stable)
     trend = "stable"
@@ -957,13 +984,22 @@ def exam_report_chart(request):
         
         # Add consolidated data
         'Consolidated': consolidated_data,
-         "performance_metrics": {
-                    "total_exams": total_exams,
-                    "average_score": average_score,
-                    "exams_passed": exams_passed,
-                    "pass_rate": pass_rate,
-                    "performance_trend": trend
-                }
+        "performance_metrics": {
+            "total_exams": total_exams,
+            "average_score": average_score,
+            "exams_passed": exams_passed,
+            "pass_rate": pass_rate,
+            "performance_trend": trend,
+            "donut": {
+                "correct_percentage": correct_percentage,
+                "wrong_percentage": wrong_percentage,
+                "unanswered_percentage": unanswered_percentage,
+            },
+            "question": total_questions,
+            "correct_answers": total_correct,
+            "wrong_answer": total_wrong,
+            "unanswered": total_unanswered
+        }
     }
     
     return Response({

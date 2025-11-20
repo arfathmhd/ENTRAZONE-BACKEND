@@ -389,27 +389,28 @@ urlpatterns = [
     path("live-class/assignment/delete/", live_class.live_class_assignment_delete, name="dashboard-live-class-assignment-delete"),
 
     # ==================================== Payment Management ============================================= #
-    path("payment/dashboard/", payment.payment_dashboard, name="dashboard-payment"),
-    path("payment/config/", payment.payment_config, name="dashboard-payment-config"),
-    path("payment/installments/", payment.installment_list, name="dashboard-installment-list"),
-    path("payment/installment/<int:pk>/", payment.installment_detail, name="dashboard-installment-detail"),
-    path("payment/installment/<int:installment_id>/generate-link/", payment.generate_payment_link, name="dashboard-generate-payment-link"),
-    path("payment/installment/<int:installment_id>/mark-paid/", payment.mark_as_paid, name="dashboard-mark-installment-paid"),
-    path("payment/subscription/<int:pk>/", payment.subscription_detail, name="dashboard-subscription-detail"),
-    path("payment/subscription/<int:subscription_id>/add-plan/", payment.add_payment_plan_to_subscription, name="dashboard-add-payment-plan"),
+    path('api/razorpay/create-order/', payment.create_razorpay_order, name='create_razorpay_order'),
+    path('api/razorpay/verify-payment/', payment.verify_payment, name='verify_payment'),
+    path('api/razorpay/webhook/', payment.razorpay_webhook, name='razorpay_webhook'),
+    path('api/user/installments/', payment.get_user_installments, name='get_user_installments'),
+    
+    # Payment pages
+    path('pay/razorpay/<uuid:uuid>/', payment.razorpay_payment_redirect, name='razorpay_payment_redirect'),
+    path('payment/success/<uuid:transaction_uuid>/', payment.payment_success, name='payment_success'),
+    path('payment/failure/<uuid:transaction_uuid>/', payment.payment_failure, name='payment_failure'),
     
     # Public payment URLs
-    path("pay/<uuid:uuid>/", payment.payment_redirect, name="payment-redirect"),
-    path("payment/callback/", payment.payment_callback, name="payment-callback"),
-    path("payment/success/<str:transaction_id>/", payment.payment_success, name="payment-success"),
-    path("payment/failure/<str:transaction_id>/", payment.payment_failure, name="payment-failure"),
-    path("payment/cancel/<str:transaction_id>/", payment.payment_cancel, name="payment-cancel"),
-    path("payment/webhook/", payment.payment_webhook, name="payment-webhook"),
+    # path("pay/<uuid:uuid>/", payment.payment_redirect, name="payment-redirect"),
+    # path("payment/callback/", payment.payment_callback, name="payment-callback"),
+    # path("payment/success/<str:transaction_id>/", payment.payment_success, name="payment-success"),
+    # path("payment/failure/<str:transaction_id>/", payment.payment_failure, name="payment-failure"),
+    # path("payment/cancel/<str:transaction_id>/", payment.payment_cancel, name="payment-cancel"),
+    # path("payment/webhook/", payment.payment_webhook, name="payment-webhook"),
     
     
-    # Payment API endpoints
-    path("payment/api/check-order-status/<str:order_id>/", smartgateway.check_order_status, name="api-check-order-status"),
-    path("payment/api/send-notification/", payment.send_payment_notification, name="api-send-payment-notification"),
+    # # Payment API endpoints
+    # path("payment/api/check-order-status/<str:order_id>/", smartgateway.check_order_status, name="api-check-order-status"),
+    # path("payment/api/send-notification/", payment.send_payment_notification, name="api-send-payment-notification"),
     
     # ==================================== Video Ratings ============================================= #
     path("video-ratings/", rating.video_rating, name="dashboard-video-ratings"),

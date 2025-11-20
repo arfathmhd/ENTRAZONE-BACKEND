@@ -11,7 +11,12 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from Crypto.Cipher import AES
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-
+import uuid
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from cryptography.fernet import Fernet
+import base64
 
 
 class MyUserManager(BaseUserManager):
@@ -160,6 +165,8 @@ class CustomUser(AbstractBaseUser):
         super().save(*args, **kwargs)
 
 
+
+
 class Batch(models.Model):
     batch_name = models.CharField(max_length=100)
     start_date = models.DateField()
@@ -172,8 +179,6 @@ class Batch(models.Model):
 
     def __str__(self):
         return f"Batch for {self.course.course_name}, {self.batch_expiry}, {self.batch_price}"
-    
-
 
 class FeePaymentPlan(models.Model):
     FREQUENCY_CHOICES = (
@@ -196,21 +201,19 @@ class FeePaymentPlan(models.Model):
         frequency_display = dict(self.FREQUENCY_CHOICES).get(self.frequency, 'Monthly')
         return f"{self.name} - ₹{self.total_amount} in {self.number_of_installments} {frequency_display} installments"
 
-
 class Subscription(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    batch = models.ManyToManyField(Batch, blank=True, null=True)
+    batch = models.ManyToManyField(Batch, blank=True)
     custom_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     payment_plan = models.ForeignKey(FeePaymentPlan, on_delete=models.SET_NULL, null=True, blank=True)
     created = models.DateTimeField(default=timezone.now)
-    is_deleted = models.BooleanField(default=False)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_due = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Subscription of {self.user.name} "
+        return f"Subscription of {self.user.name}"
         
     def update_payment_totals(self):
         """Update total paid and due amounts"""
@@ -235,7 +238,6 @@ class Subscription(models.Model):
             return 'OVERDUE'
             
         return 'PENDING'
-
 
 class FeeInstallment(models.Model):
     STATUS_CHOICES = (
@@ -283,65 +285,62 @@ class FeeInstallment(models.Model):
         
     def generate_payment_link(self, base_url):
         """Generate a shareable payment link"""
-        # Set expiry to 7 days from now
         self.payment_link_expires = timezone.now() + timezone.timedelta(days=7)
         self.payment_link = f"{base_url}/pay/{self.payment_link_uuid}/"
         self.save()
         return self.payment_link
 
-
-class HDFCPaymentConfig(models.Model):
-    """Configuration for HDFC SmartGateway payment gateway"""
-    merchant_id = models.CharField(max_length=100, help_text="HDFC Merchant ID", null=True, blank=True)
-    access_code = models.CharField(max_length=100, help_text="HDFC Access Code", null=True, blank=True)
-    working_key = models.CharField(max_length=100, help_text="HDFC Working Key for encryption", null=True, blank=True)
-    api_key = models.CharField(max_length=100, help_text="HDFC API Key", null=True, blank=True)
-    payment_page_client_id = models.CharField(max_length=100, help_text="HDFC Payment Page Client ID", null=True, blank=True)
+class RazorpayConfig(models.Model):
+    """Configuration for Razorpay payment gateway"""
+    key_id = models.CharField(max_length=100, help_text="Razorpay Key ID")
+    key_secret = models.CharField(max_length=100, help_text="Razorpay Key Secret")
+    webhook_secret = models.CharField(max_length=100, help_text="Razorpay Webhook Secret", blank=True, null=True)
     is_production = models.BooleanField(default=False, help_text="Use production environment")
-    # Webhook configuration
-    webhook_url = models.URLField(max_length=255, help_text="URL where SmartGateway will send webhook events", blank=True, null=True)
-    webhook_username = models.CharField(max_length=100, help_text="Username for Basic Auth webhook authentication", blank=True, null=True)
-    webhook_password = models.CharField(max_length=100, help_text="Password for Basic Auth webhook authentication", blank=True, null=True)
-    webhook_secret = models.CharField(max_length=100, help_text="Secret for additional webhook signature verification", blank=True, null=True)
-    webhook_custom_headers = models.JSONField(default=dict, blank=True, help_text="Custom headers for webhook authentication")
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"HDFC Config - {'Production' if self.is_production else 'Test'}"
+        return f"Razorpay Config - {'Production' if self.is_production else 'Test'}"
     
-    @property
-    def api_url(self):
-        """Get the appropriate API URL based on environment"""
-        if self.is_production:
-            return "https://smartgatewayuat.hdfcbank.com"
-        return "https://smartgatewayuat.hdfcbank.com"
+    def save(self, *args, **kwargs):
+        # Encrypt sensitive data before saving
+        if self.key_secret and not self.key_secret.startswith('encrypted:'):
+            fernet = Fernet(self._get_encryption_key())
+            encrypted_secret = fernet.encrypt(self.key_secret.encode())
+            self.key_secret = 'encrypted:' + encrypted_secret.decode()
+        
+        if self.webhook_secret and not self.webhook_secret.startswith('encrypted:'):
+            fernet = Fernet(self._get_encryption_key())
+            encrypted_webhook = fernet.encrypt(self.webhook_secret.encode())
+            self.webhook_secret = 'encrypted:' + encrypted_webhook.decode()
+        
+        super().save(*args, **kwargs)
     
-    def generate_checksum(self, merchant_data):
-        """Generate checksum for HDFC payment"""
-        return self.encrypt(merchant_data, self.working_key)
+    def get_key_secret(self):
+        """Get decrypted key secret"""
+        if self.key_secret.startswith('encrypted:'):
+            fernet = Fernet(self._get_encryption_key())
+            encrypted_secret = self.key_secret.replace('encrypted:', '')
+            return fernet.decrypt(encrypted_secret.encode()).decode()
+        return self.key_secret
     
-    @staticmethod
-    def encrypt(data, working_key):
-        """Encrypt data using working key"""
-        iv = '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
-        aes = AES.new(working_key.encode(), AES.MODE_CBC, iv.encode())
-        encrypted_data = aes.encrypt(data.encode())
-        return base64.b64encode(encrypted_data).decode()
+    def get_webhook_secret(self):
+        """Get decrypted webhook secret"""
+        if self.webhook_secret and self.webhook_secret.startswith('encrypted:'):
+            fernet = Fernet(self._get_encryption_key())
+            encrypted_webhook = self.webhook_secret.replace('encrypted:', '')
+            return fernet.decrypt(encrypted_webhook.encode()).decode()
+        return self.webhook_secret
     
-    @staticmethod
-    def decrypt(encrypted_data, working_key):
-        """Decrypt data using working key"""
-        iv = '\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f'
-        encrypted_data = base64.b64decode(encrypted_data)
-        aes = AES.new(working_key.encode(), AES.MODE_CBC, iv.encode())
-        decrypted_data = aes.decrypt(encrypted_data).decode().strip()
-        return decrypted_data
-
-
-
+    def _get_encryption_key(self):
+        """Get encryption key from settings or generate one"""
+        from django.conf import settings
+        if hasattr(settings, 'RAZORPAY_ENCRYPTION_KEY'):
+            return settings.RAZORPAY_ENCRYPTION_KEY
+        # Fallback to a key derived from SECRET_KEY
+        return Fernet.generate_key()
 
 class PaymentTransaction(models.Model):
     """Record of payment transactions"""
@@ -356,7 +355,7 @@ class PaymentTransaction(models.Model):
     
     installment = models.ForeignKey(FeeInstallment, on_delete=models.CASCADE, related_name='transactions')
     transaction_id = models.CharField(max_length=100, unique=True, blank=True, null=True)
-    transaction_uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
+    transaction_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     order_id = models.CharField(max_length=100, unique=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='INR')
@@ -366,6 +365,9 @@ class PaymentTransaction(models.Model):
     gateway_response = models.JSONField(blank=True, null=True)
     payment_link = models.URLField(blank=True, null=True)
     payment_link_expiry = models.DateTimeField(null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_signature = models.CharField(max_length=500, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
@@ -383,7 +385,6 @@ class PaymentTransaction(models.Model):
         """Update the associated installment status based on transaction status"""
         if self.status == 'SUCCESS':
             self.installment.mark_as_paid(reference=self.transaction_id)
-            # Update subscription totals
             self.installment.subscription.update_payment_totals()
             self.installment.subscription.last_payment_date = timezone.now()
             self.installment.subscription.save()
@@ -394,8 +395,6 @@ class PaymentTransaction(models.Model):
 
 class WebhookLog(models.Model):
     """Model to log payment gateway webhook data"""
-
-    
     STATUS_CHOICES = (
         ('RECEIVED', 'Received'),
         ('PROCESSED', 'Processed'),
@@ -404,15 +403,15 @@ class WebhookLog(models.Model):
         ('DUPLICATE', 'Duplicate'),
     )
     
-    webhook_id = models.CharField(max_length=100, blank=True, null=True, db_index=True, help_text="Unique ID of the webhook event from SmartGateway")
-    webhook_date = models.DateTimeField(null=True, blank=True, help_text="Timestamp when the webhook was created by SmartGateway")
+    webhook_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    webhook_date = models.DateTimeField(null=True, blank=True)
     order_id = models.CharField(max_length=100, blank=True, null=True, db_index=True)
     transaction = models.ForeignKey(PaymentTransaction, on_delete=models.SET_NULL, null=True, blank=True)
-    event_type = models.CharField(max_length=100, blank=True, null=True, help_text="Type of webhook event")
+    event_type = models.CharField(max_length=100, blank=True, null=True)
     request_data = models.JSONField(default=dict)
     headers = models.JSONField(default=dict)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    signature_valid = models.BooleanField(null=True, blank=True, help_text="Whether signature validation passed")
+    signature_valid = models.BooleanField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='RECEIVED')
     error_message = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -424,8 +423,6 @@ class WebhookLog(models.Model):
     
     def __str__(self):
         return f"Webhook - {self.order_id or 'Unknown'} ({self.created.strftime('%Y-%m-%d %H:%M:%S')})"
-
-
 class Course(models.Model):
     LANGUAGE_CHOICES = (
         ('English', 'English'),

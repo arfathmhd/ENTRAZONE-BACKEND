@@ -120,11 +120,11 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
     list_filter = ('installment', 'status')
     search_fields = ('installment', 'status')
 
-@admin.register(HDFCPaymentConfig)
-class HDFCPaymentConfigAdmin(admin.ModelAdmin):
-    list_display = ('merchant_id', 'is_production', 'webhook_url', 'is_active', 'created')
+@admin.register(RazorpayConfig)
+class RazorpayConfigAdmin(admin.ModelAdmin):
+    list_display = ('key_id', 'is_production', 'is_active', 'created')
     list_filter = ('is_active', 'is_production', 'created')
-    search_fields = ('merchant_id', 'access_code', 'webhook_url')
+    search_fields = ('key_id', 'key_secret')
     
     fieldsets = (
         ('Gateway Configuration', {

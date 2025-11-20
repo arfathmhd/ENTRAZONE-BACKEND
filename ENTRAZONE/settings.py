@@ -264,3 +264,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://entrazone-frontend.vercel.app",
     "http://entrazone-frontend.vercel.app",
 ]
+
+RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID', default='rzp_test_RhsUx4BhQf5fID')
+RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET', default='1y3J16vpLc27Pt4xSP9KeQLU')

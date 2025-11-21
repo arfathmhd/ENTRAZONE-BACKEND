@@ -7,7 +7,6 @@ from api.serializers.fee import SubscriptionSerializer
 
 
 @api_view(['GET'])
-@authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def user_fees_list(request):
     user = request.user

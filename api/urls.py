@@ -19,6 +19,7 @@ from api.views import (
   video,
   live_class,
   booking,
+  fee
 
 )
 
@@ -126,5 +127,10 @@ urlpatterns = [
 
     path('v1/booking-session/', booking.booking_session, name='api-v1-booking-session'),
     path('v1/current-slots/', booking.current_slots, name='api-v1-current-slots'),
+
+    # # ==================================== Fee ============================================= #
+
+
+    path('v1/my-fees/', fee.user_fees_list, name='api-v1-user-fees-list')
 
 ]

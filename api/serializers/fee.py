@@ -44,7 +44,7 @@ class FeeInstallmentSerializer(serializers.ModelSerializer):
 class BatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batch
-        fields = ['id', 'batch_name', 'start_date', 'end_date']
+        fields = ['id', 'batch_name', 'start_date', 'batch_expiry']
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):

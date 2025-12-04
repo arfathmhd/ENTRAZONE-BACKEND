@@ -15,6 +15,7 @@ def get_profile(request):
         "name": user.name if user.name else "",
         "image": image_url,
         "email": user.email if user.email else "",
+        "address": user.address if user.address else "",
         "district": {
             "id": user.district,  
             "name": district_name  

@@ -7,7 +7,9 @@ from dashboard.models import (
     Banner, 
     Notification, 
     StudentNotification, 
-    BatchMentor
+    BatchMentor,
+    StudentProgress,
+    Exam
 )
 from django.db.models import Count, Q, Sum
 
@@ -192,6 +194,39 @@ class HomeService:
         return has_unread, unread_count
     
     @classmethod
+    def get_recent_exam_attempts(cls, user):
+        """Get the latest 3 exams attempted by the user with progression percentage."""
+        recent_progress = StudentProgress.objects.filter(
+            student=user,
+            exam__isnull=False,
+            is_deleted=False
+        ).select_related('exam').order_by('-created')[:3]
+        
+        recent_exams = []
+        for progress in recent_progress:
+            if progress.exam:
+                # Calculate progression percentage
+                progression_percentage = 0
+                if progress.total_marks and progress.total_marks > 0:
+                    progression_percentage = round(
+                        (float(progress.marks_obtained or 0) / float(progress.total_marks)) * 100, 
+                        2
+                    )
+                
+                recent_exams.append({
+                    'exam_id': progress.exam.id,
+                    'exam_name': progress.exam.title or 'Untitled Exam',
+                    'exam_type': progress.exam.exam_type or '',
+                    'marks_obtained': float(progress.marks_obtained or 0),
+                    'total_marks': float(progress.total_marks),
+                    'progression_percentage': progression_percentage,
+                    'passed': progress.passed,
+                    'attempted_date': progress.created.strftime('%Y-%m-%d %H:%M:%S') if progress.created else '',
+                })
+        
+        return recent_exams
+    
+    @classmethod
     def get_home_data(cls, user):
         """Get all data needed for the home page."""
         # Get subscribed courses
@@ -212,6 +247,9 @@ class HomeService:
         # Process notifications
         has_unread_notifications, unread_count = cls.process_notifications(user)
         
+        # Get recent exam attempts
+        recent_exams = cls.get_recent_exam_attempts(user)
+        
         return {
             "status": "success",
             "message": "Home data retrieved successfully",
@@ -223,4 +261,6 @@ class HomeService:
             "unsubscribed_courses": unsubscribed_courses,
             "is_suspended": user.is_suspended,
             "suspended_date": user.suspended_date,
+            "recent_exams": recent_exams,
         }
+

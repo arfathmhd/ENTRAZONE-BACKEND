@@ -47,6 +47,10 @@ from dashboard.views import (
     slote,
 )
 
+
+from api.views import (
+  policy,
+)
 urlpatterns = [
     # ==================================== Authentication ============================================= #
 
@@ -425,4 +429,7 @@ urlpatterns = [
     path("slot/update/<int:slot_id>/", slote.update_slot, name="dashboard-slote-update"),
     path("slot/delete/<int:slot_id>/", slote.delete, name="dashboard-slote-delete"),
 
+    path('v1/privacy-policy/', policy.privacy_policy, name='privacy-policy'),
+    path('v1/about-us/', policy.about_us, name='about-us'),
+    path('v1/terms-conditions/', policy.terms_conditions, name='terms-conditions'),
 ]

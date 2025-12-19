@@ -42,6 +42,14 @@ class HomeService:
     @classmethod
     def get_course_data(cls, course, is_default=False):
         """Get formatted course data including subscription count, completion status, and subjects."""
+        from dashboard.models import Exam
+        
+        # Get scholarship exams for this course
+        scholarship_exams = Exam.objects.filter(
+            course=course,
+            exam_type='Scholarship',
+            is_deleted=False
+        ).values('id', 'title', 'description', 'duration_minutes', 'total_marks')
 
         # Prefetch subjects with annotated chapter counts
         subjects = course.subjects.filter(is_deleted=False).annotate(
@@ -72,7 +80,8 @@ class HomeService:
             'is_completed': cls.check_course_completion_status(course),
             'mentors': [],
             'subjects': subject_data,
-            'chapter_count': total_chapter_count,  # included without looping over chapters manually
+            'chapter_count': total_chapter_count,
+            'scholarship_exams': list(scholarship_exams)  # Add scholarship exams to the response
         }
     
     @classmethod

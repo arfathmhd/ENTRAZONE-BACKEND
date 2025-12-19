@@ -76,26 +76,75 @@ def update_default_course(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def search_courses(request):
-    search_query = request.GET.get('search', '') 
+    search_query = request.GET.get('search', '').strip()
     if not search_query:
         return Response({
             "status": "error",
             "message": "Search query is required."
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    from dashboard.models import Subject, Chapter, Lesson, Folder
+    from django.db.models import Q, Prefetch
+
+    # Search across all models
     courses = Course.objects.filter(
-        Q(course_name__icontains=search_query),
+        Q(course_name__icontains=search_query) |
+        Q(description__icontains=search_query),
         is_deleted=False
-    ).values(
+    ).distinct().values(
         'id', 'course_name', 'description', 'image', 'duration', 'number_of_lessons'
+    )
+
+    subjects = Subject.objects.filter(
+        Q(subject_name__icontains=search_query) |
+        Q(description__icontains=search_query),
+        is_deleted=False
+    ).select_related('course').values(
+        'id', 'subject_name', 'description', 'image', 'is_free', 'course__id', 'course__course_name'
+    )
+
+    chapters = Chapter.objects.filter(
+        Q(chapter_name__icontains=search_query) |
+        Q(description__icontains=search_query),
+        is_deleted=False
+    ).select_related('subject', 'subject__course').values(
+        'id', 'chapter_name', 'description', 'image', 'is_free',
+        'subject__id', 'subject__subject_name',
+        'subject__course__id', 'subject__course__course_name'
+    )
+
+    lessons = Lesson.objects.filter(
+        Q(lesson_name__icontains=search_query) |
+        Q(description__icontains=search_query),
+        is_deleted=False
+    ).select_related('chapter__subject__course').values(
+        'id', 'lesson_name', 'description', 'image', 'is_free',
+        'chapter__id', 'chapter__chapter_name',
+        'chapter__subject__id', 'chapter__subject__subject_name',
+        'chapter__subject__course__id', 'chapter__subject__course__course_name'
+    )
+
+    folders = Folder.objects.filter(
+        Q(title__icontains=search_query),
+        is_deleted=False
+    ).select_related('parent_folder', 'parent_folder__subject__course').values(
+        'id', 'title', 'description', 'image', 'is_free',
+        'parent_folder__id', 'parent_folder__title',
+        'parent_folder__subject__id', 'parent_folder__subject__subject_name',
+        'parent_folder__subject__course__id', 'parent_folder__subject__course__course_name'
     )
 
     return Response({
         "status": "success",
-        "message": "Courses retrieved successfully",
-        "data": list(courses)
+        "message": "Search results retrieved successfully",
+        "data": {
+            "courses": list(courses),
+            "subjects": list(subjects),
+            "chapters": list(chapters),
+            "lessons": list(lessons),
+            "folders": list(folders)
+        }
     }, status=status.HTTP_200_OK)
-
 
 
 @api_view(['POST'])

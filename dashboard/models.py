@@ -737,11 +737,12 @@ class Exam(models.Model):
         return os.path.join("exam_images", filename)
     
     EXAM_TYPE_CHOICES = (
-        ('Daily', 'Daily'),
-        ('Weekly', 'Weekly'),
-        ('Monthly', 'Monthly'),
+        # ('Daily', 'Daily'),
+        # ('Weekly', 'Weekly'),
+        # ('Monthly', 'Monthly'),
+        ('Scholarship', 'Scholarship'),
         ('Model', 'Model'),
-        ('Live', 'Live'),
+        # ('Live', 'Live'),
     )
     
     title = models.CharField(max_length=255, blank=True, null=True)

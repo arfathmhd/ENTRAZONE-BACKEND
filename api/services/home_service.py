@@ -49,7 +49,7 @@ class HomeService:
             course=course,
             exam_type='Scholarship',
             is_deleted=False
-        ).values('id', 'title', 'description', 'duration_minutes', 'total_marks')
+        ).values('id', 'title', 'description', 'duration', 'total_marks','start_date','end_date')
 
         # Prefetch subjects with annotated chapter counts
         subjects = course.subjects.filter(is_deleted=False).annotate(

@@ -77,7 +77,6 @@ def booking_session(request):
     date = request.data.get('date')
     time_slot = request.data.get('time_slot')
     agenda = request.data.get('agenda')
-
     # Correct the filter to find slots with available sessions greater than 0
     slot = Slot.objects.filter(
         subject_id=subject_id,

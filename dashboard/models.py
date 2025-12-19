@@ -746,6 +746,8 @@ class Exam(models.Model):
     )
     
     title = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(null=True,blank=True)
+    total_marks= models.DecimalField(max_digits=5, decimal_places=2,null=True,blank=True)
     image = models.ImageField(upload_to=get_file_path, null=True, blank=True)
     number_of_attempt = models.IntegerField(default=1)
     duration = models.TimeField(null=True, blank=True)

@@ -8,13 +8,9 @@ from django.utils import timezone
 
 @login_required(login_url='dashboard-login')
 def subject_exam_add(request, course_id=None):
-    """
-    Add a new exam for a subject
-    """
     if request.user.user_type != 1 and request.user.user_type != 2:
         return redirect('/')
     
-    # If course_id is provided in the URL, get the course
     course = None
     if course_id:
         try:
@@ -26,21 +22,15 @@ def subject_exam_add(request, course_id=None):
     if request.method == 'POST':
         form_course_id = request.POST.get('course_id')
         
-        # Use course_id from URL if available, otherwise from form
         if not course_id and form_course_id:
             try:
                 course_id = int(form_course_id)
                 course = get_object_or_404(Course, id=course_id, is_deleted=False)
             except (ValueError, Course.DoesNotExist):
-                pass
-        
+                messages.error(request, "Invalid course ID.")
+                return redirect('dashboard-course')
 
-            if course_id:
-                return redirect('dashboard-course-subjects-list', pk=course_id)
-            return redirect('dashboard-course')
-            
         try:
-            
             title = request.POST.get('title')
             duration_str = request.POST.get('duration')
             exam_type = request.POST.get('exam_type')
@@ -50,45 +40,48 @@ def subject_exam_add(request, course_id=None):
             is_shuffle = request.POST.get('is_shuffle') == 'on'
             number_of_attempt = request.POST.get('number_of_attempt', 1)
             
+            # Parse duration string (HH:MM:SS)
             try:
-                # Parse duration string (HH:MM:SS)
                 hours, minutes, seconds = map(int, duration_str.split(':'))
                 duration = datetime.strptime(f"{hours}:{minutes}:{seconds}", "%H:%M:%S").time()
                 
-                # Create the exam
-                exam = Exam.objects.create(
+                # Create the exam with all fields
+                exam = Exam(
                     title=title,
                     duration=duration,
                     exam_type=exam_type,
-                    start_date=start_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None,
-                    end_date=end_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None,
                     is_free=is_free,
                     is_shuffle=is_shuffle,
                     number_of_attempt=number_of_attempt
                 )
                 
+                # Only set dates if they are provided and exam type is not daily
+                if exam_type != 'daily' and start_date and end_date:
+                    exam.start_date = start_date
+                    exam.end_date = end_date
+                
                 # If course is available, set it for the exam
                 if course:
                     exam.course = course
-                    exam.save()
+                
+                exam.save()
                 
                 messages.success(request, "Exam added successfully.")
-                
-                # Redirect back to the course subjects page if course_id is provided
                 if course_id:
                     return redirect('dashboard-course-subjects-list', pk=course_id)
+                return redirect('dashboard-course')
                 
-                return redirect('dashboard-course-subjects-list', pk=course_id)
-            except ValueError:
-                messages.error(request, "Invalid duration format. Please use HH:MM:SS format.")
+            except ValueError as e:
+                messages.error(request, f"Error processing exam data: {str(e)}")
                 if course_id:
                     return redirect('dashboard-course-subjects-list', pk=course_id)
-                return redirect('dashboard-course-subjects-list', pk=course_id)
-        except ValueError:
-            messages.error(request, "Invalid subject ID.")
+                return redirect('dashboard-course')
+                
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
             if course_id:
                 return redirect('dashboard-course-subjects-list', pk=course_id)
-            return redirect('dashboard-course-subjects-list', pk=course_id)
+            return redirect('dashboard-course')
     
     # If not POST, redirect to appropriate page
     if course_id:

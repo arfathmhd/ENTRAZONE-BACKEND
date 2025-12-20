@@ -17,7 +17,11 @@ from dashboard.models import (
 )
 from api.services.home_service import HomeService
 import logging
-
+from django.db.models import Q
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -73,6 +77,8 @@ def update_default_course(request):
 
 
 
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) 
 def search_courses(request):
@@ -83,56 +89,40 @@ def search_courses(request):
             "message": "Search query is required."
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    from dashboard.models import Subject, Chapter, Lesson, Folder
-    from django.db.models import Q, Prefetch
-
-    # Search across all models
+    # Search Courses - only name and id
     courses = Course.objects.filter(
         Q(course_name__icontains=search_query) |
         Q(description__icontains=search_query),
         is_deleted=False
-    ).distinct().values(
-        'id', 'course_name', 'description', 'image', 'duration', 'number_of_lessons'
-    )
+    ).values('id', 'course_name').distinct()
 
+    # Search Subjects - only name and id
     subjects = Subject.objects.filter(
         Q(subject_name__icontains=search_query) |
         Q(description__icontains=search_query),
         is_deleted=False
-    ).select_related('course').values(
-        'id', 'subject_name', 'description', 'image', 'is_free', 'course__id', 'course__course_name'
-    )
+    ).values('id', 'subject_name')
 
+    # Search Chapters - only name and id
     chapters = Chapter.objects.filter(
         Q(chapter_name__icontains=search_query) |
         Q(description__icontains=search_query),
         is_deleted=False
-    ).select_related('subject', 'subject__course').values(
-        'id', 'chapter_name', 'description', 'image', 'is_free',
-        'subject__id', 'subject__subject_name',
-        'subject__course__id', 'subject__course__course_name'
-    )
+    ).values('id', 'chapter_name')
 
+    # Search Lessons - only name and id
     lessons = Lesson.objects.filter(
         Q(lesson_name__icontains=search_query) |
         Q(description__icontains=search_query),
         is_deleted=False
-    ).select_related('chapter__subject__course').values(
-        'id', 'lesson_name', 'description', 'image', 'is_free',
-        'chapter__id', 'chapter__chapter_name',
-        'chapter__subject__id', 'chapter__subject__subject_name',
-        'chapter__subject__course__id', 'chapter__subject__course__course_name'
-    )
+    ).values('id', 'lesson_name')
 
+    # Search Folders - only title and id
     folders = Folder.objects.filter(
-        Q(title__icontains=search_query),
+        Q(title__icontains=search_query) |
+        Q(name__icontains=search_query),
         is_deleted=False
-    ).select_related('parent_folder', 'parent_folder__subject__course').values(
-        'id', 'title', 'description', 'image', 'is_free',
-        'parent_folder__id', 'parent_folder__title',
-        'parent_folder__subject__id', 'parent_folder__subject__subject_name',
-        'parent_folder__subject__course__id', 'parent_folder__subject__course__course_name'
-    )
+    ).values('id', 'title')
 
     return Response({
         "status": "success",

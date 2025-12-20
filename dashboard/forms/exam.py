@@ -57,17 +57,20 @@ class ExamForm(forms.ModelForm):
         cleaned_data = super().clean()
         exam_type = cleaned_data.get('exam_type')
         
-        # If exam type is daily, set start_date and end_date to None
+        # Only set dates to None for daily exams
         if exam_type == 'daily':
             cleaned_data['start_date'] = None
             cleaned_data['end_date'] = None
         else:
-            # For other exam types, dates might be required
+            # For other exam types (including Scholarship), validate dates
             start_date = cleaned_data.get('start_date')
             end_date = cleaned_data.get('end_date')
             
-            # Validate dates if provided
-            if start_date and end_date and start_date > end_date:
+            if not start_date:
+                self.add_error('start_date', 'Start date is required for this exam type')
+            if not end_date:
+                self.add_error('end_date', 'End date is required for this exam type')
+            elif start_date and end_date and start_date > end_date:
                 self.add_error('end_date', 'End date must be after start date')
         
         return cleaned_data
@@ -75,11 +78,12 @@ class ExamForm(forms.ModelForm):
     def save(self, commit=True):    
         instance = super().save(commit=False)
         
-        # Set dates to None if exam type is daily
+        # Only set dates to None for daily exams
+        # Scholarship and other exam types will keep their dates
         if instance.exam_type == 'daily':
             instance.start_date = None
             instance.end_date = None
-            
+        
         if commit:
             instance.save()
         return instance

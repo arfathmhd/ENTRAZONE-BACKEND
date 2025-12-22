@@ -39,8 +39,8 @@ def folder_exam_add(request, folder_id):
                 is_shuffle=is_shuffle,
                 number_of_attempt=number_of_attempt,
                 exam_type=exam_type,
-                start_date=exam_start_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None,
-                end_date=exam_end_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None,
+                start_date=exam_start_date if exam_start_date else None,
+                end_date=exam_end_date if exam_end_date else None,
                 folder=folder
             )
             exam.save()
@@ -91,8 +91,8 @@ def folder_exam_update(request, exam_id):
             exam.is_shuffle = is_shuffle
             exam.number_of_attempt = number_of_attempt
             exam.exam_type = exam_type
-            exam.start_date = exam_start_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None
-            exam.end_date = exam_end_date if exam_type != Exam.EXAM_TYPE_CHOICES[0][0] else None
+            exam.start_date = exam_start_date if exam_start_date else None
+            exam.end_date = exam_end_date if exam_end_date else None
             exam.save()
             
             messages.success(request, "Exam updated successfully.")

@@ -50,6 +50,10 @@ class HomeService:
             exam_type='Scholarship',
             is_deleted=False
         ).values('id', 'title', 'duration', 'start_date','end_date')
+        exam_count = Exam.objects.filter(
+            course=course,
+            is_deleted=False
+        ).count()
 
         # Prefetch subjects with annotated chapter counts
         subjects = course.subjects.filter(is_deleted=False).annotate(

@@ -7,7 +7,7 @@
 
 
 <div class="page-wrapper">
-       
+
 
     <div class="content">
 
@@ -24,25 +24,23 @@
             <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
                 <div class="pe-1 mb-2">
                     <a href="#" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
-                    data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
-                    onclick="window.location.reload();">
-                    <i class="bi bi-arrow-repeat"></i>
-                </a>
-                
+                        data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Refresh"
+                        onclick="window.location.reload();">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </a>
+
                 </div>
                 <div class="pe-1 mb-2">
-                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" 
-                        data-bs-toggle="tooltip" data-bs-placement="top" 
-                        aria-label="Print" data-bs-original-title="Print"
-                        onclick="printPage()">
+                    <button type="button" class="btn btn-outline-light bg-white btn-icon me-1" data-bs-toggle="tooltip"
+                        data-bs-placement="top" aria-label="Print" data-bs-original-title="Print" onclick="printPage()">
                         <i class="bi bi-printer"></i>
                     </button>
                 </div>
-                
-               
+
+
                 <div class="mb-2">
-                    <a href="{% url 'dashboard-slote-add' %}"
-                        class="btn btn-primary d-flex align-items-center"><i class="bi bi-plus-circle me-2"></i>
+                    <a href="{% url 'dashboard-slote-add' %}" class="btn btn-primary d-flex align-items-center"><i
+                            class="bi bi-plus-circle me-2"></i>
                         Add Slot</a>
                 </div>
             </div>
@@ -60,32 +58,32 @@
                         </span>
                         <input type="text" class="form-control custom-date-picker" placeholder="Select Date Range">
                     </div>
-                
+
                     <!-- Sort by Dropdown -->
                     <div class="dropdown mb-3">
                         <a href="javascript:void(0);" class="btn btn-outline-light bg-white dropdown-toggle"
-                           data-bs-toggle="dropdown">
-                           <i class="bi bi-sort-alpha-up me-2"></i>Sort by
+                            data-bs-toggle="dropdown">
+                            <i class="bi bi-sort-alpha-up me-2"></i>Sort by
                         </a>
-                    
+
                         <ul class="dropdown-menu p-3">
                             <li>
                                 <a href="javascript:void(0);" data-sort="name_ascending"
-                                   class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
+                                    class="dropdown-item rounded-1 {% if current_sort == 'name_ascending' %}active{% endif %}">
                                     Name A-Z
                                 </a>
                             </li>
                             <li>
                                 <a href="javascript:void(0);" data-sort="name_descending"
-                                   class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
+                                    class="dropdown-item rounded-1 {% if current_sort == 'name_descending' %}active{% endif %}">
                                     Name Z-A
                                 </a>
                             </li>
                         </ul>
                     </div>
-                    
-                    
-                    
+
+
+
                 </div>
             </div>
             <div class="card-body p-0 py-3">
@@ -116,16 +114,19 @@
                                     </div>
                                 </td>
                                 <td><a href="" class="link-primary">{{ slot.id }}</a></td>
-                                <td>{{ slot.course.name }}</td>  <!-- Assuming course has a name attribute -->
-                                <td>{{ slot.subject.subject_name }}</td>  <!-- Assuming subject has a subject_name attribute -->
+                                <td>{{ slot.course.name }}</td> <!-- Assuming course has a name attribute -->
+                                <td>{{ slot.subject.subject_name }}</td>
+                                <!-- Assuming subject has a subject_name attribute -->
                                 <td>{{ slot.available_sessions }}</td>
                                 <td>{{ slot.created|date:"d-m-Y" }}</td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="{% url 'dashboard-slote-update' slot_id=slot.id %}" class="text-primary me-3" title="Edit Slot">
-                                            <i class="bi bi-pencil-square me-2"></i> 
+                                        <a href="{% url 'dashboard-slote-update' slot_id=slot.id %}"
+                                            class="text-primary me-3" title="Edit Slot">
+                                            <i class="bi bi-pencil-square me-2"></i>
                                         </a>
-                                        <a class="btn-delete" href="#" data-bs-toggle="modal" data-slot-id="{{ slot.id }}" data-bs-target="#delete-modal">
+                                        <a class="btn-delete" href="#" data-bs-toggle="modal"
+                                            data-slot-id="{{ slot.id }}" data-bs-target="#delete-modal">
                                             <i class="bi bi-trash me-2"></i>
                                         </a>
                                     </div>
@@ -140,26 +141,26 @@
                     </table>
                     <div class="pagination">
                         {% if slots.has_previous %}
-                            <a href="?page=1" class="btn btn-primary" title="First Page">
-                                <i class="fas fa-angle-double-left"></i> First
-                            </a>
-                            <a href="?page={{ slots.previous_page_number }}" class="btn btn-primary" title="Previous Page">
-                                <i class="fas fa-angle-left"></i> Previous
-                            </a>
+                        <a href="?page=1" class="btn btn-primary" title="First Page">
+                            <i class="fas fa-angle-double-left"></i> First
+                        </a>
+                        <a href="?page={{ slots.previous_page_number }}" class="btn btn-primary" title="Previous Page">
+                            <i class="fas fa-angle-left"></i> Previous
+                        </a>
                         {% endif %}
-                        
+
                         <span class="pagination-info">Page {{ slots.number }} of {{ slots.paginator.num_pages }}</span>
-                        
+
                         {% if slots.has_next %}
-                            <a href="?page={{ slots.next_page_number }}" class="btn btn-primary" title="Next Page">
-                                Next <i class="fas fa-angle-right"></i>
-                            </a>
-                            <a href="?page={{ slots.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
-                                <i class="fas fa-angle-double-right"></i> Last
-                            </a>
+                        <a href="?page={{ slots.next_page_number }}" class="btn btn-primary" title="Next Page">
+                            Next <i class="fas fa-angle-right"></i>
+                        </a>
+                        <a href="?page={{ slots.paginator.num_pages }}" class="btn btn-primary" title="Last Page">
+                            <i class="fas fa-angle-double-right"></i> Last
+                        </a>
                         {% endif %}
                     </div>
-                    
+
                 </div>
 
             </div>
@@ -194,35 +195,35 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function () {
-    // Capture slot ID when delete button is clicked
-    $(document).on("click", ".btn-delete", function () {
-        var slotId = $(this).data("slot-id");
-        $("#delete-record").data("slot-id", slotId);
-    });
+    $(document).ready(function () {
+        // Capture slot ID when delete button is clicked
+        $(document).on("click", ".btn-delete", function () {
+            var slotId = $(this).data("slot-id");
+            $("#delete-record").data("slot-id", slotId);
+        });
 
-    // Handle delete confirmation button click
-    $("#delete-record").click(function () {
-        var slotId = $(this).data("slot-id");
+        // Handle delete confirmation button click
+        $("#delete-record").click(function () {
+            var slotId = $(this).data("slot-id");
 
-        console.log("Deleting Slot ID: " + slotId);
+            console.log("Deleting Slot ID: " + slotId);
 
-        $.ajax({
-            url: "/slote/delete/" + slotId + "/",  // Correct URL pattern
-            type: "POST",
-            data: {
-                csrfmiddlewaretoken: "{{ csrf_token }}",
-            },
-            success: function (data) {
-                console.log("Deleted successfully");
-                window.location.reload();  // Reload page after deletion
-            },
-            error: function(xhr, status, error) {
-                console.error("Error deleting slot:", error);
-            }
+            $.ajax({
+                url: "/slot/delete/" + slotId + "/",  // Correct URL pattern
+                type: "POST",
+                data: {
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function (data) {
+                    console.log("Deleted successfully");
+                    window.location.reload();  // Reload page after deletion
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error deleting slot:", error);
+                }
+            });
         });
     });
-});
 </script>
 
 
@@ -233,87 +234,87 @@ $(document).ready(function () {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Initialize flatpickr date picker
         const datepicker = flatpickr(".custom-date-picker", {
             mode: "range",
             dateFormat: "Y-m-d",
-            onClose: function(selectedDates, dateStr, instance) {
+            onClose: function (selectedDates, dateStr, instance) {
                 if (selectedDates.length === 2) {
                     let startDate = selectedDates[0].toISOString().split('T')[0];
                     let endDate = selectedDates[1].toISOString().split('T')[0];
-    
+
                     // Get the current sort parameter
                     const sort = new URL(window.location.href).searchParams.get('sort');
-    
+
                     // Update URL with date range and sort parameter
                     updateURL(startDate, endDate, sort);
                 }
             }
         });
-    
+
         function updateURL(startDate, endDate, sort) {
             const url = new URL(window.location.href);
-    
+
             // Set date range parameters
             url.searchParams.set('start_date', startDate);
             url.searchParams.set('end_date', endDate);
-    
+
             // Set or preserve sorting parameter
             if (sort) {
                 url.searchParams.set('sort', sort);
             }
-    
+
             // Redirect to updated URL
             window.location.href = url;
         }
-    
+
         function handleSortChange(event) {
             const sort = event.target.getAttribute('data-sort');
             const url = new URL(window.location.href);
-    
+
             // Get existing date range parameters
             const startDate = url.searchParams.get('start_date');
             const endDate = url.searchParams.get('end_date');
-    
+
             // Update URL with sorting parameter
             updateURL(startDate, endDate, sort);
         }
-    
+
         // Add event listener to sorting links
         document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
             item.addEventListener('click', handleSortChange);
         });
-    
+
         function clearFiltersOnRefresh() {
             const url = new URL(window.location.href);
-    
+
             // Optionally: Remove date range and sorting parameters on refresh
             url.searchParams.delete('start_date');
             url.searchParams.delete('end_date');
             url.searchParams.delete('sort');
-    
+
             // Redirect to URL without filters
             window.history.replaceState(null, '', url);
         }
-    
+
         // Trigger function to clear filters on page load
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             clearFiltersOnRefresh();
         });
     });
-    </script>
+</script>
 
-    <script src="{% static 'dashboard/sweetalert2/sweetalert2.min.js' %}"></script>
+<script src="{% static 'dashboard/sweetalert2/sweetalert2.min.js' %}"></script>
 
 
 
 
 <script>
-        $(document).ready(function () {
-            $('.noty-tost').click();
-        });
-</script>   
+    $(document).ready(function () {
+        $('.noty-tost').click();
+    });
+</script>
 {% endblock %}
 
 

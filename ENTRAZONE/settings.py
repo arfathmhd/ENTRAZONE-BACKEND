@@ -30,9 +30,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, "ENTRAZONE/.env"))
 SECRET_KEY = env("SECRET_KEY")
 
 
-API_KEY=env("API_KEY")
-ORG_ID=env("ORG_ID")
-TP_STREAM_URL=env("TP_STREAM_URL")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

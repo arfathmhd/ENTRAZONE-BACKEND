@@ -39,6 +39,7 @@ pdf_notes/
 # Environment Files
 .env
 .env.*
+!.env.example
 
 # Virtual Environment
 venv/

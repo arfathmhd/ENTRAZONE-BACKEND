@@ -1,0 +1,65 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: entrazone_db
+    restart: unless-stopped
+    env_file:
+      - ./ENTRAZONE/.env
+    environment:
+      POSTGRES_DB: entrazonefinal
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Changed to 5433 to avoid conflict with local PostgreSQL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - entrazone_network
+
+  # Django Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: entrazone_web
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 ENTRAZONE.wsgi:application"
+    volumes:
+      - ./media:/app/media
+      - ./static:/app/static
+      - ./assets:/app/assets
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ENTRAZONE/.env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - entrazone_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  entrazone_network:
+    driver: bridge

@@ -243,7 +243,7 @@ if USE_S3_MEDIA:
 
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS") else []
 
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS") else []
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS", default="") else []
 
 # CORS_ALLOWED_ORIGINS = [
         

@@ -188,7 +188,6 @@ CKEDITOR_CONFIGS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS", default="") else []
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -242,8 +241,28 @@ if USE_S3_MEDIA:
     THUMBNAIL_DEFAULT_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS") else []
 
 CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS", default="") else []
+
+# CORS_ALLOWED_ORIGINS = [
+        
+#         'http://localhost:5173',
+#         'http://127.0.0.1:5173',
+#         'http://localhost:3000',
+#         'http://127.0.0.1:3000',
+#         'http://localhost:8000',
+# ]
+
+
+# CSRF_TRUSTED_ORIGINS = [
+#         'http://localhost:5173',
+#         'http://127.0.0.1:5173',
+#         'http://localhost:3000',
+#         'http://127.0.0.1:3000',
+#         'http://localhost:8000',
+    
+# ]
 
 RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID', default='rzp_test_RhsUx4BhQf5fID')
 RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET', default='1y3J16vpLc27Pt4xSP9KeQLU')

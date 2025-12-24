@@ -114,7 +114,7 @@ def register(request):
 
 def sendsms(otp, phone):
     try:
-        url = f"https://2factor.in/API/V1/e9d24a95-606f-11f0-a562-0200cd936042/SMS/{phone}/{otp}/EntrazonOTP"
+        url = f"https://2factor.in/API/V1/25f6dc83-e0be-11f0-a6b2-0200cd936042/SMS/{phone}/{otp}/EntrazonOTP"
         response = requests.get(url, timeout=10)
         
         if response.status_code == 200:

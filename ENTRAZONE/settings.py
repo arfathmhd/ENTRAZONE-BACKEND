@@ -188,7 +188,7 @@ CKEDITOR_CONFIGS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS") else []
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS", default="") else []
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -243,7 +243,7 @@ if USE_S3_MEDIA:
 
 
 
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS") else []
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS", default="") else []
 
 RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID', default='rzp_test_RhsUx4BhQf5fID')
 RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET', default='1y3J16vpLc27Pt4xSP9KeQLU')

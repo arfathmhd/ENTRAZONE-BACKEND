@@ -40,7 +40,7 @@ class HomeService:
         # A course is completed if it has no active batches but has at least one batch
         return not has_active_batches and Batch.objects.filter(course=course).exists()
     @classmethod
-    def get_course_data(cls, course, is_default=False):
+    def get_course_data(cls, course, is_default=False, is_subscribed=False):
         """Get formatted course data including subscription count, completion status, and subjects."""
         from dashboard.models import Exam
         
@@ -80,6 +80,7 @@ class HomeService:
             'course_id': course.id,
             'course_name': course.course_name,
             'is_default': is_default,
+            'is_subscribed': is_subscribed,
             'subscription_count': cls.get_course_subscription_count(course),
             'is_completed': cls.check_course_completion_status(course),
             'mentors': [],
@@ -132,8 +133,13 @@ class HomeService:
                 if course_id not in course_data:
                     course_data[course_id] = cls.get_course_data(
                         course, 
-                        is_default=(course_id == default_course_id)
+                        is_default=(course_id == default_course_id),
+                        is_subscribed=(subscription.total_paid > 0)
                     )
+                else:
+                    # If already present, update is_subscribed to True if this subscription is paid
+                    if subscription.total_paid > 0:
+                        course_data[course_id]['is_subscribed'] = True
                 
                 # Get mentors for this batch and add to course data
                 batch_mentors = cls.get_mentors_for_batch(batch)
@@ -158,7 +164,7 @@ class HomeService:
             return []
             
         default_course = user.default_course
-        default_course_data = [cls.get_course_data(default_course, is_default=True)]
+        default_course_data = [cls.get_course_data(default_course, is_default=True, is_subscribed=False)]
         
         return default_course_data
     
@@ -172,7 +178,7 @@ class HomeService:
         )
         
         unsubscribed_courses_data = [
-            cls.get_course_data(course) 
+            cls.get_course_data(course, is_subscribed=False) 
             for course in unsubscribed_courses
         ]
         

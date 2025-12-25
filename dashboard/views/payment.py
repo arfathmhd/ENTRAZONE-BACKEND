@@ -120,7 +120,7 @@ def verify_payment(request):
         razorpay_order_id = data.get('razorpay_order_id')
         razorpay_payment_id = data.get('razorpay_payment_id')
         razorpay_signature = data.get('razorpay_signature')
-        
+        print(razorpay_order_id, razorpay_payment_id, razorpay_signature)
         client = get_razorpay_client()
         
         # Verify the payment signature

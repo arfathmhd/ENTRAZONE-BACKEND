@@ -33,7 +33,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(" ")
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -145,8 +145,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [os.path.join("static"), os.path.join(BASE_DIR, "static/")]
-STATIC_ROOT = "assets/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = os.path.join(BASE_DIR, "assets")
 
 
 STORAGES = {
@@ -241,28 +241,28 @@ if USE_S3_MEDIA:
     THUMBNAIL_DEFAULT_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 
-CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS") else []
+# CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default="").split(" ") if env("CSRF_TRUSTED_ORIGINS") else []
 
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS") else []
+# CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="").split(" ") if env("CORS_ALLOWED_ORIGINS") else []
 
-# CORS_ALLOWED_ORIGINS = [
-        
-#         'http://localhost:5173',
-#         'http://127.0.0.1:5173',
-#         'http://localhost:3000',
-#         'http://127.0.0.1:3000',
-#         'http://localhost:8000',
-# ]
-
-
-# CSRF_TRUSTED_ORIGINS = [
-#         'http://localhost:5173',
-#         'http://127.0.0.1:5173',
-#         'http://localhost:3000',
-#         'http://127.0.0.1:3000',
-#         'http://localhost:8000',
+CORS_ALLOWED_ORIGINS = [
     
-# ]
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:8000',
+]
 
-RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID', default='rzp_test_RhsUx4BhQf5fID')
-RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET', default='1y3J16vpLc27Pt4xSP9KeQLU')
+
+CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:8000',
+    
+]
+
+RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID', default='rzp_live_RviigkUv7foW2J')
+RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET', default='O9OAYvZ39C6Zra8Oc6jCDggo')

@@ -3,10 +3,11 @@ from dashboard.views.imports import *
 from django.utils.timezone import localtime
 from rest_framework.permissions import IsAuthenticated
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def comment_list(request):
     video_id = request.data.get('video_id')
+    print(video_id,"this is video id")
     pdf_note_id = request.data.get('pdf_note_id')
     user = request.user
 
@@ -173,9 +174,10 @@ def comment_add(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def comment_reply(request):
+    print(request.data)
     parent_comment_id = request.data.get('parent_comment_id')
     content = request.data.get('content')
-
+    print(parent_comment_id, content)
     if not parent_comment_id or not content:
         return Response({"status": "error", "message": "Parent comment ID and content are required."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -210,9 +212,10 @@ def comment_reply(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def comment_react(request):
+    print(request.data)
     comment_id = request.data.get('comment_id')
     reaction = request.data.get('reaction')  
-
+    print(comment_id, reaction) 
     if not comment_id or reaction not in ['LIKE', 'DISLIKE']:
         return Response({"status": "error", "message": "Comment ID and a valid reaction (LIKE/DISLIKE) are required."}, status=status.HTTP_400_BAD_REQUEST)
 
